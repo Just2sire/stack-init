@@ -212,6 +212,19 @@
     min-height: 100vh;
     background: #0a0b14;
     color: #e2e4ed;
+    position: relative;
+    overflow: hidden;
+  }
+  .si-wizard-layout::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    right: -120px;
+    width: 640px;
+    height: 520px;
+    background: radial-gradient(ellipse at center, rgba(108, 99, 255, 0.09) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
   }
 
   .si-wizard-sidebar {
@@ -223,6 +236,7 @@
     height: 100vh;
     display: flex;
     flex-direction: column;
+    z-index: 1;
   }
 
   .si-wizard-main {
@@ -231,6 +245,8 @@
     flex-direction: column;
     min-height: 100vh;
     overflow-y: auto;
+    position: relative;
+    z-index: 1;
   }
 
   .si-wizard-footer {
@@ -256,6 +272,7 @@
     color: #5c6078;
     transition: all 0.2s ease;
     user-select: none;
+    border-left: 2px solid transparent;
   }
   .si-step-item:hover {
     color: #8b8fa3;
@@ -265,6 +282,8 @@
     background: rgba(108, 99, 255, 0.10);
     color: #a59bff;
     font-weight: 500;
+    border-left-color: #6C63FF;
+    padding-left: 12px;
   }
   .si-step-item.done {
     color: #c5c8d8;
@@ -286,15 +305,16 @@
     background: transparent;
   }
   .si-step-item.done .si-step-dot {
-    background: #6C63FF;
-    border-color: #6C63FF;
-    color: #fff;
-    box-shadow: 0 0 12px rgba(108, 99, 255, 0.3);
+    background: rgba(52, 211, 153, 0.12);
+    border-color: rgba(52, 211, 153, 0.4);
+    color: #6ee7b7;
+    box-shadow: none;
   }
   .si-step-item.active .si-step-dot {
-    border-color: #6C63FF;
-    color: #a59bff;
-    background: rgba(108, 99, 255, 0.12);
+    background: linear-gradient(135deg, #6C63FF, #9b87ff);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 0 10px rgba(108, 99, 255, 0.5);
   }
 
   /* ─── Buttons ──────────────────────────────────────────────── */
@@ -618,9 +638,12 @@
   .si-title {
     font-size: 26px;
     font-weight: 500;
-    color: #e2e4ed;
     letter-spacing: -0.02em;
     line-height: 1.2;
+    background: linear-gradient(90deg, #ffffff 40%, #a59bff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .si-subtitle {

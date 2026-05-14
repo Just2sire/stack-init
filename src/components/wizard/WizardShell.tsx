@@ -1,6 +1,7 @@
 "use client";
 
 import { useWizardStore } from "@/stores/useWizardStore";
+import { cn } from "@/lib/utils";
 import { WizardSidebar } from "./WizardSidebar";
 import { StackStep } from "./steps/StackStep";
 import { RelationsStep } from "./steps/RelationsStep";
@@ -8,15 +9,17 @@ import { LaravelStep } from "./steps/LaravelStep";
 import { ModelsStep } from "./steps/ModelsStep";
 import { OutputStep } from "./steps/OutputStep";
 import { ReactStep } from "./steps/ReactStep";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArchitectDrawer } from "./ArchitectDrawer";
+import { ArrowLeft, ArrowRight, Zap } from "lucide-react";
 
 export function WizardShell() {
-  const { currentStep, nextStep, prevStep, canProceed, stack } = useWizardStore();
+  const { currentStep, nextStep, prevStep, canProceed, stack } =
+    useWizardStore();
 
   const isLaravel = stack === "laravel" || stack === "laravel+react";
   const isReact = stack === "react" || stack === "laravel+react";
 
-  const totalSteps = (isLaravel && isReact) ? 6 : (!stack ? 6 : 5);
+  const totalSteps = isLaravel && isReact ? 6 : !stack ? 6 : 5;
 
   const renderStep = () => {
     switch (currentStep) {
@@ -27,7 +30,13 @@ export function WizardShell() {
       case 2:
         return <RelationsStep />;
       case 3:
-        return isLaravel ? <LaravelStep /> : (isReact ? <ReactStep /> : <OutputStep />);
+        return isLaravel ? (
+          <LaravelStep />
+        ) : isReact ? (
+          <ReactStep />
+        ) : (
+          <OutputStep />
+        );
       case 4:
         return isLaravel && isReact ? <ReactStep /> : <OutputStep />;
       case 5:
@@ -49,9 +58,7 @@ export function WizardShell() {
     <div className="si-wizard-layout">
       <WizardSidebar />
       <div className="si-wizard-main">
-        <div className="flex-1">
-          {renderStep()}
-        </div>
+        <div className="flex-1">{renderStep()}</div>
 
         <div className="si-wizard-footer">
           <button

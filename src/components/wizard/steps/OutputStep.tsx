@@ -164,10 +164,17 @@ export function OutputStep() {
             {isLaravel && (
               <div className="mt-4 rounded-[10px] bg-white/[0.02] border border-white/[0.06] p-4">
                 <p className="text-[11px] font-medium text-[#a59bff] mb-2 uppercase tracking-wider">Quick start</p>
-                <div className="font-mono text-[13px] text-[#c5c8d8] leading-[1.8] bg-white/[0.02] rounded-[8px] p-3 border border-white/[0.04]">
+                <div className="font-mono text-[13px] text-[#c5c8d8] leading-[1.8] bg-white/[0.02] rounded-[8px] p-3 border border-white/[0.04] space-y-1">
+                  <p className="text-[#5c6078] text-[11px] mb-1"># 1. Generate Laravel files from the YAML</p>
                   <p><span className="text-[#5c6078]">$</span> cp stack-init.yaml ./my-laravel-project/</p>
                   <p><span className="text-[#5c6078]">$</span> cd my-laravel-project</p>
                   <p><span className="text-[#5c6078]">$</span> npx stack-init generate</p>
+                  <p className="text-[#5c6078] text-[11px] mt-3 mb-1"># 2. Run migrations &amp; seed</p>
+                  <p><span className="text-[#5c6078]">$</span> php artisan migrate</p>
+                  <p><span className="text-[#5c6078]">$</span> php artisan db:seed</p>
+                  <p className="text-[#5c6078] text-[11px] mt-3 mb-1"># 3. Start the dev server</p>
+                  <p><span className="text-[#5c6078]">$</span> php artisan serve</p>
+                  <p className="text-[#5c6078] text-[11px] mt-1 ml-4">→ http://localhost:8000</p>
                 </div>
               </div>
             )}

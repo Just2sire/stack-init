@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Check, Layers } from "lucide-react";
 
 export function WizardSidebar() {
-  const { currentStep, stack } = useWizardStore();
+  const { currentStep, stack, setStep } = useWizardStore();
 
   const isLaravel = stack === "laravel" || stack === "laravel+react";
   const isReact = stack === "react" || stack === "laravel+react";
@@ -25,7 +25,10 @@ export function WizardSidebar() {
     <div className="si-wizard-sidebar">
       {/* Logo */}
       <div className="flex items-center gap-3 mb-10">
-        <div className="w-9 h-9 rounded-[10px] bg-[#6C63FF] text-white flex items-center justify-center shadow-[0_0_16px_rgba(108,99,255,0.3)]">
+        <div
+          className="w-9 h-9 rounded-[10px] text-white flex items-center justify-center shadow-[0_0_16px_rgba(108,99,255,0.3)]"
+          style={{ background: "linear-gradient(135deg, #6C63FF, #9b87ff)" }}
+        >
           <Layers className="w-[18px] h-[18px]" />
         </div>
         <span className="font-display text-[16px] text-white tracking-tight">Stack-Init</span>

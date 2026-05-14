@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>stack-init — Generate your stack in seconds</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root {
+  --gold: #F5C842;
+  --gold-dim: #C9A227;
+  --gold-glow: rgba(245,200,66,0.18);
+  --gold-subtle: rgba(245,200,66,0.07);
+  --bg: #080809;
+  --bg2: #0e0e10;
+  --bg3: #141417;
+  --bg4: #1a1a1e;
+  --surface: #1f1f24;
+  --surface2: #26262c;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.10);
+  --border-gold: rgba(245,200,66,0.25);
+  --text: #f0f0f0;
+  --text2: #a0a0b0;
+  --text3: #5a5a70;
+  --red: #ff4d6d;
+  --green: #4dff91;
+  --blue: #4d9fff;
+  --purple: #9d6fff;
+  --font-sans: 'Space Grotesk', sans-serif;
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:var(--font-sans)}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:2px}
+
+/* ── GRID NOISE ── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(245,200,66,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245,200,66,0.03) 1px, transparent 1px);
+  background-size:60px 60px;
+  pointer-events:none;z-index:0;
+}
+
+/* ════════════════════════════════════════
+   LANDING PAGE
+════════════════════════════════════════ */
+#landing{position:relative;z-index:1}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 48px;height:60px;
+  background:rgba(8,8,9,0.85);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{
+  display:flex;align-items:center;gap:10px;
+  font-family:var(--font-display);font-size:18px;font-weight:800;
+  color:var(--text);
+}
+.nav-logo span{color:var(--gold)}
+.nav-links{display:flex;align-items:center;gap:32px}
+.nav-links a{font-size:13px;color:var(--text2);transition:color var(--transition)}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{
+  display:flex;align-items:center;gap:6px;
+  background:var(--gold);color:var(--bg);
+  font-size:13px;font-weight:600;
+  padding:8px 18px;border-radius:var(--radius);
+  border:none;transition:all var(--transition);
+}
+.nav-cta:hover{background:#f0c020;transform:translateY(-1px)}
+
+/* HERO */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:120px 24px 80px;text-align:center;position:relative;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--gold-subtle);border:1px solid var(--border-gold);
+  color:var(--gold);font-size:12px;font-weight:600;letter-spacing:0.08em;
+  padding:6px 16px;border-radius:100px;margin-bottom:40px;
+  text-transform:uppercase;
+}
+.hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+
+.hero h1{
+  font-family:var(--font-display);font-size:clamp(52px,8vw,96px);
+  font-weight:800;line-height:1.0;letter-spacing:-0.03em;
+  margin-bottom:28px;max-width:900px;
+}
+.hero h1 em{
+  font-style:normal;color:var(--gold);
+  position:relative;
+}
+.hero h1 em::after{
+  content:'';position:absolute;bottom:-4px;left:0;right:0;
+  height:3px;background:var(--gold);border-radius:2px;
+  opacity:0.5;
+}
+.hero-sub{
+  font-size:18px;color:var(--text2);max-width:560px;
+  line-height:1.7;margin-bottom:52px;font-weight:400;
+}
+.hero-actions{display:flex;gap:16px;align-items:center;margin-bottom:80px}
+.btn-primary{
+  display:flex;align-items:center;gap:8px;
+  background:var(--gold);color:var(--bg);
+  font-size:15px;font-weight:700;
+  padding:14px 28px;border-radius:var(--radius);
+  border:none;transition:all var(--transition);
+  font-family:var(--font-sans);
+}
+.btn-primary:hover{background:#f0c020;transform:translateY(-2px);box-shadow:0 12px 40px rgba(245,200,66,0.35)}
+.btn-secondary{
+  display:flex;align-items:center;gap:8px;
+  background:transparent;color:var(--text);
+  font-size:15px;font-weight:500;
+  padding:14px 28px;border-radius:var(--radius);
+  border:1px solid var(--border2);transition:all var(--transition);
+  font-family:var(--font-sans);
+}
+.btn-secondary:hover{border-color:var(--border-gold);color:var(--gold);background:var(--gold-subtle)}
+
+/* TERMINAL PREVIEW */
+.hero-terminal{
+  width:100%;max-width:680px;
+  background:var(--bg3);border:1px solid var(--border2);
+  border-radius:var(--radius-lg);overflow:hidden;
+  box-shadow:0 40px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.04);
+}
+.terminal-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  background:var(--bg4);
+}
+.terminal-dot{width:12px;height:12px;border-radius:50%}
+.td-red{background:#ff5f57}.td-yellow{background:#febc2e}.td-green{background:#28c840}
+.terminal-title{
+  flex:1;text-align:center;font-size:11px;color:var(--text3);
+  font-family:var(--font-mono);
+}
+.terminal-body{padding:24px;font-family:var(--font-mono);font-size:13px;line-height:1.9;text-align:left}
+.t-prompt{color:var(--gold)}
+.t-cmd{color:var(--text)}
+.t-comment{color:var(--text3)}
+.t-success{color:var(--green)}
+.t-info{color:var(--blue)}
+.t-file{color:var(--purple)}
+.t-num{color:var(--gold)}
+
+/* STATS */
+.stats{
+  display:flex;gap:48px;justify-content:center;
+  padding:60px 24px;border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.stat{text-align:center}
+.stat-num{
+  font-family:var(--font-display);font-size:40px;font-weight:800;
+  color:var(--gold);display:block;
+}
+.stat-label{font-size:13px;color:var(--text2);margin-top:4px}
+
+/* FEATURES */
+.features{padding:100px 48px;max-width:1200px;margin:0 auto}
+.section-label{
+  font-size:11px;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--gold);font-weight:600;margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;
+}
+.section-label::before{content:'';width:24px;height:1px;background:var(--gold)}
+.section-title{
+  font-family:var(--font-display);font-size:clamp(32px,4vw,52px);
+  font-weight:800;line-height:1.1;margin-bottom:60px;
+  max-width:600px;
+}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.feature-card{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:32px;
+  transition:all var(--transition);position:relative;overflow:hidden;
+}
+.feature-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  opacity:0;transition:opacity var(--transition);
+}
+.feature-card:hover{border-color:var(--border-gold);transform:translateY(-4px);background:var(--bg4)}
+.feature-card:hover::before{opacity:1}
+.feature-icon{
+  width:44px;height:44px;background:var(--gold-subtle);
+  border:1px solid var(--border-gold);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:var(--gold);margin-bottom:20px;
+}
+.feature-title{font-size:16px;font-weight:600;margin-bottom:10px}
+.feature-desc{font-size:14px;color:var(--text2);line-height:1.65}
+
+/* HOW IT WORKS */
+.how{padding:100px 48px;max-width:1200px;margin:0 auto}
+.steps-row{display:flex;gap:0;align-items:stretch;margin-top:60px}
+.step-item{flex:1;position:relative}
+.step-item:not(:last-child)::after{
+  content:'';position:absolute;top:32px;left:calc(50% + 32px);
+  width:calc(100% - 64px);height:1px;
+  background:linear-gradient(90deg,var(--border-gold),var(--border));
+}
+.step-num{
+  width:64px;height:64px;border-radius:50%;
+  background:var(--gold-subtle);border:1px solid var(--border-gold);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-size:22px;font-weight:800;
+  color:var(--gold);margin:0 auto 20px;
+}
+.step-title{font-size:15px;font-weight:600;text-align:center;margin-bottom:8px}
+.step-desc{font-size:13px;color:var(--text2);text-align:center;line-height:1.6}
+
+/* STACKS */
+.stacks-section{padding:80px 48px;max-width:1200px;margin:0 auto}
+.stacks-grid{display:flex;flex-wrap:wrap;gap:12px;margin-top:40px}
+.stack-pill{
+  display:flex;align-items:center;gap:10px;
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:100px;padding:10px 20px;
+  font-size:14px;font-weight:500;transition:all var(--transition);
+}
+.stack-pill:hover{border-color:var(--border-gold);color:var(--gold);cursor:default}
+.stack-pill i{font-size:18px}
+
+/* CTA SECTION */
+.cta-section{
+  padding:120px 48px;text-align:center;position:relative;
+}
+.cta-section::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 60% at 50% 50%, var(--gold-glow), transparent);
+  pointer-events:none;
+}
+.cta-section h2{
+  font-family:var(--font-display);font-size:clamp(36px,5vw,64px);
+  font-weight:800;margin-bottom:20px;
+}
+.cta-section p{font-size:17px;color:var(--text2);margin-bottom:40px}
+
+/* FOOTER */
+footer{
+  border-top:1px solid var(--border);
+  padding:40px 48px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.footer-logo{font-family:var(--font-display);font-size:16px;font-weight:800}
+.footer-logo span{color:var(--gold)}
+.footer-copy{font-size:12px;color:var(--text3)}
+
+/* ════════════════════════════════════════
+   WIZARD
+════════════════════════════════════════ */
+#wizard{
+  display:none;position:fixed;inset:0;z-index:200;
+  background:var(--bg);overflow:hidden;
+}
+.wizard-shell{display:flex;height:100vh}
+
+/* SIDEBAR */
+.wiz-sidebar{
+  width:240px;flex-shrink:0;
+  background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:0;overflow:hidden;
+}
+.wiz-logo{
+  padding:24px 24px 0;
+  font-family:var(--font-display);font-size:16px;font-weight:800;
+  display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid var(--border);padding-bottom:20px;margin-bottom:8px;
+}
+.wiz-logo span{color:var(--gold)}
+.wiz-steps{padding:8px 0;flex:1}
+.wiz-step-item{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 20px;cursor:default;
+  position:relative;transition:all var(--transition);
+}
+.wiz-step-item.active{background:var(--gold-subtle)}
+.wiz-step-item.active::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;
+  width:2px;background:var(--gold);
+}
+.wiz-step-dot{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;transition:all var(--transition);
+  border:1.5px solid var(--border2);color:var(--text3);
+  background:var(--bg3);
+}
+.wiz-step-item.active .wiz-step-dot{
+  border-color:var(--gold);color:var(--gold);background:var(--gold-subtle);
+}
+.wiz-step-item.done .wiz-step-dot{
+  border-color:var(--green);color:var(--green);background:rgba(77,255,145,0.1);
+}
+.wiz-step-name{font-size:13px;font-weight:500;color:var(--text3)}
+.wiz-step-item.active .wiz-step-name{color:var(--text)}
+.wiz-step-item.done .wiz-step-name{color:var(--text2)}
+.wiz-sidebar-footer{
+  padding:16px 20px;border-top:1px solid var(--border);
+  font-size:11px;color:var(--text3);
+}
+
+/* MAIN */
+.wiz-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.wiz-header{
+  padding:24px 40px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--bg2);
+}
+.wiz-header-title h2{font-family:var(--font-display);font-size:22px;font-weight:800}
+.wiz-header-title p{font-size:13px;color:var(--text2);margin-top:3px}
+.wiz-close{
+  width:36px;height:36px;border-radius:var(--radius);
+  background:transparent;border:1px solid var(--border);
+  color:var(--text2);font-size:18px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all var(--transition);
+}
+.wiz-close:hover{border-color:var(--red);color:var(--red);background:rgba(255,77,109,0.08)}
+
+.wiz-body{flex:1;overflow-y:auto;padding:40px}
+.wiz-footer{
+  padding:20px 40px;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--bg2);
+}
+.wiz-footer-dots{display:flex;gap:6px}
+.wiz-footer-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--border2);transition:all var(--transition);
+}
+.wiz-footer-dot.active{background:var(--gold);width:20px;border-radius:3px}
+.wiz-footer-dot.done{background:var(--green)}
+.wiz-btn-back{
+  display:flex;align-items:center;gap:6px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--text2);font-size:14px;font-weight:500;
+  padding:10px 20px;border-radius:var(--radius);
+  transition:all var(--transition);
+}
+.wiz-btn-back:hover{border-color:var(--border2);color:var(--text)}
+.wiz-btn-next{
+  display:flex;align-items:center;gap:6px;
+  background:var(--gold);color:var(--bg);
+  font-size:14px;font-weight:700;
+  padding:10px 24px;border-radius:var(--radius);
+  border:none;transition:all var(--transition);
+}
+.wiz-btn-next:hover:not(:disabled){background:#f0c020;transform:translateY(-1px)}
+.wiz-btn-next:disabled{opacity:0.35;cursor:not-allowed;transform:none}
+
+/* ── STEP PANELS ── */
+.step-panel{display:none;animation:fadeUp 0.3s ease}
+.step-panel.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* STEP 1 – STACK */
+.stack-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:700px}
+.stack-card{
+  background:var(--bg3);border:1.5px solid var(--border);
+  border-radius:var(--radius-lg);padding:28px;cursor:pointer;
+  transition:all var(--transition);position:relative;overflow:hidden;
+}
+.stack-card::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,var(--gold-subtle),transparent);
+  opacity:0;transition:opacity var(--transition);
+}
+.stack-card:hover{border-color:var(--border-gold);transform:translateY(-2px)}
+.stack-card.selected{border-color:var(--gold);background:var(--gold-subtle)}
+.stack-card.selected::after{opacity:1}
+.stack-card-icon{font-size:32px;margin-bottom:16px;display:block}
+.stack-card-name{font-size:16px;font-weight:700;margin-bottom:6px}
+.stack-card-desc{font-size:13px;color:var(--text2)}
+.stack-card-badge{
+  position:absolute;top:12px;right:12px;
+  font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+  background:var(--gold);color:var(--bg);padding:3px 8px;border-radius:4px;
+}
+.stack-check{
+  position:absolute;bottom:12px;right:12px;
+  width:24px;height:24px;border-radius:50%;
+  background:var(--gold);color:var(--bg);
+  display:none;align-items:center;justify-content:center;font-size:12px;
+}
+.stack-card.selected .stack-check{display:flex}
+
+/* STEP 2 – MODELS */
+.models-layout{display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start}
+.models-list{display:flex;flex-direction:column;gap:12px}
+.model-card{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius-lg);overflow:hidden;
+  transition:all var(--transition);
+}
+.model-card.active-model{border-color:var(--border-gold)}
+.model-card-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;cursor:pointer;background:var(--bg4);
+}
+.model-card-name{
+  font-family:var(--font-mono);font-size:15px;font-weight:700;
+  color:var(--gold);display:flex;align-items:center;gap:10px;
+}
+.model-card-name .model-badge{
+  font-size:11px;color:var(--text3);font-family:var(--font-sans);font-weight:400;
+}
+.model-card-actions{display:flex;gap:6px}
+.icon-btn{
+  width:28px;height:28px;border-radius:6px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--text3);font-size:14px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all var(--transition);
+}
+.icon-btn:hover{border-color:var(--red);color:var(--red);background:rgba(255,77,109,0.08)}
+.icon-btn.edit:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-subtle)}
+.model-fields{padding:12px 20px 16px;border-top:1px solid var(--border)}
+.field-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-family:var(--font-mono);
+  padding:4px 10px;border-radius:6px;margin:3px;
+  font-weight:500;
+}
+.fc-string{background:rgba(77,255,145,0.1);color:#4dff91}
+.fc-text{background:rgba(161,161,185,0.1);color:#a0a0b0}
+.fc-integer,.fc-bigInteger{background:rgba(77,159,255,0.1);color:#4d9fff}
+.fc-boolean{background:rgba(245,200,66,0.1);color:#f5c842}
+.fc-timestamp,.fc-date,.fc-dateTime{background:rgba(255,77,109,0.1);color:#ff4d6d}
+.fc-foreignId,.fc-foreignUuid{background:rgba(157,111,255,0.1);color:#9d6fff}
+.fc-enum,.fc-set{background:rgba(255,127,77,0.1);color:#ff7f4d}
+.fc-decimal,.fc-float{background:rgba(77,255,200,0.1);color:#4dffc8}
+.fc-default{background:rgba(255,255,255,0.06);color:var(--text2)}
+
+.no-models{
+  text-align:center;padding:60px 20px;
+  color:var(--text3);font-size:14px;
+}
+.no-models i{font-size:40px;display:block;margin-bottom:12px;opacity:0.3}
+
+/* ADD MODEL PANEL */
+.add-model-panel{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:24px;
+  position:sticky;top:0;
+}
+.panel-title{font-size:14px;font-weight:700;margin-bottom:20px;
+  display:flex;align-items:center;gap:8px;color:var(--text2)}
+.panel-title i{color:var(--gold)}
+.form-group{margin-bottom:16px}
+.form-label{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;display:block;letter-spacing:0.04em}
+.form-input{
+  width:100%;background:var(--bg4);border:1px solid var(--border2);
+  color:var(--text);font-family:var(--font-sans);font-size:14px;
+  padding:9px 12px;border-radius:var(--radius);outline:none;
+  transition:all var(--transition);
+}
+.form-input:focus{border-color:var(--gold);background:var(--bg)}
+.form-input::placeholder{color:var(--text3)}
+.form-select{
+  width:100%;background:var(--bg4);border:1px solid var(--border2);
+  color:var(--text);font-family:var(--font-sans);font-size:14px;
+  padding:9px 12px;border-radius:var(--radius);outline:none;
+  appearance:none;cursor:pointer;transition:all var(--transition);
+}
+.form-select:focus{border-color:var(--gold)}
+.form-select option{background:var(--bg3)}
+.fields-list{margin-bottom:12px}
+.field-row{
+  display:flex;align-items:center;gap:6px;
+  background:var(--bg4);border:1px solid var(--border);
+  border-radius:var(--radius);padding:8px 10px;margin-bottom:6px;
+  font-size:12px;font-family:var(--font-mono);
+}
+.field-row-name{flex:1;color:var(--text)}
+.field-row-type{padding:2px 8px;border-radius:4px;font-size:11px}
+.field-row-del{
+  width:20px;height:20px;border-radius:4px;
+  background:transparent;border:none;
+  color:var(--text3);cursor:pointer;font-size:12px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all var(--transition);
+}
+.field-row-del:hover{color:var(--red)}
+.add-field-row{display:flex;gap:6px;margin-top:8px}
+.add-field-row .form-input{flex:1}
+.add-field-row .form-select{width:120px}
+.btn-add-field{
+  display:flex;align-items:center;gap:4px;
+  background:var(--gold-subtle);border:1px solid var(--border-gold);
+  color:var(--gold);font-size:12px;font-weight:600;
+  padding:6px 12px;border-radius:var(--radius);white-space:nowrap;
+}
+.btn-add-field:hover{background:rgba(245,200,66,0.15)}
+.btn-add-model{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:6px;
+  background:var(--gold);color:var(--bg);font-size:14px;font-weight:700;
+  padding:12px;border-radius:var(--radius);border:none;
+  margin-top:8px;transition:all var(--transition);
+}
+.btn-add-model:hover{background:#f0c020}
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+
+/* STEP 3 – RELATIONS */
+.relations-grid{display:flex;flex-direction:column;gap:10px;max-width:700px}
+.relation-card{
+  display:flex;align-items:center;gap:16px;
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 20px;
+}
+.relation-from{
+  font-family:var(--font-mono);font-size:14px;font-weight:700;color:var(--gold);
+  min-width:100px;
+}
+.relation-type-badge{
+  background:var(--purple);color:var(--bg);
+  font-size:12px;font-weight:700;font-family:var(--font-mono);
+  padding:4px 12px;border-radius:6px;
+}
+.relation-to{
+  font-family:var(--font-mono);font-size:14px;font-weight:700;color:var(--text);
+}
+.no-relations{
+  text-align:center;padding:60px 20px;color:var(--text3);font-size:14px;
+}
+.no-relations i{font-size:40px;display:block;margin-bottom:12px;opacity:0.3}
+
+/* STEP 4 – LARAVEL */
+.laravel-step-layout{display:grid;grid-template-columns:200px 1fr;gap:24px}
+.model-tabs{display:flex;flex-direction:column;gap:4px}
+.model-tab{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 14px;border-radius:var(--radius);cursor:pointer;
+  font-size:13px;font-weight:500;transition:all var(--transition);
+  background:transparent;border:none;color:var(--text2);text-align:left;
+  font-family:var(--font-sans);
+}
+.model-tab:hover{background:var(--bg3);color:var(--text)}
+.model-tab.active{background:var(--gold-subtle);color:var(--gold);border:1px solid var(--border-gold)}
+.model-tab-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0}
+.model-tab.active .model-tab-dot{background:var(--gold)}
+.all-tab-dot{background:var(--blue)!important}
+.model-tab.active .all-tab-dot{background:var(--blue)!important}
+
+.toggles-panel{}
+.toggles-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.toggle-card{
+  background:var(--bg3);border:1.5px solid var(--border);
+  border-radius:var(--radius-lg);padding:20px;cursor:pointer;
+  transition:all var(--transition);
+  display:flex;align-items:flex-start;gap:12px;
+}
+.toggle-card:hover{border-color:var(--border2)}
+.toggle-card.on{border-color:var(--border-gold);background:var(--gold-subtle)}
+.toggle-card.partial{border-color:rgba(245,200,66,0.15);background:rgba(245,200,66,0.03)}
+.tc-icon{
+  font-size:22px;margin-top:2px;flex-shrink:0;
+  transition:color var(--transition);
+}
+.toggle-card.on .tc-icon{color:var(--gold)}
+.toggle-card:not(.on) .tc-icon{color:var(--text3)}
+.tc-info{}
+.tc-name{font-size:14px;font-weight:600;margin-bottom:3px}
+.tc-desc{font-size:12px;color:var(--text2)}
+.tc-toggle{
+  width:36px;height:20px;border-radius:10px;
+  background:var(--bg4);border:1px solid var(--border2);
+  position:relative;flex-shrink:0;margin-left:auto;margin-top:2px;
+  transition:all var(--transition);
+}
+.tc-toggle-knob{
+  position:absolute;top:3px;left:3px;
+  width:12px;height:12px;border-radius:50%;
+  background:var(--text3);transition:all var(--transition);
+}
+.toggle-card.on .tc-toggle{background:var(--gold);border-color:var(--gold-dim)}
+.toggle-card.on .tc-toggle-knob{background:var(--bg);left:19px}
+.toggle-card.partial .tc-toggle{background:rgba(245,200,66,0.3)}
+.toggle-card.partial .tc-toggle-knob{left:19px;background:var(--gold)}
+
+/* GLOBAL OPTIONS */
+.global-options{
+  margin-top:24px;padding:20px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);
+}
+.global-options-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:16px}
+.global-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+
+/* STEP 5 – REACT */
+.react-opts{display:flex;flex-direction:column;gap:24px;max-width:760px}
+.opt-group{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:24px;
+}
+.opt-group-title{font-size:14px;font-weight:700;margin-bottom:16px;color:var(--text2);
+  display:flex;align-items:center;gap:8px}
+.opt-group-title i{color:var(--gold);font-size:18px}
+.opt-chips{display:flex;flex-wrap:wrap;gap:8px}
+.opt-chip{
+  background:var(--bg4);border:1.5px solid var(--border);
+  border-radius:var(--radius);padding:8px 16px;
+  font-size:13px;font-weight:500;cursor:pointer;
+  transition:all var(--transition);
+}
+.opt-chip:hover{border-color:var(--border2);color:var(--text)}
+.opt-chip.selected{border-color:var(--gold);background:var(--gold-subtle);color:var(--gold)}
+
+/* STEP 6 – OUTPUT */
+.output-layout{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.output-panel{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius-lg);overflow:hidden;
+}
+.output-panel-header{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  background:var(--bg4);display:flex;align-items:center;justify-content:space-between;
+}
+.output-panel-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.output-panel-title i{color:var(--gold)}
+.output-body{padding:20px}
+
+.yaml-preview{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;
+  font-family:var(--font-mono);font-size:12px;
+  line-height:1.8;color:var(--text2);
+  max-height:300px;overflow-y:auto;
+}
+.y-key{color:var(--blue)}
+.y-val{color:var(--green)}
+.y-str{color:var(--gold)}
+.y-comment{color:var(--text3)}
+
+.files-list{display:flex;flex-direction:column;gap:4px;max-height:300px;overflow-y:auto}
+.file-item{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px;border-radius:6px;font-size:12px;
+  font-family:var(--font-mono);color:var(--text2);
+  transition:background var(--transition);
+}
+.file-item:hover{background:var(--bg4)}
+.file-item i{font-size:14px;color:var(--gold);flex-shrink:0}
+.file-item span{color:var(--text3)}
+
+.output-actions{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
+.btn-download{
+  display:flex;align-items:center;gap:8px;
+  background:var(--gold);color:var(--bg);
+  font-size:14px;font-weight:700;
+  padding:12px 24px;border-radius:var(--radius);border:none;
+  cursor:pointer;transition:all var(--transition);
+  font-family:var(--font-sans);
+}
+.btn-download:hover{background:#f0c020;transform:translateY(-1px)}
+.btn-copy{
+  display:flex;align-items:center;gap:8px;
+  background:transparent;border:1px solid var(--border2);
+  color:var(--text);font-size:14px;font-weight:500;
+  padding:12px 24px;border-radius:var(--radius);
+  cursor:pointer;transition:all var(--transition);
+  font-family:var(--font-sans);
+}
+.btn-copy:hover{border-color:var(--border-gold);color:var(--gold);background:var(--gold-subtle)}
+
+.success-banner{
+  display:flex;align-items:flex-start;gap:14px;
+  background:rgba(77,255,145,0.07);border:1px solid rgba(77,255,145,0.2);
+  border-radius:var(--radius-lg);padding:20px;margin-bottom:20px;
+}
+.success-banner i{font-size:22px;color:var(--green);flex-shrink:0;margin-top:1px}
+.success-banner-title{font-size:14px;font-weight:700;color:var(--green);margin-bottom:4px}
+.success-banner-desc{font-size:13px;color:var(--text2);line-height:1.6}
+
+.cmd-block{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;
+  font-family:var(--font-mono);font-size:13px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:12px;
+}
+.cmd-block code{color:var(--text)}
+.cmd-copy{
+  background:transparent;border:1px solid var(--border);
+  color:var(--text3);font-size:14px;padding:6px 10px;
+  border-radius:6px;cursor:pointer;transition:all var(--transition);
+  white-space:nowrap;font-size:12px;font-family:var(--font-sans);
+}
+.cmd-copy:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-subtle)}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:24px;right:24px;z-index:999;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--radius);padding:12px 20px;
+  font-size:13px;color:var(--text);
+  display:flex;align-items:center;gap:8px;
+  transform:translateY(80px);opacity:0;
+  transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events:none;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast i{color:var(--green)}
+
+/* UTILITY */
+.hidden{display:none!important}
+.gold{color:var(--gold)}
+.muted{color:var(--text2)}
+.small{font-size:12px}
+
+/* ── ANIMATED BG ORBS ── */
+.orb{
+  position:absolute;border-radius:50%;
+  filter:blur(80px);pointer-events:none;opacity:0.15;
+  animation:orbFloat 12s ease-in-out infinite;
+}
+.orb1{width:400px;height:400px;background:var(--gold);top:-100px;left:-100px;animation-delay:0s}
+.orb2{width:300px;height:300px;background:#ff4d6d;bottom:0;right:0;animation-delay:-4s}
+@keyframes orbFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,20px)}}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Copié !</span></div>
+
+<!-- ══════════════════════════════════════
+     LANDING PAGE
+══════════════════════════════════════ -->
+<div id="landing">
+
+<nav>
+  <div class="nav-logo"><i class="ti ti-stack-2"></i>stack<span>-init</span></div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    <a href="https://github.com" target="_blank">GitHub</a>
+    <a href="https://npmjs.com" target="_blank">npm</a>
+  </div>
+  <button class="nav-cta" onclick="openWizard()">
+    <i class="ti ti-sparkles"></i> Generate now
+  </button>
+</nav>
+
+<section class="hero">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+
+  <div class="hero-badge">
+    <span class="hero-badge-dot"></span>
+    v1.0 — Now in public beta
+  </div>
+
+  <h1>Generate your<br><em>entire stack</em><br>in seconds</h1>
+
+  <p class="hero-sub">
+    Describe your database in YAML, launch one command — and all your Laravel models, migrations, controllers, factories and tests are created automatically.
+  </p>
+
+  <div class="hero-actions">
+    <button class="btn-primary" onclick="openWizard()">
+      <i class="ti ti-sparkles"></i> Open Wizard
+    </button>
+    <button class="btn-secondary">
+      <i class="ti ti-terminal-2"></i> npx stack-init generate
+    </button>
+  </div>
+
+  <div class="hero-terminal">
+    <div class="terminal-bar">
+      <div class="terminal-dot td-red"></div>
+      <div class="terminal-dot td-yellow"></div>
+      <div class="terminal-dot td-green"></div>
+      <div class="terminal-title">~/my-project — stack-init generate</div>
+    </div>
+    <div class="terminal-body">
+      <div><span class="t-prompt">→ </span><span class="t-cmd">npx stack-init generate</span></div>
+      <div class="t-comment">&nbsp;</div>
+      <div><span class="t-info">  Validating config...</span> ✓</div>
+      <div><span class="t-info">  Parsing 3 models (User, Post, Comment)</span></div>
+      <div class="t-comment">&nbsp;</div>
+      <div><span class="t-success">  ✓</span> <span class="t-file">app/Models/User.php</span></div>
+      <div><span class="t-success">  ✓</span> <span class="t-file">app/Models/Post.php</span></div>
+      <div><span class="t-success">  ✓</span> <span class="t-file">database/migrations/2026_05_14_create_posts_table.php</span></div>
+      <div><span class="t-success">  ✓</span> <span class="t-file">app/Http/Controllers/Api/PostController.php</span></div>
+      <div><span class="t-success">  ✓</span> <span class="t-file">database/factories/PostFactory.php</span></div>
+      <div><span class="t-success">  ✓</span> <span class="t-file">tests/Feature/PostTest.php</span></div>
+      <div class="t-comment">&nbsp;</div>
+      <div><span class="t-num">  25 files</span><span class="t-info"> generated in </span><span class="t-num">0.8s</span> <span class="t-success">🚀</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="stats">
+  <div class="stat"><span class="stat-num">25+</span><div class="stat-label">Files generated per project</div></div>
+  <div class="stat"><span class="stat-num">55</span><div class="stat-label">Blueprint field types</div></div>
+  <div class="stat"><span class="stat-num">&lt;1s</span><div class="stat-label">Generation time</div></div>
+  <div class="stat"><span class="stat-num">0</span><div class="stat-label">Config to install</div></div>
+</div>
+
+<section class="features" id="features">
+  <div class="section-label">Features</div>
+  <h2 class="section-title">Everything you always write by hand</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon"><i class="ti ti-database"></i></div>
+      <div class="feature-title">Smart Migrations</div>
+      <div class="feature-desc">Every Blueprint type supported with all modifiers — nullable, unique, index, default — with proper cascades for FK.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="ti ti-shield-check"></i></div>
+      <div class="feature-title">Auto Validation Rules</div>
+      <div class="feature-desc">StoreRequest and UpdateRequest generated with context-aware rules. Enum types get `in:`, FK get `exists:`, and more.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="ti ti-test-pipe"></i></div>
+      <div class="feature-title">Pest Tests</div>
+      <div class="feature-desc">5 scenarios per model: index, show, store (valid + invalid), update, destroy. Soft delete handled automatically.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="ti ti-wand"></i></div>
+      <div class="feature-title">Intelligent Fakers</div>
+      <div class="feature-desc">Factory values inferred from field name first, type second. `email` gives `safeEmail()`, `body` gives `paragraphs()`.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="ti ti-arrows-exchange"></i></div>
+      <div class="feature-title">Eloquent Relations</div>
+      <div class="feature-desc">hasMany, belongsTo, belongsToMany, morphs — generated in the model with proper methods and FK validation.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="ti ti-file-zip"></i></div>
+      <div class="feature-title">React ZIP Export</div>
+      <div class="feature-desc">React/Next.js projects generated directly in your browser — no server, no install. Download and unzip.</div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="section-label">Workflow</div>
+  <h2 class="section-title">From idea to code in 4 steps</h2>
+  <div class="steps-row">
+    <div class="step-item">
+      <div class="step-num">1</div>
+      <div class="step-title">Open the Wizard</div>
+      <div class="step-desc">Configure your stack, models and fields visually</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">2</div>
+      <div class="step-title">Download YAML</div>
+      <div class="step-desc">Get a <code style="font-family:var(--font-mono);font-size:11px;color:var(--gold)">stack-init.yaml</code> file at your project root</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">3</div>
+      <div class="step-title">Run the CLI</div>
+      <div class="step-desc">One command and all your files appear in the right folders</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">4</div>
+      <div class="step-title">make setup</div>
+      <div class="step-desc">Auto-generated Makefile installs, migrates and seeds</div>
+    </div>
+  </div>
+</section>
+
+<section class="stacks-section">
+  <div class="section-label">Stacks supported</div>
+  <div class="stacks-grid">
+    <div class="stack-pill"><i class="ti ti-brand-php" style="color:#9d6fff"></i>Laravel</div>
+    <div class="stack-pill"><i class="ti ti-brand-react" style="color:#4d9fff"></i>React + Vite</div>
+    <div class="stack-pill"><i class="ti ti-brand-nextjs" style="color:#f0f0f0"></i>Next.js</div>
+    <div class="stack-pill"><i class="ti ti-brand-php" style="color:#9d6fff"></i><i class="ti ti-plus" style="font-size:10px;color:var(--text3)"></i><i class="ti ti-brand-react" style="color:#4d9fff"></i>Laravel + React</div>
+    <div class="stack-pill"><i class="ti ti-brand-python" style="color:#4dffc8"></i>Django <span style="font-size:11px;color:var(--text3);margin-left:2px">soon</span></div>
+    <div class="stack-pill"><i class="ti ti-brand-nodejs" style="color:#4dff91"></i>NestJS <span style="font-size:11px;color:var(--text3);margin-left:2px">soon</span></div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <h2>Ready to never write<br>boilerplate again?</h2>
+  <p>Open the wizard, configure your stack, and generate in seconds.</p>
+  <button class="btn-primary" style="margin:0 auto;font-size:16px;padding:16px 36px" onclick="openWizard()">
+    <i class="ti ti-sparkles"></i> Start building
+  </button>
+</section>
+
+<footer>
+  <div class="footer-logo"><i class="ti ti-stack-2"></i> stack<span>-init</span></div>
+  <div class="footer-copy">MIT License · Built with ♥ · 2026</div>
+</footer>
+
+</div><!-- end #landing -->
+
+
+<!-- ══════════════════════════════════════
+     WIZARD
+══════════════════════════════════════ -->
+<div id="wizard">
+<div class="wizard-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="wiz-sidebar">
+    <div class="wiz-logo"><i class="ti ti-stack-2" style="color:var(--gold)"></i>stack<span>-init</span></div>
+    <nav class="wiz-steps" id="wiz-steps-nav">
+      <!-- rendered by JS -->
+    </nav>
+    <div class="wiz-sidebar-footer">
+      <div style="margin-bottom:4px;font-weight:600;color:var(--text2)">npx stack-init</div>
+      <div>v1.0.0 — MIT</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="wiz-main">
+    <div class="wiz-header">
+      <div class="wiz-header-title">
+        <h2 id="wiz-step-title">Choose your stack</h2>
+        <p id="wiz-step-sub">Select the technology you want to generate files for</p>
+      </div>
+      <button class="wiz-close" onclick="closeWizard()" title="Close wizard">
+        <i class="ti ti-x"></i>
+      </button>
+    </div>
+
+    <div class="wiz-body">
+
+      <!-- ── STEP 1: STACK ── -->
+      <div class="step-panel active" id="step-0">
+        <div class="stack-cards">
+          <div class="stack-card" data-stack="laravel" onclick="selectStack(this,'laravel')">
+            <span class="stack-card-icon"><i class="ti ti-brand-php" style="color:#9d6fff"></i></span>
+            <div class="stack-card-name">Laravel</div>
+            <div class="stack-card-desc">Generates YAML + CLI command. Models, migrations, controllers, policies, factories, Pest tests.</div>
+            <div class="stack-card-badge">CLI</div>
+            <div class="stack-check"><i class="ti ti-check"></i></div>
+          </div>
+          <div class="stack-card" data-stack="react" onclick="selectStack(this,'react')">
+            <span class="stack-card-icon"><i class="ti ti-brand-react" style="color:#4d9fff"></i></span>
+            <div class="stack-card-name">React + Vite</div>
+            <div class="stack-card-desc">Browser ZIP generation. Components, pages, Zustand store, React Hook Form, shadcn/ui.</div>
+            <div class="stack-card-badge">ZIP</div>
+            <div class="stack-check"><i class="ti ti-check"></i></div>
+          </div>
+          <div class="stack-card" data-stack="laravel+react" onclick="selectStack(this,'laravel+react')">
+            <span class="stack-card-icon">
+              <i class="ti ti-brand-php" style="color:#9d6fff"></i>
+              <i class="ti ti-plus" style="font-size:14px;color:var(--text3);margin:0 4px"></i>
+              <i class="ti ti-brand-react" style="color:#4d9fff"></i>
+            </span>
+            <div class="stack-card-name">Laravel + React</div>
+            <div class="stack-card-desc">Full-stack: YAML for Laravel backend + ZIP for React frontend simultaneously.</div>
+            <div class="stack-check"><i class="ti ti-check"></i></div>
+          </div>
+          <div class="stack-card" data-stack="nextjs" onclick="selectStack(this,'nextjs')">
+            <span class="stack-card-icon"><i class="ti ti-brand-nextjs"></i></span>
+            <div class="stack-card-name">Next.js</div>
+            <div class="stack-card-desc">App Router, Server Components, TypeScript. Pages, API routes, Prisma schema.</div>
+            <div class="stack-card-badge">ZIP</div>
+            <div class="stack-check"><i class="ti ti-check"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 2: MODELS ── -->
+      <div class="step-panel" id="step-1">
+        <div class="models-layout">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+              <div style="font-size:13px;color:var(--text2)">
+                <span id="models-count">0</span> model(s) configured
+              </div>
+            </div>
+            <div class="models-list" id="models-list">
+              <div class="no-models">
+                <i class="ti ti-table"></i>
+                No models yet. Add your first one →
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="add-model-panel">
+              <div class="panel-title"><i class="ti ti-plus-circle"></i> Add a model</div>
+
+              <div class="form-group">
+                <label class="form-label">Model name <span class="muted">(PascalCase)</span></label>
+                <input class="form-input" id="new-model-name" placeholder="Post, User, Comment…" oninput="enforceModelName(this)">
+              </div>
+
+              <hr class="divider">
+
+              <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;letter-spacing:0.04em">FIELDS</div>
+              <div class="fields-list" id="temp-fields-list"></div>
+
+              <div class="add-field-row">
+                <input class="form-input" id="new-field-name" placeholder="field_name" style="font-family:var(--font-mono);font-size:12px" oninput="enforceFieldName(this)">
+                <select class="form-select" id="new-field-type" style="font-family:var(--font-mono);font-size:12px">
+                  <option value="string">string</option>
+                  <option value="text">text</option>
+                  <option value="longText">longText</option>
+                  <option value="integer">integer</option>
+                  <option value="bigInteger">bigInteger</option>
+                  <option value="decimal">decimal</option>
+                  <option value="boolean">boolean</option>
+                  <option value="timestamp">timestamp</option>
+                  <option value="date">date</option>
+                  <option value="foreignId">foreignId</option>
+                  <option value="enum">enum</option>
+                  <option value="json">json</option>
+                  <option value="uuid">uuid</option>
+                </select>
+                <button class="btn-add-field" onclick="addTempField()"><i class="ti ti-plus"></i></button>
+              </div>
+
+              <div id="extra-params" style="margin-top:10px"></div>
+
+              <hr class="divider">
+
+              <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;letter-spacing:0.04em">RELATIONS (optional)</div>
+              <div class="add-field-row" style="margin-bottom:6px">
+                <select class="form-select" id="new-rel-type" style="font-family:var(--font-mono);font-size:12px">
+                  <option value="hasMany">hasMany</option>
+                  <option value="belongsTo">belongsTo</option>
+                  <option value="belongsToMany">belongsToMany</option>
+                  <option value="hasOne">hasOne</option>
+                  <option value="morphMany">morphMany</option>
+                </select>
+                <input class="form-input" id="new-rel-model" placeholder="TargetModel" style="font-family:var(--font-mono);font-size:12px">
+                <button class="btn-add-field" onclick="addTempRelation()"><i class="ti ti-plus"></i></button>
+              </div>
+              <div class="fields-list" id="temp-rels-list"></div>
+
+              <button class="btn-add-model" onclick="addModel()">
+                <i class="ti ti-check"></i> Add model
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 3: RELATIONS ── -->
+      <div class="step-panel" id="step-2">
+        <p style="font-size:14px;color:var(--text2);margin-bottom:24px;max-width:600px">
+          Auto-detected relations from your <code style="font-family:var(--font-mono);color:var(--gold);font-size:13px">foreignId</code> fields and manually defined relations. Review and adjust as needed.
+        </p>
+        <div class="relations-grid" id="relations-grid"></div>
+      </div>
+
+      <!-- ── STEP 4: LARAVEL ── -->
+      <div class="step-panel" id="step-3">
+        <div class="laravel-step-layout">
+          <div class="model-tabs" id="laravel-model-tabs"></div>
+          <div>
+            <div class="toggles-grid" id="toggles-grid"></div>
+            <div class="global-options" style="margin-top:20px">
+              <div class="global-options-title">Global Laravel options</div>
+              <div class="global-grid">
+                <div class="form-group">
+                  <label class="form-label">Auth system</label>
+                  <select class="form-select" id="laravel-auth">
+                    <option value="sanctum">Sanctum (default)</option>
+                    <option value="passport">Passport</option>
+                    <option value="breeze">Breeze</option>
+                    <option value="none">None</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Database</label>
+                  <select class="form-select" id="laravel-db">
+                    <option value="mysql">MySQL</option>
+                    <option value="pgsql">PostgreSQL</option>
+                    <option value="sqlite">SQLite</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">PHP Version</label>
+                  <select class="form-select" id="laravel-php">
+                    <option value="8.2">PHP 8.2</option>
+                    <option value="8.3">PHP 8.3</option>
+                    <option value="8.1">PHP 8.1</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Runner</label>
+                  <select class="form-select" id="laravel-runner">
+                    <option value="makefile">Makefile</option>
+                    <option value="bash">Bash script</option>
+                    <option value="both">Both</option>
+                    <option value="none">None</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 5: REACT ── -->
+      <div class="step-panel" id="step-4">
+        <div class="react-opts">
+          <div class="opt-group">
+            <div class="opt-group-title"><i class="ti ti-boxes"></i>State Management</div>
+            <div class="opt-chips" id="state-chips">
+              <div class="opt-chip selected" data-group="state" data-val="zustand">Zustand</div>
+              <div class="opt-chip" data-group="state" data-val="redux-toolkit">Redux Toolkit</div>
+              <div class="opt-chip" data-group="state" data-val="jotai">Jotai</div>
+              <div class="opt-chip" data-group="state" data-val="none">None</div>
+            </div>
+          </div>
+          <div class="opt-group">
+            <div class="opt-group-title"><i class="ti ti-forms"></i>Forms</div>
+            <div class="opt-chips" id="form-chips">
+              <div class="opt-chip selected" data-group="form" data-val="react-hook-form">React Hook Form</div>
+              <div class="opt-chip" data-group="form" data-val="formik">Formik</div>
+              <div class="opt-chip" data-group="form" data-val="none">None</div>
+            </div>
+          </div>
+          <div class="opt-group">
+            <div class="opt-group-title"><i class="ti ti-palette"></i>UI Library</div>
+            <div class="opt-chips" id="ui-chips">
+              <div class="opt-chip selected" data-group="ui" data-val="shadcn">shadcn/ui</div>
+              <div class="opt-chip" data-group="ui" data-val="mui">MUI</div>
+              <div class="opt-chip" data-group="ui" data-val="antd">Ant Design</div>
+              <div class="opt-chip" data-group="ui" data-val="none">None</div>
+            </div>
+          </div>
+          <div class="opt-group">
+            <div class="opt-group-title"><i class="ti ti-wifi"></i>HTTP / Data Fetching</div>
+            <div class="opt-chips" id="http-chips">
+              <div class="opt-chip selected" data-group="http" data-val="axios">Axios</div>
+              <div class="opt-chip" data-group="http" data-val="ky">Ky</div>
+              <div class="opt-chip" data-group="http" data-val="fetch">Native fetch</div>
+            </div>
+            <div style="margin-top:12px">
+              <div style="font-size:12px;font-weight:600;color:var(--text3);margin-bottom:8px;letter-spacing:0.04em">DATA FETCHING</div>
+              <div class="opt-chips" id="datafetch-chips">
+                <div class="opt-chip selected" data-group="datafetch" data-val="tanstack-query">TanStack Query</div>
+                <div class="opt-chip" data-group="datafetch" data-val="swr">SWR</div>
+                <div class="opt-chip" data-group="datafetch" data-val="none">None</div>
+              </div>
+            </div>
+          </div>
+          <div class="opt-group">
+            <div class="opt-group-title"><i class="ti ti-browser"></i>Pages per model</div>
+            <div id="pages-per-model" style="display:flex;flex-direction:column;gap:10px">
+              <!-- rendered by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 6: OUTPUT ── -->
+      <div class="step-panel" id="step-5">
+        <div class="success-banner">
+          <i class="ti ti-circle-check-filled"></i>
+          <div>
+            <div class="success-banner-title">Your project is ready to generate!</div>
+            <div class="success-banner-desc">Review the configuration below, download your files and start building.</div>
+          </div>
+        </div>
+
+        <div class="output-layout">
+          <div>
+            <div class="output-panel">
+              <div class="output-panel-header">
+                <div class="output-panel-title"><i class="ti ti-file-code"></i>stack-init.yaml</div>
+              </div>
+              <div class="output-body">
+                <div class="yaml-preview" id="yaml-preview"></div>
+                <div class="output-actions">
+                  <button class="btn-download" onclick="downloadYAML()"><i class="ti ti-download"></i>Download YAML</button>
+                  <button class="btn-copy" onclick="copyYAML()"><i class="ti ti-copy"></i>Copy</button>
+                </div>
+                <div style="margin-top:20px">
+                  <div style="font-size:12px;color:var(--text2);margin-bottom:6px">Then run in your project:</div>
+                  <div class="cmd-block">
+                    <code>npx stack-init generate</code>
+                    <button class="cmd-copy" onclick="copyCmd('npx stack-init generate')"><i class="ti ti-copy"></i> Copy</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="output-panel" style="margin-bottom:16px">
+              <div class="output-panel-header">
+                <div class="output-panel-title"><i class="ti ti-files"></i>Files to be generated</div>
+                <div style="font-size:12px;color:var(--text2)" id="files-count"></div>
+              </div>
+              <div class="output-body">
+                <div class="files-list" id="files-list"></div>
+              </div>
+            </div>
+
+            <div id="react-zip-panel" class="output-panel hidden">
+              <div class="output-panel-header">
+                <div class="output-panel-title"><i class="ti ti-file-zip"></i>React project ZIP</div>
+              </div>
+              <div class="output-body">
+                <p style="font-size:13px;color:var(--text2);margin-bottom:16px">A complete React project will be generated in your browser.</p>
+                <button class="btn-download" onclick="downloadZIP()"><i class="ti ti-file-zip"></i>Download ZIP</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end wiz-body -->
+
+    <!-- FOOTER -->
+    <div class="wiz-footer">
+      <button class="wiz-btn-back" id="btn-back" onclick="wizBack()">
+        <i class="ti ti-arrow-left"></i> Back
+      </button>
+      <div class="wiz-footer-dots" id="wiz-dots"></div>
+      <button class="wiz-btn-next" id="btn-next" onclick="wizNext()">
+        Next <i class="ti ti-arrow-right"></i>
+      </button>
+    </div>
+
+  </main>
+</div>
+</div><!-- end #wizard -->
+
+
+<script>
+// ════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════
+const state = {
+  stack: null,
+  models: [],
+  laravelToggles: {},
+  laravelOpts: { auth:'sanctum', db:'mysql', php:'8.2', runner:'makefile' },
+  reactOpts: { state:'zustand', form:'react-hook-form', ui:'shadcn', http:'axios', datafetch:'tanstack-query' },
+  currentLaravelTab: '__all__',
+};
+
+const TOGGLE_DEFS = [
+  {key:'migration', icon:'ti-database', name:'Migration', desc:'Schema & table creation'},
+  {key:'controller', icon:'ti-brackets', name:'Controller', desc:'CRUD API controller'},
+  {key:'resource', icon:'ti-transform', name:'Resource', desc:'JsonResource serializer'},
+  {key:'request', icon:'ti-shield-check', name:'FormRequest', desc:'Validation rules'},
+  {key:'policy', icon:'ti-lock', name:'Policy', desc:'Authorization gates'},
+  {key:'factory', icon:'ti-wand', name:'Factory', desc:'Faker data factory'},
+  {key:'seeder', icon:'ti-database-import', name:'Seeder', desc:'DatabaseSeeder class'},
+  {key:'tests', icon:'ti-test-pipe', name:'Pest Tests', desc:'Feature test suite'},
+  {key:'swagger', icon:'ti-brand-swagger', name:'Swagger', desc:'OpenAPI annotations'},
+];
+
+const DEFAULT_TOGGLES = {
+  migration:true, controller:true, resource:true, request:true,
+  policy:false, factory:true, seeder:false, tests:true, swagger:false
+};
+
+const STEPS = [
+  { name:'Stack',     sub:'Select your technology' },
+  { name:'Models',    sub:'Define your data models' },
+  { name:'Relations', sub:'Review model relationships' },
+  { name:'Laravel',   sub:'Configure file generation' },
+  { name:'React',     sub:'Choose frontend libraries' },
+  { name:'Output',    sub:'Download your project' },
+];
+
+let currentStep = 0;
+let tempFields = [];
+let tempRelations = [];
+
+// ════════════════════════════════════════════════════════════
+// WIZARD OPEN / CLOSE
+// ════════════════════════════════════════════════════════════
+function openWizard() {
+  document.getElementById('wizard').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  renderSidebar();
+  renderDots();
+  renderStep();
+}
+function closeWizard() {
+  document.getElementById('wizard').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// ════════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════════
+function getVisibleSteps() {
+  const hasLaravel = state.stack && (state.stack.includes('laravel'));
+  const hasReact = state.stack && (state.stack.includes('react') || state.stack === 'nextjs');
+  return STEPS.filter((s, i) => {
+    if (i === 3 && !hasLaravel) return false;
+    if (i === 4 && !hasReact) return false;
+    return true;
+  }).map((s, i) => ({ ...s, origIdx: STEPS.indexOf(s) }));
+}
+
+function wizNext() {
+  const visible = getVisibleSteps();
+  const curVisIdx = visible.findIndex(s => s.origIdx === currentStep);
+  if (curVisIdx < visible.length - 1) {
+    currentStep = visible[curVisIdx + 1].origIdx;
+    if (currentStep === 2) buildRelations();
+    if (currentStep === 3) renderLaravelStep();
+    if (currentStep === 4) renderReactPages();
+    if (currentStep === 5) renderOutput();
+    renderSidebar();
+    renderDots();
+    renderStep();
+  }
+}
+function wizBack() {
+  const visible = getVisibleSteps();
+  const curVisIdx = visible.findIndex(s => s.origIdx === currentStep);
+  if (curVisIdx > 0) {
+    currentStep = visible[curVisIdx - 1].origIdx;
+    renderSidebar();
+    renderDots();
+    renderStep();
+  }
+}
+
+function renderStep() {
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('step-' + currentStep).classList.add('active');
+  document.getElementById('wiz-step-title').textContent = STEPS[currentStep].name;
+  document.getElementById('wiz-step-sub').textContent = STEPS[currentStep].sub;
+
+  const visible = getVisibleSteps();
+  const curVisIdx = visible.findIndex(s => s.origIdx === currentStep);
+  const isLast = curVisIdx === visible.length - 1;
+  const isFirst = curVisIdx === 0;
+
+  const btnNext = document.getElementById('btn-next');
+  const btnBack = document.getElementById('btn-back');
+  btnBack.style.visibility = isFirst ? 'hidden' : 'visible';
+  btnNext.textContent = '';
+  if (isLast) {
+    btnNext.innerHTML = '<i class="ti ti-sparkles"></i> Generate';
+    btnNext.onclick = null;
+  } else {
+    btnNext.innerHTML = 'Next <i class="ti ti-arrow-right"></i>';
+    btnNext.onclick = wizNext;
+  }
+  btnNext.disabled = !canProceed();
+}
+
+function canProceed() {
+  if (currentStep === 0) return !!state.stack;
+  if (currentStep === 1) return state.models.length > 0;
+  return true;
+}
+
+// ════════════════════════════════════════════════════════════
+// SIDEBAR + DOTS
+// ════════════════════════════════════════════════════════════
+function renderSidebar() {
+  const visible = getVisibleSteps();
+  const curVisIdx = visible.findIndex(s => s.origIdx === currentStep);
+  const nav = document.getElementById('wiz-steps-nav');
+  nav.innerHTML = visible.map((s, i) => {
+    let cls = '';
+    let dotContent = i + 1;
+    if (i < curVisIdx) { cls = 'done'; dotContent = '<i class="ti ti-check" style="font-size:12px"></i>'; }
+    if (i === curVisIdx) cls = 'active';
+    return `<div class="wiz-step-item ${cls}">
+      <div class="wiz-step-dot">${dotContent}</div>
+      <div class="wiz-step-name">${s.name}</div>
+    </div>`;
+  }).join('');
+}
+function renderDots() {
+  const visible = getVisibleSteps();
+  const curVisIdx = visible.findIndex(s => s.origIdx === currentStep);
+  const dots = document.getElementById('wiz-dots');
+  dots.innerHTML = visible.map((s, i) => {
+    let cls = '';
+    if (i === curVisIdx) cls = 'active';
+    else if (i < curVisIdx) cls = 'done';
+    return `<div class="wiz-footer-dot ${cls}"></div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// STEP 1: STACK
+// ════════════════════════════════════════════════════════════
+function selectStack(el, val) {
+  document.querySelectorAll('.stack-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.stack = val;
+  document.getElementById('btn-next').disabled = false;
+}
+
+// ════════════════════════════════════════════════════════════
+// STEP 2: MODELS
+// ════════════════════════════════════════════════════════════
+function enforceModelName(inp) {
+  let v = inp.value.replace(/[^a-zA-Z0-9]/g,'');
+  if (v.length > 0) v = v[0].toUpperCase() + v.slice(1);
+  inp.value = v;
+}
+function enforceFieldName(inp) {
+  inp.value = inp.value.replace(/[^a-z0-9_]/g,'').toLowerCase();
+}
+
+document.getElementById('new-field-type').addEventListener('change', function() {
+  renderExtraParams(this.value);
+});
+function renderExtraParams(type) {
+  const c = document.getElementById('extra-params');
+  if (type === 'enum' || type === 'set') {
+    c.innerHTML = `<input class="form-input" id="enum-values" placeholder="admin,editor,viewer" style="margin-top:0;font-family:var(--font-mono);font-size:12px">
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">Comma-separated values</div>`;
+  } else if (type === 'foreignId') {
+    c.innerHTML = `<input class="form-input" id="fk-references" placeholder="referenced_table (e.g: users)" style="font-family:var(--font-mono);font-size:12px">`;
+  } else if (type === 'decimal' || type === 'float' || type === 'double') {
+    c.innerHTML = `<div style="display:flex;gap:8px">
+      <input class="form-input" id="decimal-precision" placeholder="precision (10)" style="font-family:var(--font-mono);font-size:12px">
+      <input class="form-input" id="decimal-scale" placeholder="scale (2)" style="font-family:var(--font-mono);font-size:12px">
+    </div>`;
+  } else if (type === 'string') {
+    c.innerHTML = `<input class="form-input" id="string-length" placeholder="length (255)" style="font-family:var(--font-mono);font-size:12px">`;
+  } else {
+    c.innerHTML = '';
+  }
+}
+
+function addTempField() {
+  const name = document.getElementById('new-field-name').value.trim();
+  const type = document.getElementById('new-field-type').value;
+  if (!name) return;
+  const field = { name, type };
+  const enumV = document.getElementById('enum-values');
+  const fkRef = document.getElementById('fk-references');
+  if (enumV) field.values = enumV.value.split(',').map(v=>v.trim()).filter(Boolean);
+  if (fkRef) field.references = fkRef.value.trim();
+  tempFields.push(field);
+  document.getElementById('new-field-name').value = '';
+  document.getElementById('extra-params').innerHTML = '';
+  renderTempFields();
+}
+
+function addTempRelation() {
+  const type = document.getElementById('new-rel-type').value;
+  const model = document.getElementById('new-rel-model').value.trim();
+  if (!model) return;
+  tempRelations.push({ type, model });
+  document.getElementById('new-rel-model').value = '';
+  renderTempRelations();
+}
+
+function renderTempFields() {
+  const c = document.getElementById('temp-fields-list');
+  c.innerHTML = tempFields.map((f, i) => `
+    <div class="field-row">
+      <span class="field-row-name">${f.name}</span>
+      <span class="field-row-type fc-${f.type}" style="padding:2px 8px;border-radius:4px;font-size:11px">${f.type}</span>
+      <button class="field-row-del" onclick="removeTempField(${i})"><i class="ti ti-x"></i></button>
+    </div>`).join('');
+}
+function removeTempField(i) { tempFields.splice(i,1); renderTempFields(); }
+
+function renderTempRelations() {
+  const c = document.getElementById('temp-rels-list');
+  c.innerHTML = tempRelations.map((r, i) => `
+    <div class="field-row">
+      <span class="field-row-name" style="color:var(--purple);font-size:12px">${r.type}</span>
+      <span class="field-row-name">${r.model}</span>
+      <button class="field-row-del" onclick="removeTempRelation(${i})"><i class="ti ti-x"></i></button>
+    </div>`).join('');
+}
+function removeTempRelation(i) { tempRelations.splice(i,1); renderTempRelations(); }
+
+function addModel() {
+  const name = document.getElementById('new-model-name').value.trim();
+  if (!name || tempFields.length === 0) {
+    showToast('Add a model name and at least one field', 'error');
+    return;
+  }
+  // auto-detect relations from foreignId
+  const autoRels = tempFields
+    .filter(f => f.type === 'foreignId' && f.references)
+    .map(f => ({
+      type: 'belongsTo',
+      model: capitalize(f.references.replace(/s$/,''))
+    }));
+  const allRels = [...tempRelations, ...autoRels];
+
+  state.models.push({
+    name,
+    fields: [...tempFields],
+    relations: allRels,
+    generate: { ...DEFAULT_TOGGLES }
+  });
+  state.laravelToggles[name] = { ...DEFAULT_TOGGLES };
+
+  tempFields = [];
+  tempRelations = [];
+  document.getElementById('new-model-name').value = '';
+  document.getElementById('temp-fields-list').innerHTML = '';
+  document.getElementById('temp-rels-list').innerHTML = '';
+
+  renderModelsList();
+  document.getElementById('models-count').textContent = state.models.length;
+  document.getElementById('btn-next').disabled = false;
+  showToast(`Model "${name}" added ✓`);
+}
+
+function removeModel(i) {
+  state.models.splice(i, 1);
+  renderModelsList();
+  document.getElementById('models-count').textContent = state.models.length;
+  if (state.models.length === 0) document.getElementById('btn-next').disabled = true;
+}
+
+function renderModelsList() {
+  const list = document.getElementById('models-list');
+  if (state.models.length === 0) {
+    list.innerHTML = `<div class="no-models"><i class="ti ti-table"></i>No models yet. Add your first one →</div>`;
+    return;
+  }
+  list.innerHTML = state.models.map((m, mi) => {
+    const chips = m.fields.map(f =>
+      `<span class="field-chip fc-${f.type}">${f.name} <span style="opacity:0.6;font-size:10px">${f.type}</span></span>`
+    ).join('');
+    return `<div class="model-card">
+      <div class="model-card-header">
+        <div class="model-card-name">
+          <i class="ti ti-table" style="font-size:16px"></i>
+          ${m.name}
+          <span class="model-badge">${m.fields.length} field${m.fields.length>1?'s':''}</span>
+        </div>
+        <div class="model-card-actions">
+          <button class="icon-btn" onclick="removeModel(${mi})" title="Delete"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+      <div class="model-fields">${chips}</div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// STEP 3: RELATIONS
+// ════════════════════════════════════════════════════════════
+function buildRelations() {
+  const grid = document.getElementById('relations-grid');
+  const allRels = [];
+  state.models.forEach(m => {
+    m.relations.forEach(r => {
+      allRels.push({ from: m.name, type: r.type, to: r.model });
+    });
+  });
+  if (allRels.length === 0) {
+    grid.innerHTML = `<div class="no-relations"><i class="ti ti-arrows-exchange"></i>No relations detected yet. Add foreignId fields or define relations manually.</div>`;
+    return;
+  }
+  grid.innerHTML = allRels.map(r => `
+    <div class="relation-card">
+      <div class="relation-from">${r.from}</div>
+      <div class="relation-type-badge">${r.type}</div>
+      <i class="ti ti-arrow-right" style="color:var(--text3)"></i>
+      <div class="relation-to">${r.to}</div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// STEP 4: LARAVEL
+// ════════════════════════════════════════════════════════════
+function renderLaravelStep() {
+  renderLaravelTabs();
+  renderLaravelToggles('__all__');
+}
+
+function renderLaravelTabs() {
+  const container = document.getElementById('laravel-model-tabs');
+  const tabs = [{ name: 'All models', key: '__all__', dotClass: 'all-tab-dot' }, ...state.models.map(m => ({ name: m.name, key: m.name }))];
+  container.innerHTML = tabs.map(t => `
+    <button class="model-tab ${state.currentLaravelTab === t.key ? 'active' : ''}"
+      onclick="switchLaravelTab('${t.key}')">
+      <div class="model-tab-dot ${t.dotClass || ''}"></div>
+      ${t.name}
+    </button>`).join('');
+}
+function switchLaravelTab(key) {
+  state.currentLaravelTab = key;
+  renderLaravelTabs();
+  renderLaravelToggles(key);
+}
+function renderLaravelToggles(tabKey) {
+  const grid = document.getElementById('toggles-grid');
+  grid.innerHTML = TOGGLE_DEFS.map(td => {
+    let cls = '';
+    if (tabKey === '__all__') {
+      const vals = state.models.map(m => (state.laravelToggles[m.name] || DEFAULT_TOGGLES)[td.key]);
+      const allOn = vals.every(v => v);
+      const allOff = vals.every(v => !v);
+      cls = allOn ? 'on' : allOff ? '' : 'partial';
+    } else {
+      const t = state.laravelToggles[tabKey] || DEFAULT_TOGGLES;
+      cls = t[td.key] ? 'on' : '';
+    }
+    return `<div class="toggle-card ${cls}" onclick="toggleFeature('${td.key}','${tabKey}')">
+      <i class="ti ${td.icon} tc-icon"></i>
+      <div class="tc-info">
+        <div class="tc-name">${td.name}</div>
+        <div class="tc-desc">${td.desc}</div>
+      </div>
+      <div class="tc-toggle"><div class="tc-toggle-knob"></div></div>
+    </div>`;
+  }).join('');
+}
+function toggleFeature(key, tabKey) {
+  if (tabKey === '__all__') {
+    const vals = state.models.map(m => (state.laravelToggles[m.name] || DEFAULT_TOGGLES)[key]);
+    const allOn = vals.every(v => v);
+    state.models.forEach(m => {
+      if (!state.laravelToggles[m.name]) state.laravelToggles[m.name] = {...DEFAULT_TOGGLES};
+      state.laravelToggles[m.name][key] = !allOn;
+    });
+  } else {
+    if (!state.laravelToggles[tabKey]) state.laravelToggles[tabKey] = {...DEFAULT_TOGGLES};
+    state.laravelToggles[tabKey][key] = !state.laravelToggles[tabKey][key];
+  }
+  renderLaravelToggles(state.currentLaravelTab);
+}
+
+// ════════════════════════════════════════════════════════════
+// STEP 5: REACT
+// ════════════════════════════════════════════════════════════
+document.querySelectorAll('.opt-chip').forEach(chip => {
+  chip.addEventListener('click', function() {
+    const group = this.dataset.group;
+    document.querySelectorAll(`.opt-chip[data-group="${group}"]`).forEach(c => c.classList.remove('selected'));
+    this.classList.add('selected');
+    state.reactOpts[group] = this.dataset.val;
+  });
+});
+function renderReactPages() {
+  const c = document.getElementById('pages-per-model');
+  if (state.models.length === 0) { c.innerHTML = '<p style="font-size:13px;color:var(--text3)">Add models first to configure pages.</p>'; return; }
+  c.innerHTML = state.models.map(m => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--bg4);border-radius:var(--radius);border:1px solid var(--border)">
+      <span style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:var(--gold)">${m.name}</span>
+      <div style="display:flex;gap:8px">
+        ${['list','detail','create','edit'].map(page => `
+          <div class="opt-chip selected" style="padding:5px 12px;font-size:12px" data-model="${m.name}" data-page="${page}">${page}</div>`).join('')}
+      </div>
+    </div>`).join('');
+  document.querySelectorAll('[data-model]').forEach(chip => {
+    chip.addEventListener('click', function() { this.classList.toggle('selected'); });
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// STEP 6: OUTPUT
+// ════════════════════════════════════════════════════════════
+function renderOutput() {
+  const config = buildConfig();
+  renderYAML(config);
+  renderFilesList(config);
+  const hasReact = state.stack && (state.stack.includes('react') || state.stack === 'nextjs');
+  document.getElementById('react-zip-panel').classList.toggle('hidden', !hasReact);
+}
+function buildConfig() {
+  const models = state.models.map(m => {
+    const toggles = state.laravelToggles[m.name] || DEFAULT_TOGGLES;
+    const fkRels = m.fields.filter(f => f.type === 'foreignId').map(f => ({
+      type: 'belongsTo',
+      model: capitalize(f.references ? f.references.replace(/s$/,'') : 'Unknown')
+    }));
+    const rels = [...m.relations.filter(r => !fkRels.some(fr => fr.model === r.model)), ...fkRels];
+    return {
+      name: m.name,
+      fields: m.fields,
+      relations: rels.length ? rels : undefined,
+      migration: { timestamps: true, softDeletes: !!toggles.softDeletes },
+      generate: toggles
+    };
+  });
+  return {
+    name: 'my-project',
+    stack: state.stack,
+    models,
+    laravel: state.stack && state.stack.includes('laravel') ? {
+      auth: document.getElementById('laravel-auth')?.value || 'sanctum',
+      db_engine: document.getElementById('laravel-db')?.value || 'mysql',
+      php_version: document.getElementById('laravel-php')?.value || '8.2',
+      runner: document.getElementById('laravel-runner')?.value || 'makefile'
+    } : undefined,
+    react: state.stack && (state.stack.includes('react') || state.stack === 'nextjs') ? state.reactOpts : undefined
+  };
+}
+function renderYAML(config) {
+  const yaml = buildYAMLString(config);
+  document.getElementById('yaml-preview').innerHTML = syntaxHighlightYAML(yaml);
+}
+function buildYAMLString(config) {
+  let lines = [];
+  lines.push(`name: ${config.name}`);
+  lines.push(`stack: ${config.stack}`);
+  lines.push('');
+  lines.push('models:');
+  config.models.forEach(m => {
+    lines.push(`  - name: ${m.name}`);
+    lines.push('    fields:');
+    m.fields.forEach(f => {
+      let extra = '';
+      if (f.values) extra += `, values: [${f.values.join(', ')}]`;
+      if (f.references) extra += `, references: ${f.references}`;
+      lines.push(`      - { name: ${f.name}, type: ${f.type}${extra} }`);
+    });
+    if (m.relations && m.relations.length) {
+      lines.push('    relations:');
+      m.relations.forEach(r => lines.push(`      - { type: ${r.type}, model: ${r.model} }`));
+    }
+    lines.push('    generate:');
+    Object.entries(m.generate).forEach(([k, v]) => lines.push(`      ${k}: ${v}`));
+  });
+  if (config.laravel) {
+    lines.push('');
+    lines.push('laravel:');
+    Object.entries(config.laravel).forEach(([k, v]) => lines.push(`  ${k}: ${v}`));
+  }
+  if (config.react) {
+    lines.push('');
+    lines.push('react:');
+    Object.entries(config.react).forEach(([k, v]) => lines.push(`  ${k}: ${v}`));
+  }
+  return lines.join('\n');
+}
+function syntaxHighlightYAML(yaml) {
+  return yaml
+    .replace(/^(  )([\w_]+)(:)/gm, '$1<span class="y-key">$2</span>$3')
+    .replace(/^([\w_]+)(:)/gm, '<span class="y-key">$1</span>$2')
+    .replace(/: (true|false)/g, ': <span class="y-val">$1</span>')
+    .replace(/: (\d+)/g, ': <span class="y-val">$1</span>')
+    .replace(/: ([^<\n{]+)/g, ': <span class="y-str">$1</span>')
+    .replace(/- name:/g, '- <span class="y-key">name:</span>')
+    .replace(/- { /g, '- { ')
+    .split('\n').join('<br>');
+}
+function renderFilesList(config) {
+  const hasLaravel = config.stack && config.stack.includes('laravel');
+  const files = [];
+  if (hasLaravel) {
+    config.models.forEach((m, i) => {
+      const t = m.generate;
+      const ts = `2026_05_14_00000${i+1}`;
+      const tname = snakeCase(m.name) + 's';
+      files.push({ icon: 'ti-brand-php', path: `app/Models/${m.name}.php` });
+      if (t.migration) files.push({ icon: 'ti-database', path: `database/migrations/${ts}_create_${tname}_table.php` });
+      if (t.controller) files.push({ icon: 'ti-brackets', path: `app/Http/Controllers/Api/${m.name}Controller.php` });
+      if (t.resource) files.push({ icon: 'ti-transform', path: `app/Http/Resources/${m.name}Resource.php` });
+      if (t.request) files.push({ icon: 'ti-shield-check', path: `app/Http/Requests/Store${m.name}Request.php` });
+      if (t.request) files.push({ icon: 'ti-shield-check', path: `app/Http/Requests/Update${m.name}Request.php` });
+      if (t.policy) files.push({ icon: 'ti-lock', path: `app/Policies/${m.name}Policy.php` });
+      if (t.factory) files.push({ icon: 'ti-wand', path: `database/factories/${m.name}Factory.php` });
+      if (t.tests) files.push({ icon: 'ti-test-pipe', path: `tests/Feature/${m.name}Test.php` });
+    });
+    const runner = config.laravel?.runner || 'makefile';
+    if (runner === 'makefile' || runner === 'both') files.push({ icon: 'ti-terminal-2', path: 'Makefile' });
+    if (runner === 'bash' || runner === 'both') files.push({ icon: 'ti-terminal-2', path: 'run.sh' });
+  }
+  document.getElementById('files-count').textContent = `${files.length} files`;
+  document.getElementById('files-list').innerHTML = files.map(f =>
+    `<div class="file-item"><i class="ti ${f.icon}"></i><span style="color:var(--text2)">${f.path.split('/').slice(0,-1).join('/')}/</span>${f.path.split('/').pop()}</div>`
+  ).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// DOWNLOAD / COPY
+// ════════════════════════════════════════════════════════════
+function downloadYAML() {
+  const config = buildConfig();
+  const yaml = buildYAMLString(config);
+  const blob = new Blob([yaml], { type: 'text/yaml' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'stack-init.yaml';
+  a.click();
+  showToast('stack-init.yaml downloaded!');
+}
+function copyYAML() {
+  const config = buildConfig();
+  const yaml = buildYAMLString(config);
+  navigator.clipboard.writeText(yaml).then(() => showToast('YAML copied to clipboard!'));
+}
+function copyCmd(cmd) {
+  navigator.clipboard.writeText(cmd).then(() => showToast('Command copied!'));
+}
+
+async function downloadZIP() {
+  if (typeof JSZip === 'undefined') { showToast('JSZip not loaded', 'error'); return; }
+  const zip = new JSZip();
+  const config = buildConfig();
+  zip.file('stack-init.yaml', buildYAMLString(config));
+  zip.file('README.md', `# ${config.name}\n\nGenerated by stack-init\n\n## Setup\n\`\`\`\nnpx stack-init generate\n\`\`\`\n`);
+
+  // Fake React structure
+  zip.folder('src/components');
+  zip.folder('src/pages');
+  zip.folder('src/stores');
+  zip.file('package.json', JSON.stringify({ name: config.name, version: '0.1.0', dependencies: { react: '^19', 'react-dom': '^19' } }, null, 2));
+  zip.file('vite.config.ts', `import { defineConfig } from 'vite'\nimport react from '@vitejs/plugin-react'\nexport default defineConfig({ plugins: [react()] })\n`);
+
+  state.models.forEach(m => {
+    zip.file(`src/components/${m.name}List.tsx`, `// ${m.name} list component\nexport function ${m.name}List() {\n  return <div>{/* TODO */}</div>\n}\n`);
+    zip.file(`src/pages/${m.name}Page.tsx`, `// ${m.name} page\nimport { ${m.name}List } from '../components/${m.name}List'\nexport default function ${m.name}Page() {\n  return <${m.name}List />\n}\n`);
+  });
+
+  const content = await zip.generateAsync({ type: 'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(content);
+  a.download = `${config.name}-react.zip`;
+  a.click();
+  showToast('React project ZIP downloaded!');
+}
+
+// ════════════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════════════
+function capitalize(s) { return s ? s[0].toUpperCase() + s.slice(1) : ''; }
+function snakeCase(s) { return s.replace(/([A-Z])/g, m => '_' + m.toLowerCase()).replace(/^_/,''); }
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  const icon = t.querySelector('i');
+  document.getElementById('toast-msg').textContent = msg;
+  icon.className = type === 'error' ? 'ti ti-alert-triangle' : 'ti ti-check';
+  icon.style.color = type === 'error' ? 'var(--red)' : 'var(--green)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// keyboard ESC
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('wizard').style.display === 'block') closeWizard();
+});
+</script>
+</body>
+</html>

@@ -22,15 +22,25 @@ export interface Relation {
 export interface LaravelGenerateOptions {
   migration: boolean;
   controller: boolean;
-  seeder: boolean;
-  factory: boolean;
+  resource: boolean;
+  request: boolean;
   policy: boolean;
+  factory: boolean;
+  seeder: boolean;
+  swagger: boolean;
+  softDelete: boolean;
+  repository: boolean;
+  service: boolean;
+  tests: boolean;
   routes: boolean;
 }
 
 export interface MigrationOptions {
   timestamps: boolean;
   softDeletes?: boolean;
+  primary_key?: 'id' | 'uuid' | 'ulid' | 'custom' | string;
+  engine?: string;
+  charset?: string;
 }
 
 export interface ModelPages {
@@ -42,10 +52,11 @@ export interface ModelPages {
 
 export interface Model {
   name: string;
+  table?: string;
   fields: NamedField[];
   relations: Relation[];
   generate: LaravelGenerateOptions;
-  migration?: MigrationOptions;
+  migration: MigrationOptions;
   pages?: ModelPages;
 }
 

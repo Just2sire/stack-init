@@ -43,6 +43,12 @@ interface WizardStore {
   laravelOptions: LaravelOptions;
   reactOptions: ReactOptions;
 
+  // UI State
+  isDrawerOpen: boolean;
+  setIsDrawerOpen: (open: boolean) => void;
+  activePreviewTab: string;
+  setActivePreviewTab: (tab: string) => void;
+
   // Actions config principale
   setStack: (stack: Stack) => void;
   setProjectName: (name: string) => void;
@@ -84,12 +90,26 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
   laravelOptions: { ...DEFAULT_LARAVEL_OPTIONS },
   reactOptions: { ...DEFAULT_REACT_OPTIONS },
 
+  // UI State
+  isDrawerOpen: false,
+  setIsDrawerOpen: (open) => set({ isDrawerOpen: open }),
+  activePreviewTab: 'erd',
+  setActivePreviewTab: (tab) => set({ activePreviewTab: tab }),
+
   setStep: (n) => set({ currentStep: n }),
   nextStep: () => set((s) => ({ currentStep: s.currentStep + 1 })),
   prevStep: () => set((s) => ({ currentStep: Math.max(0, s.currentStep - 1) })),
 
   setStack: (stack) => set({ stack }),
-  setProjectName: (projectName) => set({ projectName }),
+  setProjectName: (name) => {
+    const sanitized = name
+      .toLowerCase()
+      .replace(/\s+/g, '-')       // Espaces -> tirets
+      .replace(/[^a-z0-9-_]/g, '') // Supprime caractères spéciaux
+      .replace(/-+/g, '-')        // Évite tirets multiples
+      .replace(/^-+|-+$/g, '');   // Supprime tirets début/fin
+    set({ projectName: sanitized });
+  },
   setLaravelOptions: (patch) => set((s) => ({ laravelOptions: { ...s.laravelOptions, ...patch } })),
   setReactOptions: (patch) => set((s) => ({ reactOptions: { ...s.reactOptions, ...patch } })),
 

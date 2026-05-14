@@ -12,10 +12,17 @@ export function LaravelStep() {
   const options = [
     { key: "migration", label: "Migration", desc: "Database table definition" },
     { key: "controller", label: "Controller", desc: "HTTP request handler" },
+    { key: "resource", label: "Resource", desc: "API JSON resource transformation" },
+    { key: "request", label: "Request", desc: "Form request validation rules" },
     { key: "seeder", label: "Seeder", desc: "Seed database with test data" },
     { key: "factory", label: "Factory", desc: "Generate fake model instances" },
     { key: "policy", label: "Policy", desc: "Authorization rules" },
+    { key: "service", label: "Service", desc: "Business logic layer" },
+    { key: "repository", label: "Repository", desc: "Data access abstraction" },
+    { key: "tests", label: "Tests", desc: "Feature and unit tests" },
     { key: "routes", label: "Routes", desc: "API / web route registration" },
+    { key: "swagger", label: "Swagger", desc: "L5-Swagger documentation" },
+    { key: "softDelete", label: "Soft Deletes", desc: "Use SoftDeletes trait" },
   ] as const;
 
   const activeModel = activeTab ? models.find(m => m.name === activeTab) : null;
