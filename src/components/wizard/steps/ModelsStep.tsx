@@ -13,6 +13,8 @@ const FIELD_TYPES = [
   "enum","set","json","jsonb","uuid","ulid","binary","rememberToken",
 ];
 
+type FieldType = typeof FIELD_TYPES[number];
+
 const SUGGESTED_FIELDS: Record<string, { name: string; type: string; nullable?: boolean; values?: string[]; references?: string[] }[]> = {
   User: [
     { name: "name", type: "string" },
@@ -49,13 +51,13 @@ const SUGGESTED_FIELDS: Record<string, { name: string; type: string; nullable?: 
     { name: "name", type: "string" },
     { name: "slug", type: "string" },
     { name: "description", type: "text", nullable: true },
-    { name: "parent_id", type: "foreignId", references: "categories" },
+    { name: "parent_id", type: "foreignId", references: ["categories"] },
   ],
   Comment: [
     { name: "content", type: "text" },
     { name: "is_approved", type: "boolean" },
-    { name: "user_id", type: "foreignId", references: "users" },
-    { name: "post_id", type: "foreignId", references: "posts" },
+    { name: "user_id", type: "foreignId", references: ["users"] },
+    { name: "post_id", type: "foreignId", references: ["posts"] },
   ],
 };
 
@@ -294,7 +296,7 @@ function NewModelPanel({ onCreated, onCancel }: { onCreated: (name: string) => v
 function ModelEditor({ model }: { model: Model }) {
   const { addField, removeField, updateField, updateModel } = useWizardStore();
   const [fieldName, setFieldName]     = useState("");
-  const [fieldType, setFieldType]     = useState("string");
+  const [fieldType, setFieldType]     = useState<FieldType>("string");
   const [fieldValues, setFieldValues] = useState("");
   const [fieldRef, setFieldRef]       = useState("");
   const [nullable, setNullable]       = useState(false);
@@ -324,7 +326,7 @@ function ModelEditor({ model }: { model: Model }) {
     if (!fn) { setFieldError("Field name is required"); return; }
     if (!/^[a-z][a-z0-9_]*$/.test(fn)) { setFieldError("Use snake_case (e.g. first_name)"); return; }
 
-    const f: NamedField = { name: fn, type: fieldType, required: !nullable };
+    const f: any = { name: fn, type: fieldType, required: !nullable };
     if (needsValues && fieldValues.trim()) f.values = fieldValues.split(",").map(v => v.trim()).filter(Boolean);
     if (needsRef && fieldRef.trim()) f.references = fieldRef.trim();
     if (nullable) f.nullable = true;
@@ -340,12 +342,12 @@ function ModelEditor({ model }: { model: Model }) {
     if (editingField) {
       if (editingField !== f.name) {
         removeField(model.name, editingField);
-        addField(model.name, f);
+        addField(model.name, f as NamedField);
       } else {
-        updateField(model.name, editingField, f);
+        updateField(model.name, editingField, f as Partial<NamedField>);
       }
     } else {
-      addField(model.name, f);
+      addField(model.name, f as NamedField);
     }
 
     setFieldName(""); setFieldType("string"); setFieldValues(""); setFieldRef(""); 
@@ -516,7 +518,7 @@ function ModelEditor({ model }: { model: Model }) {
                   borderColor: fieldError ? "var(--red)" : undefined 
                 }}
               />
-              <select value={fieldType} onChange={(e) => setFieldType(e.target.value)} className="si-select" style={{ fontSize: 13, width: "auto" }}>
+              <select value={fieldType} onChange={(e) => setFieldType(e.target.value as FieldType)} className="si-select" style={{ fontSize: 13, width: "auto" }}>
                 {FIELD_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
@@ -578,8 +580,8 @@ function ModelEditor({ model }: { model: Model }) {
           <div>
             <label style={{ display: "block", fontSize: 11, color: "var(--text3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Primary key</label>
             <select
-              value={model.migration.primary_key || "id"}
-              onChange={(e) => updateModel(model.name, { migration: { ...model.migration, primary_key: e.target.value as any } })}
+              value={model.migration?.primary_key || "id"}
+              onChange={(e) => updateModel(model.name, { migration: { ...(model.migration || {}), primary_key: e.target.value as any } })}
               className="si-select"
               style={{ fontSize: 13 }}
             >
@@ -599,21 +601,24 @@ function ModelEditor({ model }: { model: Model }) {
           </div>
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-          {(["timestamps", "softDeletes"] as const).map((key) => (
-            <button
-              key={key}
-              onClick={() => updateModel(model.name, { migration: { ...model.migration, [key]: !model.migration[key] } })}
-              style={{
-                fontSize: 12, padding: "6px 14px", borderRadius: 100,
-                border: `1px solid ${model.migration[key] ? "var(--gold-border)" : "var(--border-subtle)"}`,
-                background: model.migration[key] ? "var(--gold-subtle)" : "transparent",
-                color: model.migration[key] ? "var(--gold)" : "var(--text3)",
-                cursor: "pointer", transition: "all 0.15s",
-              }}
-            >
-              {key === "timestamps" ? "⏱ Timestamps" : "🗑 Soft Deletes"}
-            </button>
-          ))}
+          {(["timestamps", "softDeletes"] as const).map((key) => {
+            const isChecked = model.migration?.[key] ?? (key === "timestamps");
+            return (
+              <button
+                key={key}
+                onClick={() => updateModel(model.name, { migration: { ...(model.migration || {}), [key]: !isChecked } })}
+                style={{
+                  fontSize: 12, padding: "6px 14px", borderRadius: 100,
+                  border: `1px solid ${isChecked ? "var(--gold-border)" : "var(--border-subtle)"}`,
+                  background: isChecked ? "var(--gold-subtle)" : "transparent",
+                  color: isChecked ? "var(--gold)" : "var(--text3)",
+                  cursor: "pointer", transition: "all 0.15s",
+                }}
+              >
+                {key === "timestamps" ? "⏱ Timestamps" : "🗑 Soft Deletes"}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

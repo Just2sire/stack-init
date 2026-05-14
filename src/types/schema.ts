@@ -1,6 +1,7 @@
 export type Stack = 'laravel' | 'react' | 'laravel+react';
 
 export interface NamedField {
+  default?: any;
   name: string;
   type: string;
   required?: boolean;
