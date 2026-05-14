@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Visual Direction</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #0d0e1a;
+    color: #e2e4ed;
+    padding: 32px 24px 64px;
+    min-height: 100vh;
+  }
+  h2 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+  .subtitle { font-size: 14px; color: #8b8fa3; margin-bottom: 40px; line-height: 1.6; }
+
+  .directions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  @media (max-width: 900px) { .directions { grid-template-columns: 1fr; } }
+
+  .dir {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1.5px solid rgba(255,255,255,0.07);
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+  .dir:hover { transform: translateY(-2px); }
+  .dir.selected { border-color: #6C63FF; box-shadow: 0 0 0 3px rgba(108,99,255,0.25); }
+
+  .dir-label {
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.03);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    text-align: center;
+  }
+  .dir-label h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .dir-label p { font-size: 12px; color: #5c6078; line-height: 1.5; }
+
+  /* ─── DIRECTION A: Brand Colors ─── */
+  .dir-a .preview {
+    background: #0d0e1a;
+    padding: 20px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .stack-card-a {
+    border-radius: 12px;
+    padding: 16px;
+    display: flex; align-items: flex-start; gap: 12px;
+    border: 1.5px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.02);
+    transition: all 0.2s;
+  }
+  .stack-card-a.laravel { border-color: rgba(255,80,50,0.35); background: rgba(255,80,50,0.06); }
+  .stack-card-a.react   { border-color: rgba(97,218,251,0.3); background: rgba(97,218,251,0.05); }
+  .stack-card-a.both    { border-color: rgba(108,99,255,0.4); background: rgba(108,99,255,0.08); }
+  .icon-a {
+    width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .icon-a.laravel { background: rgba(255,80,50,0.15); }
+  .icon-a.react   { background: rgba(97,218,251,0.12); }
+  .icon-a.both    { background: rgba(108,99,255,0.15); }
+  .card-text-a h4 { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 3px; }
+  .card-text-a p  { font-size: 11px; color: #8b8fa3; line-height: 1.4; }
+  .card-text-a.laravel h4 { color: #ff8a78; }
+  .card-text-a.react   h4 { color: #7EEEFF; }
+  .card-text-a.both    h4 { color: #b3adff; }
+
+  /* ─── DIRECTION B: Vivid Glow ─── */
+  .dir-b .preview {
+    background: #080910;
+    padding: 20px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .dir-b .preview::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%; transform: translateX(-50%);
+    width: 260px; height: 160px;
+    background: radial-gradient(ellipse, rgba(108,99,255,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .stack-card-b {
+    border-radius: 12px;
+    padding: 16px;
+    display: flex; align-items: flex-start; gap: 12px;
+    border: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.015);
+    position: relative;
+  }
+  .stack-card-b.selected-b {
+    border-color: rgba(108,99,255,0.6);
+    background: rgba(108,99,255,0.08);
+    box-shadow: 0 0 20px rgba(108,99,255,0.15), inset 0 0 20px rgba(108,99,255,0.04);
+  }
+  .stack-card-b.selected-b::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 13px;
+    background: linear-gradient(135deg, rgba(108,99,255,0.6), rgba(108,99,255,0.1));
+    z-index: -1;
+  }
+  .icon-b {
+    width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    background: rgba(255,255,255,0.04);
+  }
+  .icon-b.selected-b { background: rgba(108,99,255,0.2); box-shadow: 0 0 12px rgba(108,99,255,0.4); }
+  .card-text-b h4 { font-size: 13px; font-weight: 600; color: #c5c8d8; margin-bottom: 3px; }
+  .card-text-b.selected-b h4 { color: #fff; }
+  .card-text-b p  { font-size: 11px; color: #5c6078; line-height: 1.4; }
+
+  /* ─── DIRECTION C: Energy / Gradient Borders ─── */
+  .dir-c .preview {
+    background: #08090f;
+    padding: 20px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .stack-card-c-wrap {
+    border-radius: 13px;
+    padding: 1.5px;
+  }
+  .stack-card-c-wrap.laravel { background: linear-gradient(135deg, #ff5733, #ff2d20, #ff5733); }
+  .stack-card-c-wrap.react   { background: linear-gradient(135deg, #61DBFB, #087EA4, #61DBFB); }
+  .stack-card-c-wrap.both    { background: linear-gradient(135deg, #6C63FF, #f857a6, #6C63FF); }
+  .stack-card-c-wrap.none    { background: rgba(255,255,255,0.06); }
+  .stack-card-c {
+    border-radius: 11.5px;
+    padding: 15px;
+    display: flex; align-items: flex-start; gap: 12px;
+    background: #111222;
+  }
+  .icon-c {
+    width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .icon-c.laravel { background: rgba(255,87,51,0.15); }
+  .icon-c.react   { background: rgba(97,219,251,0.12); }
+  .icon-c.both    { background: linear-gradient(135deg, rgba(108,99,255,0.2), rgba(248,87,166,0.15)); }
+  .icon-c.none    { background: rgba(255,255,255,0.04); }
+  .card-text-c h4 { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 3px; }
+  .card-text-c p  { font-size: 11px; color: #6b7280; line-height: 1.4; }
+
+  /* SVG logos */
+  .logo-laravel { font-size: 20px; }
+  .logo-react { font-size: 20px; }
+  .logo-both { font-size: 18px; display: flex; gap: 1px; }
+
+  /* Selection overlay */
+  .dir-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: rgba(108,99,255,0.15);
+    color: #a59bff;
+    border: 1px solid rgba(108,99,255,0.3);
+    margin-bottom: 8px;
+  }
+  .my-rec { background: rgba(52,211,153,0.12); color: #6ee7b7; border-color: rgba(52,211,153,0.25); }
+</style>
+</head>
+<body>
+<h2>Quelle direction visuelle ?</h2>
+<p class="subtitle">Tous les trois gardent le fond sombre. La différence : comment les couleurs sont utilisées.</p>
+
+<div class="directions">
+
+  <!-- A: Brand Colors -->
+  <div class="dir" onclick="toggleDir(this,'a')">
+    <div class="preview dir-a">
+      <div class="stack-card-a laravel">
+        <div class="icon-a laravel">
+          <svg width="22" height="22" viewBox="0 0 50 52" fill="none"><path d="M49.3 14.4L37.6 1.4A3 3 0 0035.4.5H15.5a3 3 0 00-2.2 1L1.7 14.4A3 3 0 001 16.3v19.4a3 3 0 00.7 1.9l11.6 13a3 3 0 002.2 1h19.9a3 3 0 002.2-1L49 37.6a3 3 0 00.7-1.9V16.3a3 3 0 00-.4-1.9z" fill="#FF2D20"/><path d="M35 37.3h-9v-8.1l9-4.7v12.8z" fill="#fff"/><path d="M26 29.2l-9-4.7V37.3h9V29.2z" fill="#fff" opacity=".8"/><path d="M35 24.5L26 29.2l-9-4.7 9-4.7 9 4.7z" fill="#fff" opacity=".6"/></svg>
+        </div>
+        <div class="card-text-a laravel">
+          <h4>Laravel</h4>
+          <p>API REST · Eloquent · Artisan</p>
+        </div>
+      </div>
+      <div class="stack-card-a react">
+        <div class="icon-a react">
+          <svg width="22" height="22" viewBox="0 0 100 100" fill="none"><ellipse cx="50" cy="50" rx="11" ry="11" fill="#61DBFB"/><ellipse cx="50" cy="50" rx="44" ry="17" stroke="#61DBFB" stroke-width="5" fill="none"/><ellipse cx="50" cy="50" rx="44" ry="17" stroke="#61DBFB" stroke-width="5" fill="none" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="44" ry="17" stroke="#61DBFB" stroke-width="5" fill="none" transform="rotate(120 50 50)"/></svg>
+        </div>
+        <div class="card-text-a react">
+          <h4>React / Next.js</h4>
+          <p>ZIP téléchargeable · TypeScript</p>
+        </div>
+      </div>
+      <div class="stack-card-a both">
+        <div class="icon-a both">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#a59bff" stroke-width="1.5"/><path d="M8 12h8M12 8v8" stroke="#a59bff" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="card-text-a both">
+          <h4>Laravel + React</h4>
+          <p>Full-stack · API + SPA</p>
+        </div>
+      </div>
+    </div>
+    <div class="dir-label">
+      <h3>A — Brand Colors</h3>
+      <p>Chaque stack a sa teinte propre. Laravel en rouge-orange, React en bleu-cyan, mix en violet.</p>
+    </div>
+  </div>
+
+  <!-- B: Vivid Glow — RECOMMENDED -->
+  <div class="dir" onclick="toggleDir(this,'b')">
+    <div class="preview dir-b">
+      <div class="stack-card-b">
+        <div class="icon-b">
+          <svg width="20" height="20" viewBox="0 0 50 52" fill="none"><path d="M49.3 14.4L37.6 1.4A3 3 0 0035.4.5H15.5a3 3 0 00-2.2 1L1.7 14.4A3 3 0 001 16.3v19.4a3 3 0 00.7 1.9l11.6 13a3 3 0 002.2 1h19.9a3 3 0 002.2-1L49 37.6a3 3 0 00.7-1.9V16.3a3 3 0 00-.4-1.9z" fill="#FF2D20"/></svg>
+        </div>
+        <div class="card-text-b"><h4>Laravel</h4><p>API REST · Eloquent · Artisan</p></div>
+      </div>
+      <div class="stack-card-b selected-b">
+        <div class="icon-b selected-b">
+          <svg width="20" height="20" viewBox="0 0 100 100" fill="none"><ellipse cx="50" cy="50" rx="11" ry="11" fill="#61DBFB"/><ellipse cx="50" cy="50" rx="44" ry="17" stroke="#61DBFB" stroke-width="5" fill="none"/><ellipse cx="50" cy="50" rx="44" ry="17" stroke="#61DBFB" stroke-width="5" fill="none" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="44" ry="17" stroke="#61DBFB" stroke-width="5" fill="none" transform="rotate(120 50 50)"/></svg>
+        </div>
+        <div class="card-text-b selected-b"><h4>React / Next.js</h4><p>ZIP téléchargeable · TypeScript</p></div>
+      </div>
+      <div class="stack-card-b">
+        <div class="icon-b">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#7c78c8" stroke-width="1.5"/><path d="M8 12h8M12 8v8" stroke="#7c78c8" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="card-text-b"><h4>Laravel + React</h4><p>Full-stack · API + SPA</p></div>
+      </div>
+    </div>
+    <div class="dir-label">
+      <span class="dir-badge my-rec">★ Recommandé</span>
+      <h3>B — Vivid Glow</h3>
+      <p>Fond encore plus sombre, accent indigo très marqué au hover/selected. Glow lumineux sur la carte active.</p>
+    </div>
+  </div>
+
+  <!-- C: Gradient Borders -->
+  <div class="dir" onclick="toggleDir(this,'c')">
+    <div class="preview dir-c">
+      <div class="stack-card-c-wrap laravel">
+        <div class="stack-card-c">
+          <div class="icon-c laravel">
+            <svg width="20" height="20" viewBox="0 0 50 52" fill="none"><path d="M49.3 14.4L37.6 1.4A3 3 0 0035.4.5H15.5a3 3 0 00-2.2 1L1.7 14.4A3 3 0 001 16.3v19.4a3 3 0 00.7 1.9l11.6 13a3 3 0 002.2 1h19.9a3 3 0 002.2-1L49 37.6a3 3 0 00.7-1.9V16.3a3 3 0 00-.4-1.9z" fill="#FF2D20"/></svg>
+          </div>
+          <div class="card-text-c"><h4>Laravel</h4><p>API REST · Eloquent · Artisan</p></div>
+        </div>
+      </div>
+      <div class="stack-card-c-wrap none">
+        <div class="stack-card-c">
+          <div class="icon-c react">
+            <svg width="20" height="20" viewBox="0 0 100 100" fill="none"><ellipse cx="50" cy="50" rx="11" ry="11" fill="#61DBFB"/><ellipse cx="50" cy="50" rx="44" ry="17" stroke="#61DBFB" stroke-width="5" fill="none"/><ellipse cx="50" cy="50" rx="44" ry="17" stroke="#61DBFB" stroke-width="5" fill="none" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="44" ry="17" stroke="#61DBFB" stroke-width="5" fill="none" transform="rotate(120 50 50)"/></svg>
+          </div>
+          <div class="card-text-c"><h4>React / Next.js</h4><p>ZIP téléchargeable · TypeScript</p></div>
+        </div>
+      </div>
+      <div class="stack-card-c-wrap both">
+        <div class="stack-card-c">
+          <div class="icon-c both">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#c4a0ff" stroke-width="1.5"/><path d="M8 12h8M12 8v8" stroke="#c4a0ff" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <div class="card-text-c"><h4>Laravel + React</h4><p>Full-stack · API + SPA</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="dir-label">
+      <h3>C — Gradient Borders</h3>
+      <p>Chaque carte a un border gradient de la couleur de son stack. Plus flashy, plus "tech product".</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function toggleDir(el, choice) {
+  document.querySelectorAll('.dir').forEach(d => d.classList.remove('selected'));
+  el.classList.add('selected');
+  if (window.recordChoice) window.recordChoice(choice, el.querySelector('h3').textContent.trim());
+}
+</script>
+</body>
+</html>

@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@stack-init/schema": ["./src/types/schema.ts"]
     }
   },
   "include": [

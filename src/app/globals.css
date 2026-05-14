@@ -1,26 +1,631 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
+
+/* ================================================================
+   Stack-Init Design System — Premium Dark Mode
+   Refined indigo accent · Glass surfaces · Generous spacing
+   ================================================================ */
 
 @theme inline {
+  /* ── Brand Colors ────────────────────────────────────────────── */
+  --color-si-bg:        #0a0b14;
+  --color-si-bg-raised: #12131f;
+  --color-si-bg-card:   #16172a;
+  --color-si-surface:   rgba(108, 99, 255, 0.04);
+  --color-si-indigo:    #6C63FF;
+  --color-si-indigo-hover: #5851E6;
+  --color-si-text:      #e2e4ed;
+  --color-si-text-dim:  #8b8fa3;
+  --color-si-text-muted:#5c6078;
+  --color-si-border:    rgba(255, 255, 255, 0.07);
+  --color-si-border-strong: rgba(255, 255, 255, 0.12);
+
+  /* ── Shadcn Semantic Color Mapping ──────────────────────────── */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* ── Typography ─────────────────────────────────────────────── */
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-ibm-plex-mono);
+  --font-heading: var(--font-space-grotesk);
+
+  /* ── Border Radius ──────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-full: 9999px;
+  --radius-cards: 14px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ================================================================
+   Dark Theme — Default
+   ================================================================ */
+
+:root {
+  /* Shadcn semantic */
+  --background: #0a0b14;
+  --foreground: #e2e4ed;
+  --card: #16172a;
+  --card-foreground: #e2e4ed;
+  --popover: #12131f;
+  --popover-foreground: #e2e4ed;
+  --primary: #6C63FF;
+  --primary-foreground: #ffffff;
+  --secondary: rgba(108, 99, 255, 0.08);
+  --secondary-foreground: #c5c8d8;
+  --muted: #1e2035;
+  --muted-foreground: #8b8fa3;
+  --accent: rgba(108, 99, 255, 0.10);
+  --accent-foreground: #c5c8d8;
+  --destructive: #E24B4A;
+  --border: rgba(255, 255, 255, 0.07);
+  --input: rgba(255, 255, 255, 0.05);
+  --ring: #6C63FF;
+  --chart-1: #6C63FF;
+  --chart-2: #8b8fa3;
+  --chart-3: #5c6078;
+  --chart-4: #c5c8d8;
+  --chart-5: #e2e4ed;
+  --radius: 0.625rem;
+  --sidebar: #0e0f1a;
+  --sidebar-foreground: #e2e4ed;
+  --sidebar-primary: #6C63FF;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(108, 99, 255, 0.08);
+  --sidebar-accent-foreground: #c5c8d8;
+  --sidebar-border: rgba(255, 255, 255, 0.07);
+  --sidebar-ring: #6C63FF;
+
+  /* Stack-Init design tokens */
+  --si-accent:         #6C63FF;
+  --si-accent-hover:   #5851E6;
+  --si-accent-subtle:  rgba(108, 99, 255, 0.10);
+  --si-accent-border:  rgba(108, 99, 255, 0.25);
+  --si-accent-glow:    rgba(108, 99, 255, 0.35);
+  --si-danger:         #E24B4A;
+  --si-success:        #34D399;
+  --si-warning:        #FBBF24;
+}
+
+/* ================================================================
+   Base Styles
+   ================================================================ */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans antialiased;
+    scroll-behavior: smooth;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ================================================================
+   Utilities
+   ================================================================ */
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
+  }
+
+  .font-mono-tabular {
+    font-family: var(--font-mono);
+    letter-spacing: 0.1px;
+    font-feature-settings: "tnum";
+  }
+
+  .glass-card {
+    background: rgba(22, 23, 42, 0.6);
+    border-radius: var(--radius-cards);
+    backdrop-filter: blur(24px) saturate(1.2);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.04),
+      0 0 0 1px rgba(255, 255, 255, 0.05),
+      0 20px 40px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  .glass-surface {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(12px);
+  }
+
+  .gradient-divider {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(108, 99, 255, 0.2),
+      transparent
+    );
+    height: 1px;
+  }
+
+  .gradient-glow {
+    background: linear-gradient(
+      135deg,
+      #6C63FF 0%,
+      #a78bfa 100%
+    );
+  }
+}
+
+/* ================================================================
+   Reduced Motion
+   ================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* ================================================================
+   Stack-Init Component System — Dark Mode
+   ================================================================ */
+
+@layer components {
+
+  /* ─── Wizard Layout ────────────────────────────────────────── */
+
+  .si-wizard-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+    background: #0a0b14;
+    color: #e2e4ed;
+  }
+
+  .si-wizard-sidebar {
+    background: #0e0f1a;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 28px 20px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .si-wizard-main {
+    padding: 48px 56px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+
+  .si-wizard-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 24px;
+    margin-top: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* ─── Sidebar Steps ────────────────────────────────────────── */
+
+  .si-step-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #5c6078;
+    transition: all 0.2s ease;
+    user-select: none;
+  }
+  .si-step-item:hover {
+    color: #8b8fa3;
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .si-step-item.active {
+    background: rgba(108, 99, 255, 0.10);
+    color: #a59bff;
+    font-weight: 500;
+  }
+  .si-step-item.done {
+    color: #c5c8d8;
+  }
+
+  .si-step-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.10);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 500;
+    color: #5c6078;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+    background: transparent;
+  }
+  .si-step-item.done .si-step-dot {
+    background: #6C63FF;
+    border-color: #6C63FF;
+    color: #fff;
+    box-shadow: 0 0 12px rgba(108, 99, 255, 0.3);
+  }
+  .si-step-item.active .si-step-dot {
+    border-color: #6C63FF;
+    color: #a59bff;
+    background: rgba(108, 99, 255, 0.12);
+  }
+
+  /* ─── Buttons ──────────────────────────────────────────────── */
+
+  .si-btn-primary {
+    background: #6C63FF;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 22px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 200ms ease;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(108, 99, 255, 0.2);
+    letter-spacing: -0.01em;
+  }
+  .si-btn-primary:hover:not(:disabled) {
+    background: #5851E6;
+    box-shadow: 0 0 28px rgba(108, 99, 255, 0.35);
+    transform: translateY(-1px);
+  }
+  .si-btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  .si-btn-primary:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .si-btn-secondary {
+    background: rgba(255, 255, 255, 0.04);
+    color: #c5c8d8;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 10px 22px;
+    font-size: 14px;
+    transition: all 200ms ease;
+    cursor: pointer;
+    letter-spacing: -0.01em;
+  }
+  .si-btn-secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #e2e4ed;
+  }
+  .si-btn-secondary:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .si-btn-ghost {
+    background: none;
+    border: none;
+    color: #a59bff;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 150ms;
+    font-weight: 500;
+  }
+  .si-btn-ghost:hover {
+    color: #c5bfff;
+  }
+
+  .si-btn-danger {
+    background: none;
+    color: #E24B4A;
+    border: 1px solid rgba(226, 75, 74, 0.2);
+    border-radius: 10px;
+    padding: 10px 22px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 200ms;
+  }
+  .si-btn-danger:hover {
+    background: rgba(226, 75, 74, 0.08);
+    border-color: rgba(226, 75, 74, 0.35);
+  }
+
+  .si-btn-icon {
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5c6078;
+    cursor: pointer;
+    transition: all 150ms;
+  }
+  .si-btn-icon:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e4ed;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  /* ─── Progress Dots ────────────────────────────────────────── */
+
+  .si-progress-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.10);
+    transition: all 0.3s ease;
+  }
+  .si-progress-dot.active {
+    background: #6C63FF;
+    box-shadow: 0 0 8px rgba(108, 99, 255, 0.4);
+  }
+
+  /* ─── Cards ────────────────────────────────────────────────── */
+
+  .si-card {
+    background: rgba(22, 23, 42, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    backdrop-filter: blur(12px);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .si-card:hover {
+    border-color: rgba(255, 255, 255, 0.10);
+  }
+
+  .si-card-header {
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .si-card-body {
+    padding: 16px 18px;
+  }
+
+  /* ─── Inputs ───────────────────────────────────────────────── */
+
+  .si-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #e2e4ed;
+    transition: all 0.2s ease;
+    outline: none;
+  }
+  .si-input::placeholder {
+    color: #5c6078;
+  }
+  .si-input:focus {
+    border-color: rgba(108, 99, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.12);
+    background: rgba(108, 99, 255, 0.03);
+  }
+
+  .si-select {
+    appearance: none;
+    padding: 10px 36px 10px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #e2e4ed;
+    transition: all 0.2s ease;
+    outline: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235c6078' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+  .si-select:focus {
+    border-color: rgba(108, 99, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.12);
+  }
+
+  /* ─── Badges ───────────────────────────────────────────────── */
+
+  .si-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  .si-badge-purple { background: rgba(108, 99, 255, 0.15); color: #a59bff; }
+  .si-badge-teal   { background: rgba(52, 211, 153, 0.12); color: #6ee7b7; }
+  .si-badge-amber  { background: rgba(251, 191, 36, 0.12); color: #fcd34d; }
+  .si-badge-gray   { background: rgba(255, 255, 255, 0.06); color: #8b8fa3; }
+  .si-badge-red    { background: rgba(226, 75, 74, 0.12);  color: #fca5a5; }
+
+  /* ─── Toggle Cards ─────────────────────────────────────────── */
+
+  .si-toggle-card {
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+  }
+  .si-toggle-card:hover {
+    border-color: rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .si-toggle-card.on {
+    border-color: rgba(108, 99, 255, 0.30);
+    background: rgba(108, 99, 255, 0.06);
+  }
+  .si-toggle-card.on:hover {
+    border-color: rgba(108, 99, 255, 0.40);
+    background: rgba(108, 99, 255, 0.08);
+  }
+
+  /* ─── Toggle Switch ────────────────────────────────────────── */
+
+  .si-toggle {
+    width: 40px;
+    height: 22px;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.10);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.25s ease;
+    flex-shrink: 0;
+  }
+  .si-toggle.on {
+    background: #6C63FF;
+    box-shadow: 0 0 10px rgba(108, 99, 255, 0.3);
+  }
+  .si-toggle-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left 0.25s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+  .si-toggle.on .si-toggle-knob {
+    left: 21px;
+  }
+
+  /* ─── Field Row ────────────────────────────────────────────── */
+
+  .si-field-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    font-size: 13px;
+  }
+  .si-field-row:last-child {
+    border-bottom: none;
+  }
+
+  /* ─── Info Card (accent left border) ───────────────────────── */
+
+  .si-info-card {
+    border-left: 3px solid #6C63FF;
+    border-radius: 10px;
+    background: rgba(108, 99, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    border-right: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 16px 20px;
+  }
+
+  /* ─── Stack Card (selection cards) ─────────────────────────── */
+
+  .si-stack-card {
+    border: 1.5px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .si-stack-card:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.035);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.4);
+  }
+  .si-stack-card.selected {
+    border-color: rgba(108, 99, 255, 0.5);
+    background: rgba(108, 99, 255, 0.08);
+    box-shadow: 0 0 24px rgba(108, 99, 255, 0.12);
+  }
+
+  /* ─── Section Label ────────────────────────────────────────── */
+
+  .si-section-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #5c6078;
+    margin-bottom: 12px;
+  }
+
+  /* ─── Typography helpers ───────────────────────────────────── */
+
+  .si-title {
+    font-size: 26px;
+    font-weight: 500;
+    color: #e2e4ed;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .si-subtitle {
+    font-size: 15px;
+    color: #8b8fa3;
+    line-height: 1.6;
+  }
 }

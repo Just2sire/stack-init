@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scope du refresh</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #0a0b14;
+  color: #e2e4ed;
+  padding: 36px 28px 80px;
+}
+h1 { font-size: 21px; font-weight: 600; margin-bottom: 6px; }
+.sub { font-size: 13.5px; color: #5c6078; margin-bottom: 36px; }
+
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media(max-width:760px){ .pair { grid-template-columns: 1fr; } }
+
+.opt {
+  border: 1.5px solid rgba(255,255,255,.07);
+  border-radius: 16px; overflow: hidden;
+  cursor: pointer;
+  transition: border-color .2s, box-shadow .15s, transform .15s;
+}
+.opt:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.14); }
+.opt.picked { border-color: #6C63FF; box-shadow: 0 0 0 3px rgba(108,99,255,.2); }
+
+/* ─── Mockup shared ─── */
+.mock {
+  display: flex;
+  height: 340px;
+  overflow: hidden;
+  font-size: 11px;
+}
+
+/* Sidebar */
+.sb {
+  width: 180px; flex-shrink: 0;
+  padding: 18px 14px;
+  border-right: 1px solid rgba(255,255,255,.05);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.sb-logo {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 20px;
+}
+.sb-logo-box {
+  width: 28px; height: 28px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.sb-logo-text { font-size: 13px; font-weight: 700; }
+
+.step-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 8px; border-radius: 8px;
+  color: #3d4057;
+}
+.step-row.active { background: rgba(255,255,255,.03); }
+.step-dot {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700;
+  border: 1.5px solid #2a2c3e; color: #3d4057;
+}
+.step-label { font-size: 11.5px; }
+
+/* Main */
+.main-area {
+  flex: 1; padding: 20px 22px;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+/* ─── OPTION A: Minimal / targeted ─── */
+.mock-a .sb { background: #0d0f1e; }
+.mock-a .sb-logo-box { background: rgba(108,99,255,.15); }
+.mock-a .sb-logo-text { color: #e2e4ed; }
+.mock-a .step-row.active .step-dot { border-color: #6C63FF; color: #a59bff; background: rgba(108,99,255,.12); }
+.mock-a .step-row.active .step-label { color: #e2e4ed; }
+.mock-a .main-area { background: #0a0b14; }
+
+.mock-a .m-title { font-size: 17px; font-weight: 700; color: #e2e4ed; margin-bottom: 4px; }
+.mock-a .m-sub   { font-size: 11px; color: #5c6078; margin-bottom: 16px; }
+
+.mini-cards-a { display: flex; flex-direction: column; gap: 7px; }
+.mcard-a {
+  border-radius: 10px; padding: 10px 12px;
+  display: flex; align-items: center; gap: 10px;
+  border: 1.5px solid rgba(255,255,255,.06);
+  background: rgba(255,255,255,.02);
+}
+.mcard-a.lar { border-color: rgba(255,45,32,.28); background: rgba(255,45,32,.05); }
+.mcard-a.rea { border-color: rgba(97,219,251,.22); background: rgba(97,219,251,.04); }
+.mcard-a.mix { border-color: rgba(108,99,255,.32); background: rgba(108,99,255,.07); }
+.mcard-icon { width: 26px; height: 26px; border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.mcard-a.lar .mcard-icon { background: rgba(255,45,32,.15); }
+.mcard-a.rea .mcard-icon { background: rgba(97,219,251,.1); }
+.mcard-a.mix .mcard-icon { background: rgba(108,99,255,.18); }
+.mcard-name { font-size: 11.5px; font-weight: 600; }
+.mcard-a.lar .mcard-name { color: #ff7a6e; }
+.mcard-a.rea .mcard-name { color: #7ee6ff; }
+.mcard-a.mix .mcard-name { color: #b3adff; }
+.mcard-desc { font-size: 9.5px; color: #5c6078; margin-top: 1px; }
+
+/* ─── OPTION B: Full energy ─── */
+.mock-b .sb {
+  background: linear-gradient(180deg, #0e0f20 0%, #0a0b18 100%);
+}
+.mock-b .sb::before {
+  /* accent glow top */
+}
+.mock-b .sb-logo-box {
+  background: linear-gradient(135deg, #6C63FF, #9b87ff);
+}
+.mock-b .sb-logo-text { color: #fff; }
+
+.mock-b .step-row.active .step-dot {
+  background: linear-gradient(135deg, #6C63FF, #a87fff);
+  border-color: transparent; color: #fff;
+}
+.mock-b .step-row.active .step-label { color: #fff; font-weight: 600; }
+.mock-b .step-row.done .step-dot { background: rgba(52,211,153,.15); border-color: rgba(52,211,153,.4); color: #6ee7b7; }
+.mock-b .step-row.done .step-label { color: #6ee7b7; }
+
+.mock-b .main-area {
+  background: #0a0b14;
+  position: relative;
+}
+.mock-b .main-area::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 200px; height: 200px;
+  background: radial-gradient(ellipse, rgba(108,99,255,.12), transparent 65%);
+  pointer-events: none;
+}
+
+.mock-b .m-title {
+  font-size: 17px; font-weight: 800; margin-bottom: 4px;
+  background: linear-gradient(90deg, #fff 40%, #a59bff 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.mock-b .m-sub { font-size: 11px; color: #5c6078; margin-bottom: 16px; }
+
+.mini-cards-b { display: flex; flex-direction: column; gap: 7px; }
+.mcard-b {
+  border-radius: 10px; padding: 10px 12px;
+  display: flex; align-items: center; gap: 10px;
+  border: 1.5px solid rgba(255,255,255,.06);
+  background: rgba(255,255,255,.025);
+}
+.mcard-b.lar { border-color: rgba(255,45,32,.35); background: rgba(255,45,32,.07); box-shadow: 0 2px 12px rgba(255,45,32,.08); }
+.mcard-b.rea { border-color: rgba(97,219,251,.3); background: rgba(97,219,251,.06); box-shadow: 0 2px 12px rgba(97,219,251,.06); }
+.mcard-b.mix { border-color: rgba(108,99,255,.4); background: rgba(108,99,255,.09); box-shadow: 0 2px 16px rgba(108,99,255,.12); }
+.mcard-b.lar .mcard-icon { background: rgba(255,45,32,.18); }
+.mcard-b.rea .mcard-icon { background: rgba(97,219,251,.14); }
+.mcard-b.mix .mcard-icon { background: rgba(108,99,255,.22); }
+.mcard-b.lar .mcard-name { color: #ff7a6e; }
+.mcard-b.rea .mcard-name { color: #7ee6ff; }
+.mcard-b.mix .mcard-name { color: #b3adff; }
+
+/* Pill tags */
+.pill {
+  display: inline-block; padding: 2px 7px; border-radius: 20px;
+  font-size: 9px; font-weight: 600; letter-spacing: .04em;
+  margin-left: auto;
+}
+.lar .pill { background: rgba(255,45,32,.15); color: #ff7a6e; border: 1px solid rgba(255,45,32,.2); }
+.rea .pill { background: rgba(97,219,251,.12); color: #7ee6ff; border: 1px solid rgba(97,219,251,.2); }
+.mix .pill { background: rgba(108,99,255,.15); color: #b3adff; border: 1px solid rgba(108,99,255,.25); }
+
+/* Opt label */
+.opt-label {
+  padding: 13px 16px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  background: rgba(255,255,255,.015);
+}
+.opt-label .name { font-size: 13px; font-weight: 600; color: #e2e4ed; margin-bottom: 3px; }
+.opt-label .desc { font-size: 11.5px; color: #5c6078; line-height: 1.5; }
+.rec-tag {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 20px; margin-bottom: 6px;
+  background: rgba(52,211,153,.1); color: #6ee7b7;
+  border: 1px solid rgba(52,211,153,.2);
+}
+
+/* SVG icons inline */
+svg.i-lar { display: block; }
+</style>
+</head>
+<body>
+
+<h1>Jusqu'où aller ?</h1>
+<p class="sub">Les logos sur les stack cards dans les deux cas. La question : est-ce que le reste du wizard suit ?</p>
+
+<div class="pair">
+
+  <!-- Option A: Targeted -->
+  <div class="opt" onclick="pick(this,'targeted')">
+    <div class="mock mock-a">
+
+      <div class="sb">
+        <div class="sb-logo">
+          <div class="sb-logo-box">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3L3 7.5V16.5L12 21L21 16.5V7.5L12 3Z" stroke="#a59bff" stroke-width="2" fill="rgba(108,99,255,.3)"/></svg>
+          </div>
+          <div class="sb-logo-text">Stack-Init</div>
+        </div>
+        <div class="step-row done">
+          <div class="step-dot">✓</div>
+          <div class="step-label" style="color:#3d4057">Stack</div>
+        </div>
+        <div class="step-row active">
+          <div class="step-dot">2</div>
+          <div class="step-label">Models</div>
+        </div>
+        <div class="step-row">
+          <div class="step-dot">3</div>
+          <div class="step-label">Relations</div>
+        </div>
+        <div class="step-row">
+          <div class="step-dot">4</div>
+          <div class="step-label">Laravel</div>
+        </div>
+        <div class="step-row">
+          <div class="step-dot">5</div>
+          <div class="step-label">Output</div>
+        </div>
+      </div>
+
+      <div class="main-area">
+        <div class="m-title">Project setup</div>
+        <div class="m-sub">Choisissez votre stack et nommez le projet.</div>
+        <div class="mini-cards-a">
+          <div class="mcard-a lar">
+            <div class="mcard-icon">
+              <svg width="14" height="14" viewBox="0 0 50 52" fill="none"><path d="M49.626 11.564a.809.809 0 01.028.209v10.972a.8.8 0 01-.402.694l-9.209 5.302v10.527a.8.8 0 01-.402.694L20.42 51.408l-.024.007a.8.8 0 01-.453 0l-.024-.007L.402 40.962A.8.8 0 010 40.268V8.425a.809.809 0 01.028-.209L9.34.192a.8.8 0 01.8 0l9.274 5.348v21.232l8.008-4.617V11.358a.809.809 0 01.028-.21l9.018-5.199a.8.8 0 01.8 0l9.018 5.199.152.141.025.033a.775.775 0 01.115.238l.006.018z" fill="#FF2D20"/></svg>
+            </div>
+            <div>
+              <div class="mcard-name">Laravel</div>
+              <div class="mcard-desc">API · Eloquent · Artisan</div>
+            </div>
+          </div>
+          <div class="mcard-a rea">
+            <div class="mcard-icon">
+              <svg width="14" height="14" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="10" fill="#61DBFB"/><ellipse cx="50" cy="50" rx="44" ry="16" stroke="#61DBFB" stroke-width="5" fill="none"/><ellipse cx="50" cy="50" rx="44" ry="16" stroke="#61DBFB" stroke-width="5" fill="none" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="44" ry="16" stroke="#61DBFB" stroke-width="5" fill="none" transform="rotate(120 50 50)"/></svg>
+            </div>
+            <div>
+              <div class="mcard-name">React / Next.js</div>
+              <div class="mcard-desc">ZIP download · TypeScript</div>
+            </div>
+          </div>
+          <div class="mcard-a mix">
+            <div class="mcard-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3L3 7.5V16.5L12 21L21 16.5V7.5L12 3Z" stroke="#a59bff" stroke-width="1.5" fill="none"/><path d="M3 7.5L12 12L21 7.5M12 12V21" stroke="#a59bff" stroke-width="1.5"/></svg>
+            </div>
+            <div>
+              <div class="mcard-name">Laravel + React</div>
+              <div class="mcard-desc">Full-stack · API + SPA</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="opt-label">
+      <div class="name">Ciblé — Stack cards uniquement</div>
+      <div class="desc">Logos + couleurs brand sur les cartes de sélection. Le reste du wizard reste minimal et sombre.</div>
+    </div>
+  </div>
+
+  <!-- Option B: Full energy -->
+  <div class="opt" onclick="pick(this,'full')">
+    <div class="mock mock-b">
+
+      <div class="sb">
+        <div class="sb-logo">
+          <div class="sb-logo-box">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3L3 7.5V16.5L12 21L21 16.5V7.5L12 3Z" stroke="#fff" stroke-width="2" fill="rgba(255,255,255,.2)"/></svg>
+          </div>
+          <div class="sb-logo-text">Stack-Init</div>
+        </div>
+        <div class="step-row done">
+          <div class="step-dot">✓</div>
+          <div class="step-label">Stack</div>
+        </div>
+        <div class="step-row active">
+          <div class="step-dot">2</div>
+          <div class="step-label">Models</div>
+        </div>
+        <div class="step-row">
+          <div class="step-dot">3</div>
+          <div class="step-label">Relations</div>
+        </div>
+        <div class="step-row">
+          <div class="step-dot">4</div>
+          <div class="step-label">Laravel</div>
+        </div>
+        <div class="step-row">
+          <div class="step-dot">5</div>
+          <div class="step-label">Output</div>
+        </div>
+      </div>
+
+      <div class="main-area">
+        <div class="m-title">Project setup</div>
+        <div class="m-sub">Choisissez votre stack et nommez le projet.</div>
+        <div class="mini-cards-b">
+          <div class="mcard-b lar">
+            <div class="mcard-icon">
+              <svg width="14" height="14" viewBox="0 0 50 52" fill="none"><path d="M49.626 11.564a.809.809 0 01.028.209v10.972a.8.8 0 01-.402.694l-9.209 5.302v10.527a.8.8 0 01-.402.694L20.42 51.408l-.024.007a.8.8 0 01-.453 0l-.024-.007L.402 40.962A.8.8 0 010 40.268V8.425a.809.809 0 01.028-.209L9.34.192a.8.8 0 01.8 0l9.274 5.348v21.232l8.008-4.617V11.358a.809.809 0 01.028-.21l9.018-5.199a.8.8 0 01.8 0l9.018 5.199z" fill="#FF2D20"/></svg>
+            </div>
+            <div>
+              <div class="mcard-name">Laravel</div>
+              <div class="mcard-desc">API · Eloquent · Artisan</div>
+            </div>
+            <div class="pill">PHP</div>
+          </div>
+          <div class="mcard-b rea">
+            <div class="mcard-icon">
+              <svg width="14" height="14" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="10" fill="#61DBFB"/><ellipse cx="50" cy="50" rx="44" ry="16" stroke="#61DBFB" stroke-width="5" fill="none"/><ellipse cx="50" cy="50" rx="44" ry="16" stroke="#61DBFB" stroke-width="5" fill="none" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="44" ry="16" stroke="#61DBFB" stroke-width="5" fill="none" transform="rotate(120 50 50)"/></svg>
+            </div>
+            <div>
+              <div class="mcard-name">React / Next.js</div>
+              <div class="mcard-desc">ZIP download · TypeScript</div>
+            </div>
+            <div class="pill">TS</div>
+          </div>
+          <div class="mcard-b mix">
+            <div class="mcard-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3L3 7.5V16.5L12 21L21 16.5V7.5L12 3Z" stroke="#b3adff" stroke-width="1.5" fill="none"/><path d="M3 7.5L12 12L21 7.5M12 12V21" stroke="#b3adff" stroke-width="1.5"/></svg>
+            </div>
+            <div>
+              <div class="mcard-name">Laravel + React</div>
+              <div class="mcard-desc">Full-stack · API + SPA</div>
+            </div>
+            <div class="pill">Full</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="opt-label">
+      <div class="rec-tag">★ Recommandé</div>
+      <div class="name">Full refresh — Tout le wizard</div>
+      <div class="desc">Sidebar avec step dot gradients, titre en dégradé, glow ambiant, badges de stack. Cohérent de bout en bout.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function pick(el, c) {
+  document.querySelectorAll('.opt').forEach(o => o.classList.remove('picked'));
+  el.classList.add('picked');
+  if (window.recordChoice) window.recordChoice(c, el.querySelector('.name').textContent);
+}
+</script>
+</body>
+</html>

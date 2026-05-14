@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction visuelle</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #0a0b14;
+  color: #e2e4ed;
+  padding: 40px 32px 80px;
+  min-height: 100vh;
+}
+h1 { font-size: 22px; font-weight: 600; margin-bottom: 6px; letter-spacing: -0.3px; }
+.sub { font-size: 14px; color: #5c6078; margin-bottom: 40px; }
+
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+@media(max-width:860px){ .grid { grid-template-columns: 1fr; } }
+
+/* Direction card wrapper */
+.dir-wrap {
+  border-radius: 16px;
+  border: 1.5px solid rgba(255,255,255,0.07);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color .2s, box-shadow .2s, transform .15s;
+}
+.dir-wrap:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.14); }
+.dir-wrap.picked { border-color: #6C63FF; box-shadow: 0 0 0 3px rgba(108,99,255,.2); }
+
+.preview { padding: 20px 16px; display: flex; flex-direction: column; gap: 8px; }
+.footer-label {
+  padding: 14px 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
+}
+.footer-label .name { font-size: 13px; font-weight: 600; color: #e2e4ed; margin-bottom: 4px; }
+.footer-label .desc { font-size: 11.5px; color: #5c6078; line-height: 1.5; }
+.rec-tag {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 20px; margin-bottom: 6px;
+  background: rgba(52,211,153,.12); color: #6ee7b7;
+  border: 1px solid rgba(52,211,153,.2);
+}
+
+/* ════════════════ A — BRAND COLORS ════════════════ */
+.preview-a { background: #0d0f1e; }
+
+.bc-card {
+  border-radius: 11px; padding: 12px 14px;
+  display: flex; align-items: center; gap: 11px;
+  border: 1.5px solid transparent;
+}
+.bc-card.lar { background: rgba(255,45,32,.06); border-color: rgba(255,45,32,.3); }
+.bc-card.rea { background: rgba(97,219,251,.05); border-color: rgba(97,219,251,.25); }
+.bc-card.mix { background: rgba(108,99,255,.07); border-color: rgba(108,99,255,.35); }
+
+.bc-icon {
+  width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.bc-icon.lar { background: rgba(255,45,32,.15); }
+.bc-icon.rea { background: rgba(97,219,251,.12); }
+.bc-icon.mix { background: rgba(108,99,255,.18); }
+
+.bc-text .t { font-size: 12.5px; font-weight: 600; }
+.bc-text .s { font-size: 10.5px; color: #5c6078; margin-top: 1px; }
+.bc-card.lar .t { color: #ff7a6e; }
+.bc-card.rea .t { color: #7ee6ff; }
+.bc-card.mix .t { color: #b3adff; }
+
+/* ════════════════ B — VIVID GLOW (reco) ════════════════ */
+.preview-b {
+  background: #07080f;
+  position: relative; overflow: hidden;
+}
+.preview-b::before {
+  content: '';
+  position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+  width: 300px; height: 200px;
+  background: radial-gradient(ellipse, rgba(108,99,255,.22) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.vg-card {
+  border-radius: 11px; padding: 12px 14px;
+  display: flex; align-items: center; gap: 11px;
+  border: 1px solid rgba(255,255,255,.05);
+  background: rgba(255,255,255,.02);
+  position: relative;
+}
+.vg-card.active {
+  border-color: rgba(108,99,255,.65);
+  background: rgba(108,99,255,.1);
+  box-shadow: 0 0 22px rgba(108,99,255,.2), inset 0 1px 0 rgba(255,255,255,.06);
+}
+.vg-icon {
+  width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.04);
+}
+.vg-card.active .vg-icon {
+  background: rgba(108,99,255,.25);
+  box-shadow: 0 0 10px rgba(108,99,255,.4);
+}
+.vg-text .t { font-size: 12.5px; font-weight: 600; color: #8b8fa3; }
+.vg-text .s { font-size: 10.5px; color: #3d4057; margin-top: 1px; }
+.vg-card.active .vg-text .t { color: #fff; }
+.vg-card.active .vg-text .s { color: #7c78c8; }
+
+/* ════════════════ C — GRADIENT BORDERS ════════════════ */
+.preview-c { background: #08090f; }
+
+.gb-outer {
+  border-radius: 12px; padding: 1.5px;
+}
+.gb-outer.lar { background: linear-gradient(135deg, #ff5722 0%, #ff2d20 50%, #f87171 100%); }
+.gb-outer.rea { background: linear-gradient(135deg, #61DBFB 0%, #0ea5e9 50%, #38bdf8 100%); }
+.gb-outer.mix { background: linear-gradient(135deg, #6C63FF 0%, #a855f7 50%, #ec4899 100%); }
+
+.gb-inner {
+  border-radius: 10.5px; padding: 12px 14px;
+  display: flex; align-items: center; gap: 11px;
+  background: #0f1020;
+}
+.gb-icon {
+  width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.gb-outer.lar .gb-icon { background: rgba(255,87,34,.15); }
+.gb-outer.rea .gb-icon { background: rgba(97,219,251,.12); }
+.gb-outer.mix .gb-icon { background: rgba(168,85,247,.15); }
+.gb-text .t { font-size: 12.5px; font-weight: 600; color: #e2e4ed; }
+.gb-text .s { font-size: 10.5px; color: #5c6078; margin-top: 1px; }
+</style>
+</head>
+<body>
+
+<h1>Direction visuelle</h1>
+<p class="sub">Même fond sombre dans les 3 cas — la différence est dans l'usage des couleurs.</p>
+
+<div class="grid">
+
+  <!-- ── A ── -->
+  <div class="dir-wrap" onclick="pick(this,'A')">
+    <div class="preview preview-a">
+
+      <div class="bc-card lar">
+        <div class="bc-icon lar">
+          <!-- Laravel logo -->
+          <svg width="20" height="20" viewBox="0 0 50 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M49.626 11.564a.809.809 0 01.028.209v10.972a.8.8 0 01-.402.694l-9.209 5.302-.032.018v10.509a.8.8 0 01-.402.694L20.42 51.408a.772.772 0 01-.119.049l-.024.007a.8.8 0 01-.453 0l-.024-.007a.772.772 0 01-.12-.049L.402 40.962A.8.8 0 010 40.268V8.425a.809.809 0 01.028-.209l.006-.019a.774.774 0 01.115-.237l.025-.033c.045-.053.096-.1.152-.141L9.34.192a.8.8 0 01.8 0l9.274 5.348a.8.8 0 01.114.071c.008.005.016.011.024.017l.009.006.027.023.025.024.024.027.022.028.02.03.017.032.015.034.013.035.01.038.008.038.006.041.003.04.002.043v21.232l8.008-4.617V11.358a.809.809 0 01.028-.21l.006-.018a.775.775 0 01.115-.237l.025-.033c.045-.053.096-.1.153-.141l9.018-5.199a.8.8 0 01.8 0l9.018 5.199c.056.04.107.088.152.141l.025.033a.775.775 0 01.115.238l.006.018z" fill="#FF2D20"/>
+            <path d="M49.178 22.23L40.168 27.532V16.93l9.01-5.198v10.499zM39.767 38.055L20.02 49.409V38.808l19.748-11.354v10.6zM.801 9.22l8.96 5.173-8.96 5.171V9.22zm18.818 10.85V9.22L.4 19.563v.693l9.18 5.25 9.038-5.436zm-9.638 11.025L.4 25.717v14.55l18.819 10.854V38.808l-9.238-7.713zm.8 1.386l8.438 7.046-8.438 4.863V31.481zm10.038 5.94l19.748-11.354v-.692L20.62 14.021l-9.238 5.347 9.438 5.492v12.56z" fill="white" opacity=".5"/>
+          </svg>
+        </div>
+        <div class="bc-text">
+          <div class="t">Laravel</div>
+          <div class="s">API · Eloquent · Artisan</div>
+        </div>
+      </div>
+
+      <div class="bc-card rea">
+        <div class="bc-icon rea">
+          <!-- React logo -->
+          <svg width="20" height="20" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="10.5" fill="#61DBFB"/>
+            <ellipse cx="50" cy="50" rx="46" ry="17.5" stroke="#61DBFB" stroke-width="4.5" fill="none"/>
+            <ellipse cx="50" cy="50" rx="46" ry="17.5" stroke="#61DBFB" stroke-width="4.5" fill="none" transform="rotate(60 50 50)"/>
+            <ellipse cx="50" cy="50" rx="46" ry="17.5" stroke="#61DBFB" stroke-width="4.5" fill="none" transform="rotate(120 50 50)"/>
+          </svg>
+        </div>
+        <div class="bc-text">
+          <div class="t">React / Next.js</div>
+          <div class="s">ZIP download · TypeScript</div>
+        </div>
+      </div>
+
+      <div class="bc-card mix">
+        <div class="bc-icon mix">
+          <!-- Combined icon -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 3L3 7.5V16.5L12 21L21 16.5V7.5L12 3Z" stroke="#a59bff" stroke-width="1.5" fill="none"/>
+            <path d="M3 7.5L12 12M12 12L21 7.5M12 12V21" stroke="#a59bff" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="bc-text">
+          <div class="t">Laravel + React</div>
+          <div class="s">Full-stack · API + SPA</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="footer-label">
+      <div class="name">A — Brand Colors</div>
+      <div class="desc">Laravel rouge-orange, React cyan, mix violet. Chaque stack a son identité visuelle.</div>
+    </div>
+  </div>
+
+  <!-- ── B ── -->
+  <div class="dir-wrap" onclick="pick(this,'B')">
+    <div class="preview preview-b">
+
+      <div class="vg-card">
+        <div class="vg-icon">
+          <svg width="18" height="18" viewBox="0 0 50 52" fill="none"><path d="M49.626 11.564a.809.809 0 01.028.209v10.972a.8.8 0 01-.402.694l-9.209 5.302-.032.018v10.509a.8.8 0 01-.402.694L20.42 51.408a.772.772 0 01-.119.049l-.024.007a.8.8 0 01-.453 0l-.024-.007a.772.772 0 01-.12-.049L.402 40.962A.8.8 0 010 40.268V8.425a.809.809 0 01.028-.209l.006-.019a.774.774 0 01.115-.237l.025-.033c.045-.053.096-.1.152-.141L9.34.192a.8.8 0 01.8 0l9.274 5.348a.8.8 0 01.114.071c.008.005.016.011.024.017l.009.006.027.023.025.024.024.027.022.028.02.03.017.032.015.034.013.035.01.038.008.038.006.041.003.04.002.043v21.232l8.008-4.617V11.358a.809.809 0 01.028-.21l.006-.018a.775.775 0 01.115-.237l.025-.033c.045-.053.096-.1.153-.141l9.018-5.199a.8.8 0 01.8 0l9.018 5.199c.056.04.107.088.152.141l.025.033a.775.775 0 01.115.238l.006.018z" fill="#FF2D20"/></svg>
+        </div>
+        <div class="vg-text"><div class="t">Laravel</div><div class="s">API · Eloquent · Artisan</div></div>
+      </div>
+
+      <div class="vg-card active">
+        <div class="vg-icon">
+          <svg width="18" height="18" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="10.5" fill="#61DBFB"/><ellipse cx="50" cy="50" rx="46" ry="17.5" stroke="#61DBFB" stroke-width="4.5" fill="none"/><ellipse cx="50" cy="50" rx="46" ry="17.5" stroke="#61DBFB" stroke-width="4.5" fill="none" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="46" ry="17.5" stroke="#61DBFB" stroke-width="4.5" fill="none" transform="rotate(120 50 50)"/></svg>
+        </div>
+        <div class="vg-text"><div class="t">React / Next.js</div><div class="s">ZIP download · TypeScript</div></div>
+      </div>
+
+      <div class="vg-card">
+        <div class="vg-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3L3 7.5V16.5L12 21L21 16.5V7.5L12 3Z" stroke="#5c6078" stroke-width="1.5" fill="none"/><path d="M3 7.5L12 12M12 12L21 7.5M12 12V21" stroke="#5c6078" stroke-width="1.5"/></svg>
+        </div>
+        <div class="vg-text"><div class="t">Laravel + React</div><div class="s">Full-stack · API + SPA</div></div>
+      </div>
+
+    </div>
+    <div class="footer-label">
+      <div class="rec-tag">★ Recommandé</div>
+      <div class="name">B — Vivid Glow</div>
+      <div class="desc">Fond très sombre, accent indigo fort. La carte sélectionnée brille — les autres restent très discrètes.</div>
+    </div>
+  </div>
+
+  <!-- ── C ── -->
+  <div class="dir-wrap" onclick="pick(this,'C')">
+    <div class="preview preview-c">
+
+      <div class="gb-outer lar">
+        <div class="gb-inner">
+          <div class="gb-icon">
+            <svg width="18" height="18" viewBox="0 0 50 52" fill="none"><path d="M49.626 11.564a.809.809 0 01.028.209v10.972a.8.8 0 01-.402.694l-9.209 5.302-.032.018v10.509a.8.8 0 01-.402.694L20.42 51.408a.772.772 0 01-.119.049l-.024.007a.8.8 0 01-.453 0l-.024-.007a.772.772 0 01-.12-.049L.402 40.962A.8.8 0 010 40.268V8.425a.809.809 0 01.028-.209l.006-.019a.774.774 0 01.115-.237l.025-.033c.045-.053.096-.1.152-.141L9.34.192a.8.8 0 01.8 0l9.274 5.348a.8.8 0 01.114.071c.008.005.016.011.024.017l.009.006.027.023.025.024.024.027.022.028.02.03.017.032.015.034.013.035.01.038.008.038.006.041.003.04.002.043v21.232l8.008-4.617V11.358a.809.809 0 01.028-.21l.006-.018a.775.775 0 01.115-.237l.025-.033c.045-.053.096-.1.153-.141l9.018-5.199a.8.8 0 01.8 0l9.018 5.199c.056.04.107.088.152.141l.025.033a.775.775 0 01.115.238l.006.018z" fill="#FF2D20"/></svg>
+          </div>
+          <div class="gb-text"><div class="t">Laravel</div><div class="s">API · Eloquent · Artisan</div></div>
+        </div>
+      </div>
+
+      <div class="gb-outer rea">
+        <div class="gb-inner">
+          <div class="gb-icon">
+            <svg width="18" height="18" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="10.5" fill="#61DBFB"/><ellipse cx="50" cy="50" rx="46" ry="17.5" stroke="#61DBFB" stroke-width="4.5" fill="none"/><ellipse cx="50" cy="50" rx="46" ry="17.5" stroke="#61DBFB" stroke-width="4.5" fill="none" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="46" ry="17.5" stroke="#61DBFB" stroke-width="4.5" fill="none" transform="rotate(120 50 50)"/></svg>
+          </div>
+          <div class="gb-text"><div class="t">React / Next.js</div><div class="s">ZIP download · TypeScript</div></div>
+        </div>
+      </div>
+
+      <div class="gb-outer mix">
+        <div class="gb-inner">
+          <div class="gb-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3L3 7.5V16.5L12 21L21 16.5V7.5L12 3Z" stroke="#c084fc" stroke-width="1.5" fill="none"/><path d="M3 7.5L12 12M12 12L21 7.5M12 12V21" stroke="#c084fc" stroke-width="1.5"/></svg>
+          </div>
+          <div class="gb-text"><div class="t">Laravel + React</div><div class="s">Full-stack · API + SPA</div></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="footer-label">
+      <div class="name">C — Gradient Borders</div>
+      <div class="desc">Border gradient de la couleur du stack. Plus flashy, look "SaaS product".</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function pick(el, choice) {
+  document.querySelectorAll('.dir-wrap').forEach(d => d.classList.remove('picked'));
+  el.classList.add('picked');
+  if (window.recordChoice) window.recordChoice(choice, el.querySelector('.name').textContent);
+}
+</script>
+</body>
+</html>

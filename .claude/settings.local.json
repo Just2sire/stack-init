@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Desire\\\\Documents\\\\Projets\\\\Scaffolder\\\\stack-init\" -Force)",
+      "Bash(Select-Object Name)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(bash scripts/start-server.sh --project-dir \"C:\\\\Users\\\\Desire\\\\Documents\\\\Projets\\\\Scaffolder\\\\stack-init\")",
+      "Bash(xargs cat)"
+    ]
+  }
+}
