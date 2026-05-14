@@ -4,19 +4,6 @@ import {
   Settings2, Sparkles, Zap, FileCode, Globe, ShieldCheck,
 } from "lucide-react";
 
-/* ─────────────────────────────────────────────
-   Shared gradient style (reused in several places)
-───────────────────────────────────────────── */
-const gradientText = {
-  background: "linear-gradient(90deg, #ffffff 40%, #a59bff 100%)",
-  WebkitBackgroundClip: "text" as const,
-  WebkitTextFillColor: "transparent" as const,
-  backgroundClip: "text" as const,
-};
-
-/* ─────────────────────────────────────────────
-   Data
-───────────────────────────────────────────── */
 const HOW_IT_WORKS = [
   {
     n: "01",
@@ -98,128 +85,235 @@ const REACT_FILES = [
 
 const TECH = ["Laravel 11", "Next.js 15", "React 19", "TypeScript 5", "Tailwind CSS 4", "Eloquent ORM"];
 
-/* ─────────────────────────────────────────────
-   Page
-───────────────────────────────────────────── */
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#0a0b14] text-[#e2e4ed] flex flex-col relative overflow-hidden">
+    <main style={{
+      minHeight: "100vh",
+      background: "var(--bg)",
+      color: "var(--text)",
+      fontFamily: "var(--font-space-grotesk), 'Space Grotesk', sans-serif",
+      display: "flex",
+      flexDirection: "column",
+      position: "relative",
+      overflowX: "hidden",
+    }}>
 
-      {/* ── Ambient glows ─────────────────────────────────────── */}
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#6C63FF]/20 to-transparent" />
-      <div className="absolute top-[-30%] right-[-15%] w-[50%] h-[50%] blur-[160px] rounded-full pointer-events-none" style={{ background: "rgba(108,99,255,0.12)" }} />
-      <div className="absolute bottom-[-20%] left-[-10%] w-[40%] h-[40%] blur-[140px] rounded-full pointer-events-none" style={{ background: "rgba(108,99,255,0.10)" }} />
+      {/* ── Gold ambient glows ──────────────────────────────────── */}
+      <div style={{
+        position: "absolute", top: 0, left: 0, right: 0, height: 1,
+        background: "linear-gradient(90deg, transparent, var(--gold-border), transparent)",
+      }} />
+      <div style={{
+        position: "absolute", top: "-20%", right: "-10%",
+        width: "45%", height: "55%",
+        background: "radial-gradient(ellipse, rgba(245,200,66,0.07) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
+      <div style={{
+        position: "absolute", bottom: "-15%", left: "-8%",
+        width: "40%", height: "50%",
+        background: "radial-gradient(ellipse, rgba(245,200,66,0.05) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
 
-      {/* ── Navbar ────────────────────────────────────────────── */}
-      <nav className="flex justify-between items-center px-8 py-5 border-b border-white/[0.06] bg-[#0a0b14]/80 backdrop-blur-xl sticky top-0 z-50">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-[0_0_16px_rgba(108,99,255,0.3)]" style={{ background: "linear-gradient(135deg, #6C63FF, #9b87ff)" }}>
-            <Layers className="w-4 h-4 text-white" />
+      {/* ── Navbar ─────────────────────────────────────────────── */}
+      <nav style={{
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        padding: "0 40px", height: 64,
+        borderBottom: "1px solid var(--border-subtle)",
+        background: "rgba(8,8,9,0.85)",
+        backdropFilter: "blur(20px)",
+        position: "sticky", top: 0, zIndex: 100,
+      }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
+          <div style={{ position: "relative", width: 32, height: 32 }}>
+            <div style={{
+              position: "absolute", top: 4, left: 4, width: 24, height: 24, borderRadius: 6,
+              background: "var(--gold-border)", border: "1px solid var(--gold-border)",
+            }} />
+            <div style={{
+              position: "absolute", top: 0, left: 0, width: 24, height: 24, borderRadius: 6,
+              background: "var(--gold)", color: "var(--bg)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              zIndex: 2,
+              boxShadow: "2px 2px 10px rgba(0,0,0,0.3)",
+            }}>
+              <Layers className="w-4 h-4" strokeWidth={3} />
+            </div>
           </div>
-          <span className="font-display text-lg text-white tracking-tight">Stack-Init</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden sm:block text-sm text-[#5c6078]">Laravel · Next.js · TypeScript</span>
-          <Link href="/create" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-[#6C63FF] text-white text-sm font-medium transition-all duration-200 hover:bg-[#5851E6] hover:shadow-[0_0_24px_rgba(108,99,255,0.35)] hover:-translate-y-0.5">
-            Start Building
+          <span style={{
+            fontFamily: "var(--font-syne), 'Syne', sans-serif",
+            fontSize: 18, fontWeight: 800, color: "var(--text)", letterSpacing: "-0.02em",
+          }}>
+            Stack<span style={{ color: "var(--gold)" }}>Init</span>
+          </span>
+        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <span style={{ fontSize: 13, color: "var(--text3)" }}>Laravel · Next.js · TypeScript</span>
+          <Link href="/create" style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            padding: "8px 20px", borderRadius: 10,
+            background: "var(--gold)", color: "var(--bg)",
+            fontSize: 14, fontWeight: 700, textDecoration: "none",
+            transition: "all 0.2s",
+          }}>
+            Start Building →
           </Link>
         </div>
       </nav>
 
-      {/* ── Hero ──────────────────────────────────────────────── */}
-      <section className="flex flex-col items-center text-center px-6 pt-28 pb-20 z-10 relative">
+      {/* ── Hero ───────────────────────────────────────────────── */}
+      <section style={{
+        display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center",
+        padding: "140px 24px 100px", position: "relative", zIndex: 10,
+      }}>
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs mb-10 backdrop-blur-sm" style={{ border: "1px solid rgba(108,99,255,.35)", background: "rgba(108,99,255,.08)", color: "#a59bff" }}>
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#6C63FF] opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#6C63FF]" />
-          </span>
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 8,
+          padding: "6px 16px", borderRadius: 100,
+          border: "1px solid var(--gold-border)",
+          background: "var(--gold-subtle)",
+          color: "var(--gold)", fontSize: 12, fontWeight: 600,
+          marginBottom: 40,
+        }}>
+          <span style={{
+            width: 7, height: 7, borderRadius: "50%",
+            background: "var(--gold)", display: "inline-block",
+          }} />
           Open source · No account required · 100% browser
         </div>
 
-        <h1 className="font-display text-5xl sm:text-6xl md:text-[72px] font-medium tracking-tight max-w-4xl mx-auto mb-6 leading-[1.08]" style={gradientText}>
-          Design models.<br className="hidden sm:block" />
-          Get production code.
+        <h1 style={{
+          fontFamily: "var(--font-syne), 'Syne', sans-serif",
+          fontSize: "clamp(40px, 7vw, 72px)",
+          fontWeight: 800,
+          letterSpacing: "-0.03em",
+          lineHeight: 1.06,
+          maxWidth: 900,
+          marginBottom: 24,
+          color: "var(--text)",
+        }}>
+          Design models.{" "}
+          <span style={{ color: "var(--gold)" }}>Get production code.</span>
         </h1>
 
-        <p className="text-lg md:text-xl text-[#8b8fa3] max-w-2xl mx-auto mb-5 leading-relaxed">
+        <p style={{
+          fontSize: 18, color: "var(--text2)", maxWidth: 680,
+          lineHeight: 1.7, marginBottom: 20,
+        }}>
           Stack-Init is a visual wizard that turns your data schema into a real codebase — a Laravel API config or a Next.js ZIP — in under two minutes.
         </p>
 
-        {/* Concrete value props inline */}
-        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-[#5c6078] mb-12">
-          <span className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#FF2D20" }} />
-            Laravel → <span className="text-[#8b8fa3]">YAML + migrations + controllers</span>
+        {/* Value props */}
+        <div style={{
+          display: "flex", flexWrap: "wrap", justifyContent: "center",
+          gap: "8px 24px", fontSize: 13, color: "var(--text3)", marginBottom: 48,
+        }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#FF2D20", flexShrink: 0 }} />
+            Laravel → <span style={{ color: "var(--text2)" }}>YAML + migrations + controllers</span>
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#61DBFB" }} />
-            React → <span className="text-[#8b8fa3]">ZIP with pages, types & deps</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#61DBFB", flexShrink: 0 }} />
+            React → <span style={{ color: "var(--text2)" }}>ZIP with pages, types & deps</span>
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#6C63FF" }} />
-            Full-stack → <span className="text-[#8b8fa3]">both at once</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold)", flexShrink: 0 }} />
+            Full-stack → <span style={{ color: "var(--text2)" }}>both at once</span>
           </span>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 items-center">
-          <Link href="/create" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-[12px] bg-[#6C63FF] text-white text-[15px] font-medium shadow-[0_0_32px_rgba(108,99,255,0.25)] transition-all duration-200 hover:bg-[#5851E6] hover:shadow-[0_0_40px_rgba(108,99,255,0.4)] hover:-translate-y-0.5">
-            Launch the wizard
-            <ArrowRight className="w-4 h-4" />
+        <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+          <Link href="/create" style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            padding: "14px 36px", borderRadius: 12,
+            background: "var(--gold)", color: "var(--bg)",
+            fontSize: 16, fontWeight: 700, textDecoration: "none",
+            boxShadow: "0 0 40px var(--gold-glow)",
+            transition: "all 0.2s",
+          }}>
+            Launch the wizard <ArrowRight style={{ width: 16, height: 16 }} />
           </Link>
-          <span className="text-sm text-[#5c6078]">Takes ~2 min · No signup</span>
+          <span style={{ fontSize: 13, color: "var(--text3)" }}>Takes ~2 min · No signup</span>
         </div>
       </section>
 
-      {/* ── How it works ──────────────────────────────────────── */}
-      <section className="py-20 px-6 md:px-12 relative z-10">
-        <div className="max-w-5xl mx-auto">
+      {/* ── How it works ───────────────────────────────────────── */}
+      <section style={{ padding: "120px 24px", position: "relative", zIndex: 10 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <Divider />
           <SectionLabel>How it works</SectionLabel>
-          <h2 className="font-display text-3xl md:text-4xl font-medium text-white tracking-tight mb-14 max-w-xl" style={gradientText}>
+          <h2 style={{
+            fontFamily: "var(--font-syne), 'Syne', sans-serif",
+            fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 800,
+            letterSpacing: "-0.03em", color: "var(--text)",
+            marginBottom: 60,
+          }}>
             Four steps from idea to files
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 16 }}>
             {HOW_IT_WORKS.map((step) => (
-              <div key={step.n} className="relative p-6 rounded-[14px] border border-white/[0.06] bg-white/[0.02]">
-                <div className="flex items-center justify-between mb-5">
-                  <div className="w-9 h-9 rounded-[9px] flex items-center justify-center" style={{ background: "rgba(108,99,255,.15)", color: "#a59bff" }}>
+              <div key={step.n} style={{
+                padding: "24px 20px",
+                borderRadius: 14,
+                border: "1px solid var(--border-subtle)",
+                background: "var(--bg3)",
+                position: "relative",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 9,
+                    background: "var(--gold-subtle)", color: "var(--gold)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
                     {step.icon}
                   </div>
-                  <span className="font-mono text-[11px] text-[#3d3f58] font-semibold">{step.n}</span>
+                  <span style={{ fontFamily: "var(--font-jetbrains-mono)", fontSize: 11, color: "var(--text3)", fontWeight: 700 }}>{step.n}</span>
                 </div>
-                <h3 className="text-[15px] font-medium text-white mb-2 tracking-tight">{step.title}</h3>
-                <p className="text-[13px] text-[#5c6078] leading-relaxed">{step.desc}</p>
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>{step.title}</h3>
+                <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>{step.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Output preview ────────────────────────────────────── */}
-      <section className="py-20 px-6 md:px-12 relative z-10">
-        <div className="max-w-5xl mx-auto">
+      {/* ── Output preview ─────────────────────────────────────── */}
+      <section style={{ padding: "120px 24px", position: "relative", zIndex: 10 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <Divider />
           <SectionLabel>What you get</SectionLabel>
-          <h2 className="font-display text-3xl md:text-4xl font-medium tracking-tight mb-4" style={gradientText}>
+          <h2 style={{
+            fontFamily: "var(--font-syne), 'Syne', sans-serif",
+            fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 800,
+            letterSpacing: "-0.03em", color: "var(--text)", marginBottom: 20,
+          }}>
             Real files, ready to use
           </h2>
-          <p className="text-[#8b8fa3] text-[15px] mb-12 max-w-xl">
+          <p style={{ color: "var(--text2)", fontSize: 15, marginBottom: 40, maxWidth: 520, lineHeight: 1.6 }}>
             Not a demo, not a stub. Every file is generated with your model names, field types, and library choices baked in.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 16 }}>
             {/* Laravel panel */}
-            <div className="rounded-[14px] border overflow-hidden" style={{ borderColor: "rgba(255,45,32,.25)", background: "rgba(255,45,32,.04)" }}>
-              <div className="flex items-center gap-2.5 px-4 py-3 border-b" style={{ borderColor: "rgba(255,45,32,.15)", background: "rgba(255,45,32,.05)" }}>
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#FF2D20" }} />
-                <span className="text-[13px] font-medium" style={{ color: "#ff7a6e" }}>Laravel output</span>
-                <span className="ml-auto text-[11px] text-[#5c6078] font-mono">stack-init.yaml + CLI</span>
+            <div style={{
+              borderRadius: 14, border: "1px solid rgba(255,45,32,.2)",
+              background: "rgba(255,45,32,.03)", overflow: "hidden",
+            }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "12px 16px",
+                borderBottom: "1px solid rgba(255,45,32,.12)",
+                background: "rgba(255,45,32,.04)",
+              }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#FF2D20" }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#ff7a6e" }}>Laravel output</span>
+                <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--text3)", fontFamily: "var(--font-jetbrains-mono)" }}>stack-init.yaml + CLI</span>
               </div>
-              <div className="p-5 font-mono text-[12px] leading-[1.9] text-[#8b8fa3] space-y-0">
+              <div style={{ padding: 20, fontFamily: "var(--font-jetbrains-mono)", fontSize: 12, lineHeight: 1.9, color: "var(--text2)" }}>
                 {LARAVEL_FILES.map((line, i) => (
-                  <div key={i} className={line.startsWith("#") ? "text-[#3d3f58] mt-2" : ""}>
+                  <div key={i} style={{ color: line.startsWith("#") ? "var(--text3)" : undefined }}>
                     {line || <br />}
                   </div>
                 ))}
@@ -227,15 +321,23 @@ export default function Home() {
             </div>
 
             {/* React panel */}
-            <div className="rounded-[14px] border overflow-hidden" style={{ borderColor: "rgba(97,219,251,.2)", background: "rgba(97,219,251,.03)" }}>
-              <div className="flex items-center gap-2.5 px-4 py-3 border-b" style={{ borderColor: "rgba(97,219,251,.12)", background: "rgba(97,219,251,.04)" }}>
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#61DBFB" }} />
-                <span className="text-[13px] font-medium" style={{ color: "#7ee6ff" }}>React / Next.js output</span>
-                <span className="ml-auto text-[11px] text-[#5c6078] font-mono">ZIP · instant download</span>
+            <div style={{
+              borderRadius: 14, border: "1px solid rgba(97,219,251,.18)",
+              background: "rgba(97,219,251,.03)", overflow: "hidden",
+            }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "12px 16px",
+                borderBottom: "1px solid rgba(97,219,251,.1)",
+                background: "rgba(97,219,251,.04)",
+              }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#61DBFB" }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#7ee6ff" }}>React / Next.js output</span>
+                <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--text3)", fontFamily: "var(--font-jetbrains-mono)" }}>ZIP · instant download</span>
               </div>
-              <div className="p-5 font-mono text-[12px] leading-[1.9] text-[#8b8fa3] space-y-0">
+              <div style={{ padding: 20, fontFamily: "var(--font-jetbrains-mono)", fontSize: 12, lineHeight: 1.9, color: "var(--text2)" }}>
                 {REACT_FILES.map((line, i) => (
-                  <div key={i} className={line.endsWith("interface") || line.includes("#") ? "text-[#3d3f58]" : ""}>
+                  <div key={i} style={{ color: line.includes("#") ? "var(--text3)" : undefined }}>
                     {line || <br />}
                   </div>
                 ))}
@@ -245,16 +347,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Features ──────────────────────────────────────────── */}
-      <section className="py-20 px-6 md:px-12 relative z-10">
-        <div className="max-w-5xl mx-auto">
+      {/* ── Features ───────────────────────────────────────────── */}
+      <section style={{ padding: "120px 24px", position: "relative", zIndex: 10 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <Divider />
           <SectionLabel>Why Stack-Init</SectionLabel>
-          <h2 className="font-display text-3xl md:text-4xl font-medium tracking-tight mb-14" style={gradientText}>
+          <h2 style={{
+            fontFamily: "var(--font-syne), 'Syne', sans-serif",
+            fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 800,
+            letterSpacing: "-0.03em", color: "var(--text)", marginBottom: 60,
+          }}>
             Built for the impatient developer
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
             {FEATURES.map((f) => (
               <FeatureCard key={f.title} icon={f.icon} title={f.title} desc={f.desc} />
             ))}
@@ -262,44 +368,83 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Tech stack ────────────────────────────────────────── */}
-      <section className="py-16 px-6 z-10 relative">
-        <div className="max-w-5xl mx-auto">
+      {/* ── Tech stack ─────────────────────────────────────────── */}
+      <section style={{ padding: "80px 24px", position: "relative", zIndex: 10 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <Divider />
-          <p className="text-center text-[12px] text-[#3d3f58] uppercase tracking-widest font-medium mb-8">Supported technologies</p>
-          <div className="flex flex-wrap justify-center gap-3">
+          <p style={{ textAlign: "center", fontSize: 11, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700, marginBottom: 24 }}>
+            Supported technologies
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>
             {TECH.map((t) => (
-              <span key={t} className="px-4 py-1.5 rounded-full text-[13px] text-[#8b8fa3] border border-white/[0.06] bg-white/[0.02]">{t}</span>
+              <span key={t} style={{
+                padding: "6px 16px", borderRadius: 100,
+                fontSize: 13, color: "var(--text2)",
+                border: "1px solid var(--border-subtle)",
+                background: "var(--bg3)",
+              }}>{t}</span>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── CTA banner ────────────────────────────────────────── */}
-      <section className="py-24 px-6 z-10 relative">
-        <div className="max-w-2xl mx-auto text-center">
-          <div className="rounded-[20px] border p-12" style={{ borderColor: "rgba(108,99,255,.25)", background: "rgba(108,99,255,.06)" }}>
-            <Zap className="w-8 h-8 mx-auto mb-6" style={{ color: "#a59bff" }} />
-            <h2 className="font-display text-3xl font-medium text-white tracking-tight mb-4">
+      {/* ── CTA banner ─────────────────────────────────────────── */}
+      <section style={{ padding: "120px 24px", position: "relative", zIndex: 10 }}>
+        <div style={{ maxWidth: 800, margin: "0 auto", textAlign: "center" }}>
+          <div style={{
+            borderRadius: 20,
+            border: "1px solid var(--gold-border)",
+            background: "var(--gold-subtle)",
+            padding: "80px 40px",
+            position: "relative",
+            overflow: "hidden",
+          }}>
+            {/* Glow inside banner */}
+            <div style={{
+              position: "absolute", top: "-50%", left: "50%", transform: "translateX(-50%)",
+              width: 300, height: 200,
+              background: "radial-gradient(ellipse, var(--gold-glow), transparent 70%)",
+              pointerEvents: "none",
+            }} />
+            <div style={{
+              width: 56, height: 56, borderRadius: "50%",
+              background: "var(--gold)", color: "var(--bg)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 24, margin: "0 auto 24px", position: "relative",
+            }}>⚡</div>
+            <h2 style={{
+              fontFamily: "var(--font-syne), 'Syne', sans-serif",
+              fontSize: 30, fontWeight: 800, letterSpacing: "-0.03em",
+              color: "var(--text)", marginBottom: 12,
+            }}>
               Ready to stop writing boilerplate?
             </h2>
-            <p className="text-[#8b8fa3] mb-8 text-[15px] leading-relaxed">
+            <p style={{ color: "var(--text2)", marginBottom: 32, fontSize: 15, lineHeight: 1.6 }}>
               Open the wizard, define your schema, click generate. Your project is waiting.
             </p>
-            <Link href="/create" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-[12px] bg-[#6C63FF] text-white text-[15px] font-medium shadow-[0_0_32px_rgba(108,99,255,0.25)] transition-all duration-200 hover:bg-[#5851E6] hover:shadow-[0_0_40px_rgba(108,99,255,0.4)] hover:-translate-y-0.5">
-              Launch the wizard
-              <ArrowRight className="w-4 h-4" />
+            <Link href="/create" style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              padding: "14px 36px", borderRadius: 12,
+              background: "var(--gold)", color: "var(--bg)",
+              fontSize: 15, fontWeight: 700, textDecoration: "none",
+              boxShadow: "0 0 40px var(--gold-glow)",
+            }}>
+              Launch the wizard <ArrowRight style={{ width: 16, height: 16 }} />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ── Footer ────────────────────────────────────────────── */}
-      <footer className="border-t border-white/[0.05] py-8 px-6 text-center text-sm text-[#5c6078] z-10">
-        <div className="flex items-center justify-center gap-2">
-          <Sparkles className="w-3.5 h-3.5 text-[#6C63FF]" />
-          <span>Stack-Init — scaffold faster, ship sooner</span>
-        </div>
+      {/* ── Footer ─────────────────────────────────────────────── */}
+      <footer style={{
+        borderTop: "1px solid var(--border-subtle)",
+        padding: "24px 24px",
+        textAlign: "center",
+        fontSize: 13, color: "var(--text3)",
+        position: "relative", zIndex: 10,
+      }}>
+        <span style={{ color: "var(--gold)" }}><Layers className="inline-block w-3 h-3 mb-0.5" /></span>{" "}
+        StackInit — scaffold faster, ship sooner
       </footer>
     </main>
   );
@@ -309,12 +454,22 @@ export default function Home() {
    Sub-components
 ───────────────────────────────────────────── */
 function Divider() {
-  return <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent mb-12" />;
+  return (
+    <div style={{
+      height: 1, marginBottom: 80,
+      background: "linear-gradient(90deg, transparent, var(--gold-border), transparent)",
+    }} />
+  );
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "#a59bff" }}>
+    <p style={{
+      fontSize: 11, fontWeight: 700, textTransform: "uppercase",
+      letterSpacing: "0.12em", color: "var(--gold)",
+      marginBottom: 20, display: "flex", alignItems: "center", gap: 8,
+    }}>
+      <span style={{ display: "inline-block", width: 20, height: 1, background: "var(--gold)" }} />
       {children}
     </p>
   );
@@ -322,12 +477,24 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
-    <div className="group p-7 rounded-[16px] border border-white/[0.06] bg-white/[0.02] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.4)] hover:[border-color:rgba(108,99,255,0.3)]">
-      <div className="w-10 h-10 rounded-[10px] flex items-center justify-center mb-5" style={{ background: "rgba(108,99,255,.12)", color: "#a59bff" }}>
+    <div style={{
+      padding: "28px 24px",
+      borderRadius: 16,
+      border: "1px solid var(--border-subtle)",
+      background: "var(--bg3)",
+      transition: "all 0.2s",
+    }}>
+      <div style={{
+        width: 40, height: 40, borderRadius: 10,
+        background: "var(--gold-subtle)", color: "var(--gold)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        marginBottom: 20,
+        border: "1px solid var(--gold-border)",
+      }}>
         {icon}
       </div>
-      <h3 className="text-[16px] font-medium text-white mb-2 tracking-tight">{title}</h3>
-      <p className="text-[14px] text-[#5c6078] leading-relaxed group-hover:text-[#8b8fa3] transition-colors">{desc}</p>
+      <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>{title}</h3>
+      <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.65 }}>{desc}</p>
     </div>
   );
 }

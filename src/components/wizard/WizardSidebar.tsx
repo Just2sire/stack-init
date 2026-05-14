@@ -2,21 +2,22 @@
 
 import { useWizardStore } from "@/stores/useWizardStore";
 import { cn } from "@/lib/utils";
-import { Check, Layers } from "lucide-react";
+import Link from "next/link";
+import { Layers } from "lucide-react";
 
 export function WizardSidebar() {
-  const { currentStep, stack, setStep } = useWizardStore();
+  const { currentStep, stack } = useWizardStore();
 
   const isLaravel = stack === "laravel" || stack === "laravel+react";
-  const isReact = stack === "react" || stack === "laravel+react";
+  const isReact   = stack === "react"   || stack === "laravel+react";
 
   const allSteps = [
-    { label: "Stack & Project", index: 0, show: true },
-    { label: "Models & Fields", index: 1, show: true },
-    { label: "Relations", index: 2, show: true },
-    { label: "Laravel Setup", index: 3, show: isLaravel },
-    { label: "React Setup", index: isLaravel ? 4 : 3, show: isReact },
-    { label: "Output", index: (isLaravel && isReact) ? 5 : 4, show: true },
+    { label: "Stack & Project",  index: 0, show: true },
+    { label: "Models & Fields",  index: 1, show: true },
+    { label: "Relations",        index: 2, show: true },
+    { label: "Laravel Setup",    index: 3, show: isLaravel },
+    { label: "React Setup",      index: isLaravel ? 4 : 3, show: isReact },
+    { label: "Output",           index: (isLaravel && isReact) ? 5 : 4, show: true },
   ];
 
   const visibleSteps = allSteps.filter((s) => s.show);
@@ -24,20 +25,30 @@ export function WizardSidebar() {
   return (
     <div className="si-wizard-sidebar">
       {/* Logo */}
-      <div className="flex items-center gap-3 mb-10">
-        <div
-          className="w-9 h-9 rounded-[10px] text-white flex items-center justify-center shadow-[0_0_16px_rgba(108,99,255,0.3)]"
-          style={{ background: "linear-gradient(135deg, #6C63FF, #9b87ff)" }}
-        >
-          <Layers className="w-[18px] h-[18px]" />
+      <Link href="/" className="si-wiz-logo" style={{ textDecoration: "none", height: 72, boxSizing: "border-box" }}>
+        <div style={{ position: "relative", width: 28, height: 28, flexShrink: 0 }}>
+          <div style={{
+            position: "absolute", top: 3, left: 3, width: 20, height: 20, borderRadius: 5,
+            background: "var(--gold-border)", border: "1px solid var(--gold-border)",
+          }} />
+          <div style={{
+            position: "absolute", top: 0, left: 0, width: 20, height: 20, borderRadius: 5,
+            background: "var(--gold)", color: "var(--bg)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 2,
+          }}>
+            <Layers className="w-3.5 h-3.5" strokeWidth={3} />
+          </div>
         </div>
-        <span className="font-display text-[16px] text-white tracking-tight">Stack-Init</span>
-      </div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          Stack<span style={{ color: "var(--gold)" }}>Init</span>
+        </div>
+      </Link>
 
       {/* Steps */}
-      <nav className="flex flex-col gap-1">
-        {visibleSteps.map((step) => {
-          const isActive = currentStep === step.index;
+      <nav style={{ padding: "8px 0", flex: 1 }}>
+        {visibleSteps.map((step, idx) => {
+          const isActive    = currentStep === step.index;
           const isCompleted = currentStep > step.index;
 
           return (
@@ -45,12 +56,12 @@ export function WizardSidebar() {
               key={step.label}
               className={cn(
                 "si-step-item",
-                isActive && "active",
+                isActive    && "active",
                 isCompleted && "done"
               )}
             >
               <div className="si-step-dot">
-                {isCompleted ? <Check className="w-3.5 h-3.5" /> : visibleSteps.indexOf(step) + 1}
+                {isCompleted ? "✓" : idx + 1}
               </div>
               {step.label}
             </div>
@@ -58,11 +69,15 @@ export function WizardSidebar() {
         })}
       </nav>
 
-      {/* Bottom spacer for visual balance */}
-      <div className="mt-auto pt-6 border-t border-white/[0.04]">
-        <p className="text-[11px] text-[#5c6078] leading-relaxed">
-          Define your stack, design your models, and generate everything in one go.
-        </p>
+      {/* Footer */}
+      <div style={{
+        padding: "16px 20px",
+        borderTop: "1px solid var(--border-subtle)",
+        fontSize: 11,
+        color: "var(--text3)",
+        lineHeight: 1.5,
+      }}>
+        Define your stack, design your models,<br />and generate everything in one go.
       </div>
     </div>
   );

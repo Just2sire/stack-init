@@ -110,21 +110,23 @@ export function OutputStep() {
   const fileList = isDone ? computeFileList(getConfig()) : [];
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col items-center text-center py-8">
-        <div className="w-16 h-16 rounded-full bg-[#6C63FF]/10 flex items-center justify-center mb-6 border border-[#6C63FF]/20">
-          <Sparkles className="w-7 h-7 text-[#a59bff]" />
+    <div className="si-step-panel">
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "24px 0 40px" }}>
+        <div style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--gold-subtle)", border: "1px solid var(--gold-border)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
+          <Sparkles style={{ width: 28, height: 28, color: "var(--gold)" }} />
         </div>
 
-        <h1 className="si-title mb-3">Ready to generate</h1>
-        <p className="si-subtitle max-w-lg mx-auto mb-10">
+        <div className="si-section-label" style={{ justifyContent: "center" }}>Output</div>
+        <h1 className="si-title" style={{ marginBottom: 12 }}>Ready to generate</h1>
+        <p className="si-subtitle" style={{ maxWidth: 480, marginBottom: 40 }}>
           Your project configuration is complete. Click below to generate and download your scaffolded codebase.
         </p>
 
         <button
           onClick={handleGenerate}
           disabled={isGenerating || isDone}
-          className="si-btn-primary text-[16px] py-4 px-10 inline-flex items-center gap-3 mb-12"
+          className="si-btn-primary"
+          style={{ fontSize: 16, padding: "14px 40px", gap: 10, marginBottom: 48 }}
         >
           {isGenerating ? (
             <>
@@ -145,36 +147,31 @@ export function OutputStep() {
         </button>
 
         {isDone && (
-          <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="si-card overflow-hidden text-left">
-              <div className="si-card-header justify-between">
-                <div className="flex items-center gap-2">
-                  <FileCode className="w-4 h-4 text-[#a59bff]" />
-                  <span className="text-[13px] font-medium text-white">Generated files</span>
+          <div style={{ width: "100%", maxWidth: 660 }}>
+            <div className="si-card" style={{ textAlign: "left", marginBottom: 16 }}>
+              <div className="si-card-header">
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <FileCode style={{ width: 16, height: 16, color: "var(--gold)" }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>Generated files</span>
                 </div>
-                <span className="si-badge si-badge-teal">{fileList.length} files</span>
+                <span className="si-badge si-badge-gold">{fileList.length} files</span>
               </div>
-              <div className="si-card-body text-[13px] font-mono text-[#8b8fa3] space-y-1 max-h-64 overflow-y-auto">
+              <div className="si-card-body" style={{ fontFamily: "var(--font-jetbrains-mono)", fontSize: 12, color: "var(--text2)", maxHeight: 240, overflowY: "auto" }}>
                 {fileList.map((f) => (
-                  <p key={f.path}>{f.icon} {f.path}</p>
+                  <p key={f.path} style={{ padding: "3px 0" }}>{f.icon} {f.path}</p>
                 ))}
               </div>
             </div>
 
             {isLaravel && (
-              <div className="mt-4 rounded-[10px] bg-white/[0.02] border border-white/[0.06] p-4">
-                <p className="text-[11px] font-medium text-[#a59bff] mb-2 uppercase tracking-wider">Quick start</p>
-                <div className="font-mono text-[13px] text-[#c5c8d8] leading-[1.8] bg-white/[0.02] rounded-[8px] p-3 border border-white/[0.04] space-y-1">
-                  <p className="text-[#5c6078] text-[11px] mb-1"># 1. Generate Laravel files from the YAML</p>
-                  <p><span className="text-[#5c6078]">$</span> cp stack-init.yaml ./my-laravel-project/</p>
-                  <p><span className="text-[#5c6078]">$</span> cd my-laravel-project</p>
-                  <p><span className="text-[#5c6078]">$</span> npx stack-init generate</p>
-                  <p className="text-[#5c6078] text-[11px] mt-3 mb-1"># 2. Run migrations &amp; seed</p>
-                  <p><span className="text-[#5c6078]">$</span> php artisan migrate</p>
-                  <p><span className="text-[#5c6078]">$</span> php artisan db:seed</p>
-                  <p className="text-[#5c6078] text-[11px] mt-3 mb-1"># 3. Start the dev server</p>
-                  <p><span className="text-[#5c6078]">$</span> php artisan serve</p>
-                  <p className="text-[#5c6078] text-[11px] mt-1 ml-4">→ http://localhost:8000</p>
+              <div style={{ borderRadius: 12, background: "var(--bg4)", border: "1px solid var(--border-subtle)", padding: 20 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: "var(--gold)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.1em" }}>Quick start</p>
+                <div style={{ fontFamily: "var(--font-jetbrains-mono)", fontSize: 13, color: "var(--text2)", lineHeight: 2, background: "var(--bg)", borderRadius: 8, padding: 16, border: "1px solid var(--border-subtle)" }}>
+                  <p style={{ color: "var(--text3)", fontSize: 11, marginBottom: 4 }}># 1. Copy YAML to your project and generate</p>
+                  <p><span style={{ color: "var(--text3)" }}>$ </span>cp stack-init.yaml ./my-laravel-project/</p>
+                  <p><span style={{ color: "var(--text3)" }}>$ </span>cd my-laravel-project &amp;&amp; npx stack-init generate</p>
+                  <p style={{ color: "var(--text3)", fontSize: 11, marginTop: 8, marginBottom: 4 }}># 2. Run migrations &amp; start</p>
+                  <p><span style={{ color: "var(--text3)" }}>$ </span>php artisan migrate &amp;&amp; php artisan serve</p>
                 </div>
               </div>
             )}
