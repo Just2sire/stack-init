@@ -106,20 +106,29 @@ export function ModelsStep() {
               fontSize: 12, fontWeight: 700, color: "var(--gold)",
               background: "var(--gold-subtle)", border: "1px solid var(--gold-border)",
               borderRadius: 8, padding: "4px 10px", cursor: "pointer",
+              opacity: showNewModel ? 0.5 : 1
             }}
+            disabled={showNewModel}
           >
             + New
           </button>
         </div>
 
-        {models.length === 0 && !showNewModel && (
-          <div style={{ padding: "40px 16px", textAlign: "center", border: "1px dashed var(--border-medium)", borderRadius: 12, color: "var(--text3)" }}>
+        {models.length === 0 && (
+          <div style={{ 
+            padding: "40px 16px", textAlign: "center", border: "1px dashed var(--border-medium)", 
+            borderRadius: 12, color: "var(--text3)",
+            opacity: showNewModel ? 0.4 : 1,
+            transition: "opacity 0.2s"
+          }}>
             <div style={{ fontSize: 28, marginBottom: 10, opacity: 0.3 }}>◫</div>
             <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text2)", marginBottom: 4 }}>No models yet</p>
             <p style={{ fontSize: 12, marginBottom: 16 }}>Start by adding your first model</p>
-            <button onClick={() => setShowNewModel(true)} className="si-btn-primary" style={{ fontSize: 12, padding: "7px 16px" }}>
-              Add model
-            </button>
+            {!showNewModel && (
+              <button onClick={() => setShowNewModel(true)} className="si-btn-primary" style={{ fontSize: 12, padding: "7px 16px" }}>
+                Add model
+              </button>
+            )}
           </div>
         )}
 
@@ -292,22 +301,60 @@ function NewModelPanel({ onCreated, onCancel }: { onCreated: (name: string) => v
   );
 }
 
+const FIELD_TYPE_CATEGORIES = {
+  'Text':         ['string', 'char', 'tinyText', 'text', 'mediumText', 'longText', 'enum', 'set', 'uuid', 'ulid', 'ipAddress', 'macAddress'],
+  'JSON':         ['json', 'jsonb'],
+  'Numbers':      ['tinyInteger', 'smallInteger', 'mediumInteger', 'integer', 'bigInteger', 'unsignedTinyInteger', 'unsignedSmallInteger', 'unsignedInteger', 'unsignedBigInteger', 'float', 'double', 'decimal', 'year'],
+  'Date & Time':  ['date', 'dateTime', 'dateTimeTz', 'time', 'timeTz', 'timestamp', 'timestampTz'],
+  'Bool & Blob':  ['boolean', 'binary', 'tinyBlob', 'blob', 'mediumBlob', 'longBlob'],
+  'Relations':    ['id', 'foreignId', 'foreignUuid', 'foreignUlid', 'morphs', 'uuidMorphs'],
+  'Special':      ['geometry', 'geography', 'point', 'lineString', 'polygon', 'vector', 'rememberToken'],
+};
+
+const FIELD_TYPES_WITH_PARAMS: Record<string, string[]> = {
+  string:      ['length'],
+  char:        ['length'],
+  enum:        ['values'],
+  set:         ['values'],
+  float:       ['precision', 'scale'],
+  double:      ['precision', 'scale'],
+  decimal:     ['precision', 'scale'],
+  dateTime:    ['precision'],
+  dateTimeTz:  ['precision'],
+  time:        ['precision'],
+  timeTz:      ['precision'],
+  timestamp:   ['precision'],
+  timestampTz: ['precision'],
+  foreignId:   ['references', 'on_delete', 'constrained'],
+  foreignUuid: ['references', 'on_delete', 'constrained'],
+  foreignUlid: ['references', 'on_delete', 'constrained'],
+  vector:      ['dimensions'],
+};
+
 /* ── Model editor (right panel) ───────────────────────────────── */
 function ModelEditor({ model }: { model: Model }) {
-  const { addField, removeField, updateField, updateModel } = useWizardStore();
+  const { addField, removeField, updateField, updateModel, models } = useWizardStore();
   const [fieldName, setFieldName]     = useState("");
-  const [fieldType, setFieldType]     = useState<FieldType>("string");
+  const [fieldType, setFieldType]     = useState<string>("string");
+  
+  // Paramètres de champs
+  const [fieldLength, setFieldLength] = useState<number>(255);
+  const [fieldPrecision, setFieldPrecision] = useState<number>(10);
+  const [fieldScale, setFieldScale] = useState<number>(2);
   const [fieldValues, setFieldValues] = useState("");
   const [fieldRef, setFieldRef]       = useState("");
+  const [fieldDimensions, setFieldDimensions] = useState<number>(1536);
+  
   const [nullable, setNullable]       = useState(false);
   const [fieldDefault, setFieldDefault] = useState("");
   const [fieldUnique, setFieldUnique] = useState(false);
-  const [isAddingField, setIsAddingField] = useState(false);
+  const [fieldIndex, setFieldIndex]   = useState(false);
+  
+  const [isAddingField, setIsAddingField] = useState(model.fields.length === 0);
   const [editingField, setEditingField]   = useState<string | null>(null);
   const [fieldError, setFieldError]       = useState("");
 
-  const needsValues = ["enum","set"].includes(fieldType);
-  const needsRef    = ["foreignId","foreignUuid"].includes(fieldType);
+  const params = FIELD_TYPES_WITH_PARAMS[fieldType] || [];
 
   const handleFieldNameChange = (val: string) => {
     setFieldName(val);
@@ -326,11 +373,21 @@ function ModelEditor({ model }: { model: Model }) {
     if (!fn) { setFieldError("Field name is required"); return; }
     if (!/^[a-z][a-z0-9_]*$/.test(fn)) { setFieldError("Use snake_case (e.g. first_name)"); return; }
 
-    const f: any = { name: fn, type: fieldType, required: !nullable };
-    if (needsValues && fieldValues.trim()) f.values = fieldValues.split(",").map(v => v.trim()).filter(Boolean);
-    if (needsRef && fieldRef.trim()) f.references = fieldRef.trim();
-    if (nullable) f.nullable = true;
-    if (fieldUnique) f.unique = true;
+    const f: any = { 
+      name: fn, 
+      type: fieldType, 
+      nullable,
+      unique: fieldUnique,
+      index: fieldIndex,
+    };
+
+    if (params.includes('length')) f.length = fieldLength;
+    if (params.includes('precision')) f.precision = fieldPrecision;
+    if (params.includes('scale')) f.scale = fieldScale;
+    if (params.includes('values') && fieldValues.trim()) f.values = fieldValues.split(",").map(v => v.trim()).filter(Boolean);
+    if (params.includes('references') && fieldRef.trim()) f.references = fieldRef.trim();
+    if (params.includes('dimensions')) f.dimensions = fieldDimensions;
+    
     if (fieldDefault.trim()) {
       let dv: any = fieldDefault.trim();
       if (dv === "true") dv = true;
@@ -350,45 +407,39 @@ function ModelEditor({ model }: { model: Model }) {
       addField(model.name, f as NamedField);
     }
 
-    setFieldName(""); setFieldType("string"); setFieldValues(""); setFieldRef(""); 
-    setNullable(false); setFieldDefault(""); setFieldUnique(false);
-    setIsAddingField(true); setEditingField(null);
-  };
-
-  const addQuickField = (suggested: any) => {
-    setFieldName(suggested.name);
-    setFieldType(suggested.type);
-    setNullable(suggested.nullable || false);
-    setFieldValues(suggested.values ? suggested.values.join(",") : "");
-    setFieldRef(suggested.references || "");
-    setFieldDefault(suggested.default?.toString() || "");
-    setFieldUnique(suggested.unique || false);
+    resetForm();
     setIsAddingField(true);
-    setEditingField(null);
   };
 
-  const editFieldSetup = (f: NamedField) => {
+  const resetForm = () => {
+    setFieldName(""); setFieldType("string"); setFieldValues(""); setFieldRef(""); 
+    setNullable(false); setFieldDefault(""); setFieldUnique(false); setFieldIndex(false);
+    setFieldLength(255); setFieldPrecision(10); setFieldScale(2); setFieldDimensions(1536);
+    setEditingField(null); setFieldError("");
+  };
+
+  const editFieldSetup = (f: any) => {
     setFieldName(f.name);
     setFieldType(f.type);
     setNullable(f.nullable || false);
+    setFieldUnique(f.unique || false);
+    setFieldIndex(f.index || false);
     setFieldValues(f.values ? f.values.join(",") : "");
     setFieldRef(f.references || "");
     setFieldDefault(f.default?.toString() || "");
-    setFieldUnique(f.unique || false);
+    setFieldLength(f.length || 255);
+    setFieldPrecision(f.precision || 10);
+    setFieldScale(f.scale || 2);
+    setFieldDimensions(f.dimensions || 1536);
     setIsAddingField(true);
     setEditingField(f.name);
   };
 
-  const cancelEdit = () => {
-    setFieldName(""); setFieldType("string"); setFieldValues(""); setFieldRef(""); 
-    setNullable(false); setFieldDefault(""); setFieldUnique(false);
-    setIsAddingField(false); setEditingField(null);
-  };
+  const enumOptions = params.includes('values') ? fieldValues.split(",").map(v => v.trim()).filter(Boolean) : [];
 
-  const enumOptions = needsValues ? fieldValues.split(",").map(v => v.trim()).filter(Boolean) : [];
-
-  const suggestions = (SUGGESTED_FIELDS[model.name] || GLOBAL_FIELD_SUGGESTIONS)
-    .filter(s => !model.fields.find(f => f.name === s.name));
+  const suggestions = SUGGESTED_FIELDS[model.name] || GLOBAL_FIELD_SUGGESTIONS;
+  const existingFieldNames = new Set(model.fields.map(f => f.name));
+  const filteredSuggestions = suggestions.filter(s => !existingFieldNames.has(s.name));
 
   return (
     <div>
@@ -410,44 +461,13 @@ function ModelEditor({ model }: { model: Model }) {
             Fields ({model.fields.length})
           </span>
           {!isAddingField && (
-            <button onClick={() => { cancelEdit(); setIsAddingField(true); }} className="si-btn-ghost" style={{ fontSize: 12, padding: "4px 10px" }}>
+            <button onClick={() => { resetForm(); setIsAddingField(true); }} className="si-btn-ghost" style={{ fontSize: 12, padding: "4px 10px" }}>
               + Add field
             </button>
           )}
         </div>
 
-        {/* Quick Suggestions */}
-        {suggestions.length > 0 && (
-          <div style={{ marginBottom: 20 }}>
-            <p style={{ fontSize: 10, color: "var(--text3)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Suggested Fields</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {suggestions.slice(0, 8).map(s => (
-                <button
-                  key={s.name}
-                  onClick={() => addQuickField(s)}
-                  style={{
-                    fontSize: 11, padding: "4px 10px", borderRadius: 6,
-                    background: "var(--bg4)", border: "1px solid var(--border-subtle)",
-                    color: "var(--text2)", cursor: "pointer", transition: "all 0.1s",
-                    display: "flex", alignItems: "center", gap: 4,
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--gold-border)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border-subtle)")}
-                >
-                  <span style={{ color: "var(--gold)", fontWeight: 700 }}>+</span>
-                  {s.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Field rows */}
-        {model.fields.length === 0 && !isAddingField && (
-          <p style={{ fontSize: 13, color: "var(--text3)", fontStyle: "italic", padding: "20px 0" }}>
-            No fields yet — add your first field below.
-          </p>
-        )}
         {model.fields.map((f) => {
           const tc = typeColor(f.type);
           return (
@@ -479,12 +499,6 @@ function ModelEditor({ model }: { model: Model }) {
               </span>
               {f.nullable && <span style={{ fontSize: 10, color: "var(--text3)" }}>nullable</span>}
               {f.unique && <span style={{ fontSize: 10, color: "var(--gold)", background: "rgba(245,200,66,0.1)", padding: "1px 4px", borderRadius: 4 }}>unique</span>}
-              {f.default !== undefined && <span style={{ fontSize: 10, color: "var(--blue)", background: "rgba(77,159,255,0.1)", padding: "1px 4px", borderRadius: 4, fontFamily: "var(--font-jetbrains-mono)" }}>def: {String(f.default)}</span>}
-              {f.values && (
-                <span style={{ fontSize: 10, color: "var(--purple)", display: "flex", gap: 4 }}>
-                  {f.values.map(v => <span key={v} style={{ background: "rgba(157,111,255,0.1)", padding: "1px 4px", borderRadius: 4 }}>{v}</span>)}
-                </span>
-              )}
               <div className="field-actions" style={{ display: "flex", gap: 4, opacity: 0, transition: "opacity 0.15s" }}>
                 <button
                   onClick={(e) => { e.stopPropagation(); removeField(model.name, f.name); }}
@@ -499,73 +513,136 @@ function ModelEditor({ model }: { model: Model }) {
         {/* Add field inline form */}
         {isAddingField && (
           <div style={{
-            padding: 16, borderRadius: 10,
+            padding: 20, borderRadius: 16,
             border: "1px solid var(--gold-border)",
             background: "var(--gold-subtle)",
             marginTop: 8,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.4)"
           }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, marginBottom: fieldError ? 4 : 10 }}>
-              <input
-                autoFocus
-                value={fieldName}
-                onChange={(e) => handleFieldNameChange(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddField()}
-                placeholder="field_name"
-                className="si-input"
-                style={{ 
-                  fontFamily: "var(--font-jetbrains-mono)", 
-                  fontSize: 13,
-                  borderColor: fieldError ? "var(--red)" : undefined 
-                }}
-              />
-              <select value={fieldType} onChange={(e) => setFieldType(e.target.value as FieldType)} className="si-select" style={{ fontSize: 13, width: "auto" }}>
-                {FIELD_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="si-section-label">Field Name</label>
+                <input
+                  autoFocus
+                  value={fieldName}
+                  onChange={(e) => handleFieldNameChange(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddField()}
+                  placeholder="e.g. email, user_id"
+                  className="si-input"
+                  style={{ borderColor: fieldError ? "var(--red)" : undefined }}
+                />
+              </div>
+              <div>
+                <label className="si-section-label">Type</label>
+                <select value={fieldType} onChange={(e) => setFieldType(e.target.value)} className="si-select">
+                  {Object.entries(FIELD_TYPE_CATEGORIES).map(([cat, types]) => (
+                    <optgroup key={cat} label={cat}>
+                      {types.map(t => <option key={t} value={t}>{t}</option>)}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
             </div>
-            {fieldError && (
-              <p style={{ fontSize: 11, color: "var(--red)", marginBottom: 10, marginLeft: 4 }}>{fieldError}</p>
-            )}
-            {needsValues && (
-              <input value={fieldValues} onChange={(e) => setFieldValues(e.target.value)} placeholder="Values: admin,editor,viewer" className="si-input" style={{ marginBottom: 8, fontFamily: "var(--font-jetbrains-mono)", fontSize: 13 }} />
-            )}
-            {needsRef && (
-              <input value={fieldRef} onChange={(e) => setFieldRef(e.target.value)} placeholder="References table (e.g. users)" className="si-input" style={{ marginBottom: 8, fontFamily: "var(--font-jetbrains-mono)", fontSize: 13 }} />
-            )}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+
+            {/* Dynamic Params */}
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              {params.includes('length') && (
+                <div>
+                  <label className="si-section-label">Length</label>
+                  <input type="number" value={fieldLength} onChange={(e) => setFieldLength(Number(e.target.value))} onKeyDown={(e) => e.key === "Enter" && handleAddField()} className="si-input" />
+                </div>
+              )}
+              {params.includes('precision') && (
+                <div>
+                  <label className="si-section-label">Precision</label>
+                  <input type="number" value={fieldPrecision} onChange={(e) => setFieldPrecision(Number(e.target.value))} onKeyDown={(e) => e.key === "Enter" && handleAddField()} className="si-input" />
+                </div>
+              )}
+              {params.includes('scale') && (
+                <div>
+                  <label className="si-section-label">Scale</label>
+                  <input type="number" value={fieldScale} onChange={(e) => setFieldScale(Number(e.target.value))} onKeyDown={(e) => e.key === "Enter" && handleAddField()} className="si-input" />
+                </div>
+              )}
+              {params.includes('values') && (
+                <div className="col-span-3">
+                  <label className="si-section-label">Enum Values (comma separated)</label>
+                  <input value={fieldValues} onChange={(e) => setFieldValues(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAddField()} placeholder="admin, editor, user" className="si-input" />
+                </div>
+              )}
+              {params.includes('references') && (
+                <div className="col-span-3">
+                  <label className="si-section-label">References Table</label>
+                  <select value={fieldRef} onChange={(e) => setFieldRef(e.target.value)} className="si-select">
+                    <option value="">Select a table...</option>
+                    {models.map(m => <option key={m.name} value={m.table || `${m.name.toLowerCase()}s`}>{m.table || `${m.name.toLowerCase()}s`}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--gold-border)", paddingTop: 16 }}>
               <div style={{ display: "flex", gap: 16 }}>
-                <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text2)", cursor: "pointer" }}>
-                  <input type="checkbox" checked={nullable} onChange={(e) => setNullable(e.target.checked)} style={{ accentColor: "var(--gold)" }} />
+                <label className="flex items-center gap-2 text-xs text-text2 cursor-pointer">
+                  <input type="checkbox" checked={nullable} onChange={(e) => setNullable(e.target.checked)} className="accent-gold" />
                   Nullable
                 </label>
-                <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text2)", cursor: "pointer" }}>
-                  <input type="checkbox" checked={fieldUnique} onChange={(e) => setFieldUnique(e.target.checked)} style={{ accentColor: "var(--gold)" }} />
+                <label className="flex items-center gap-2 text-xs text-text2 cursor-pointer">
+                  <input type="checkbox" checked={fieldUnique} onChange={(e) => setFieldUnique(e.target.checked)} className="accent-gold" />
                   Unique
                 </label>
-                
-                {needsValues ? (
-                  <select 
-                    value={fieldDefault} 
-                    onChange={(e) => setFieldDefault(e.target.value)} 
-                    className="si-select" 
-                    style={{ width: 180, fontSize: 12, height: 28, padding: "0 8px" }}
-                  >
-                    <option value="">Default value (none)</option>
-                    {enumOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                  </select>
-                ) : (
-                  <input 
-                    value={fieldDefault} 
-                    onChange={(e) => setFieldDefault(e.target.value)} 
-                    placeholder="Default value (optional)" 
-                    className="si-input" 
-                    style={{ width: 180, fontFamily: "var(--font-jetbrains-mono)", fontSize: 12, padding: "4px 8px", height: 28 }} 
-                  />
-                )}
+                <label className="flex items-center gap-2 text-xs text-text2 cursor-pointer">
+                  <input type="checkbox" checked={fieldIndex} onChange={(e) => setFieldIndex(e.target.checked)} className="accent-gold" />
+                  Index
+                </label>
               </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={cancelEdit} className="si-btn-secondary" style={{ fontSize: 12, padding: "6px 14px" }}>Cancel</button>
-                <button onClick={handleAddField} className="si-btn-primary" style={{ fontSize: 12, padding: "6px 16px" }}>{editingField ? "Save" : "Add"}</button>
+              <div className="flex gap-2">
+                <button onClick={() => setIsAddingField(false)} className="si-btn-secondary text-xs">Cancel</button>
+                <button onClick={handleAddField} className="si-btn-primary text-xs">{editingField ? "Save Changes" : "Add Field"}</button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Add Suggestions */}
+        {!isAddingField && filteredSuggestions.length > 0 && (
+          <div style={{ marginTop: 24, padding: "16px 0", borderTop: "1px solid var(--border-subtle)" }}>
+            <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text3)", marginBottom: 12 }}>
+              Quick Add / Suggestions
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {filteredSuggestions.map((s) => (
+                <button
+                  key={s.name}
+                  onClick={() => addField(model.name, { 
+                    name: s.name, 
+                    type: s.type, 
+                    nullable: s.nullable || false,
+                    values: s.values,
+                    references: s.references ? s.references[0] : undefined
+                  } as NamedField)}
+                  style={{
+                    padding: "6px 14px", borderRadius: 100, fontSize: 12, cursor: "pointer",
+                    border: "1px solid var(--border-subtle)",
+                    background: "var(--bg4)",
+                    color: "var(--text2)",
+                    transition: "all 0.15s",
+                    display: "flex", alignItems: "center", gap: 6
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "var(--gold-border)";
+                    e.currentTarget.style.color = "var(--gold)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "var(--border-subtle)";
+                    e.currentTarget.style.color = "var(--text2)";
+                  }}
+                >
+                  <span style={{ color: "var(--gold)", fontWeight: 800 }}>+</span>
+                  {s.name}
+                  <span style={{ fontSize: 10, opacity: 0.5, fontWeight: 400 }}>{s.type}</span>
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -585,7 +662,7 @@ function ModelEditor({ model }: { model: Model }) {
               className="si-select"
               style={{ fontSize: 13 }}
             >
-              <option value="id">Auto-increment</option>
+              <option value="id">Auto-increment (id)</option>
               <option value="uuid">UUID</option>
               <option value="ulid">ULID</option>
             </select>
@@ -607,13 +684,11 @@ function ModelEditor({ model }: { model: Model }) {
               <button
                 key={key}
                 onClick={() => updateModel(model.name, { migration: { ...(model.migration || {}), [key]: !isChecked } })}
-                style={{
-                  fontSize: 12, padding: "6px 14px", borderRadius: 100,
-                  border: `1px solid ${isChecked ? "var(--gold-border)" : "var(--border-subtle)"}`,
-                  background: isChecked ? "var(--gold-subtle)" : "transparent",
-                  color: isChecked ? "var(--gold)" : "var(--text3)",
-                  cursor: "pointer", transition: "all 0.15s",
-                }}
+                className={[
+                  "si-badge",
+                  isChecked ? "si-badge-gold" : "si-badge-gray"
+                ].join(" ")}
+                style={{ cursor: "pointer", padding: "6px 12px" }}
               >
                 {key === "timestamps" ? "⏱ Timestamps" : "🗑 Soft Deletes"}
               </button>

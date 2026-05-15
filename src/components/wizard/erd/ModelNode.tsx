@@ -12,23 +12,22 @@ export function ModelNode({ data }: { data: ModelNodeData }) {
   const { model } = data;
 
   return (
-    <div className="bg-[#1a1d2d] border-2 border-[#6C63FF]/30 rounded-xl overflow-hidden min-w-[200px] shadow-2xl">
+    <div className="bg-bg3 border-2 border-gold/30 rounded-xl overflow-hidden min-w-[220px] shadow-2xl transition-all hover:border-gold/60">
       {/* Target handle at the top */}
-      <Handle type="target" position={Position.Top} className="!bg-[#6C63FF] !w-3 !h-3 !border-none" />
+      <Handle type="target" position={Position.Top} className="!bg-gold !w-2.5 !h-2.5 !border-none" />
       
-      <div className="bg-[#6C63FF] px-4 py-2 flex items-center gap-2">
-        <Table2 className="w-4 h-4 text-white" />
-        <span className="text-sm font-bold text-white">{model.name}</span>
+      <div className="bg-gold px-4 py-2.5 flex items-center gap-2">
+        <Table2 className="w-4 h-4 text-bg" />
+        <span className="text-sm font-black text-bg uppercase tracking-tight">{model.name}</span>
       </div>
       
-      <div className="p-3 space-y-1 bg-[#1a1d2d]">
+      <div className="p-3 space-y-1.5 bg-bg3/50 backdrop-blur-sm">
         {model.fields.map((field) => (
-          <div key={field.name} className="flex justify-between items-center gap-4 text-[11px]">
-            <span className="text-gray-200 flex items-center gap-1.5">
-              {field.primary && <Key className="w-3 h-3 text-amber-500" />}
+          <div key={field.name} className="flex justify-between items-center gap-4 text-[11px] py-0.5">
+            <span className="text-text flex items-center gap-2 font-medium">
               {field.name}
             </span>
-            <span className="text-gray-500 italic uppercase font-mono text-[9px]">
+            <span className="text-text3 italic uppercase font-mono text-[9px] bg-bg4 px-1.5 py-0.5 rounded border border-white/[0.03]">
               {field.type}
             </span>
           </div>
@@ -36,7 +35,8 @@ export function ModelNode({ data }: { data: ModelNodeData }) {
       </div>
 
       {/* Source handle at the bottom */}
-      <Handle type="source" position={Position.Bottom} className="!bg-[#6C63FF] !w-3 !h-3 !border-none" />
+      <Handle type="source" position={Position.Bottom} className="!bg-gold !w-2.5 !h-2.5 !border-none" />
     </div>
   );
 }
+

@@ -9,25 +9,25 @@ const HOW_IT_WORKS = [
     n: "01",
     icon: <Layers className="w-5 h-5" />,
     title: "Pick your stack",
-    desc: "Choose Laravel, React/Next.js, or the full-stack combo. Each path produces a different output.",
+    desc: "Choose Laravel, Express, NestJS, React, or the full-stack Next.js + Prisma combo.",
   },
   {
     n: "02",
     icon: <Database className="w-5 h-5" />,
     title: "Model your data",
-    desc: "Add models, fields, and relations visually — enums, foreign keys, nullable toggles included.",
+    desc: "Add models and fields visually. Enums, foreign keys, and advanced attributes included.",
   },
   {
     n: "03",
     icon: <Settings2 className="w-5 h-5" />,
-    title: "Configure options",
-    desc: "Laravel: auth strategy, DB engine, PHP version. React: state lib, UI kit, HTTP client, pages per model.",
+    title: "Configure architecture",
+    desc: "Select patterns like DDD, MVC or Feature-First. Toggle Swagger, validation, and auth.",
   },
   {
     n: "04",
     icon: <Download className="w-5 h-5" />,
     title: "Generate & download",
-    desc: "Laravel → YAML config + CLI. React → ready-to-unzip project. No login, no server, 100% browser.",
+    desc: "Get a ready-to-unzip project or a YAML config. No login, no server, 100% browser-side.",
   },
 ];
 
@@ -49,41 +49,34 @@ const FEATURES = [
   },
 ];
 
-const LARAVEL_FILES = [
-  "📄  stack-init.yaml",
-  "📄  GETTING_STARTED.md",
+const BACKEND_FILES = [
+  "📦  backend-project.zip",
   "",
-  "# After running `npx stack-init generate`:",
-  "",
-  "📄  app/Models/Post.php",
-  "📄  app/Http/Controllers/Api/PostController.php",
-  "📄  app/Http/Requests/StorePostRequest.php",
-  "📄  app/Http/Resources/PostResource.php",
-  "📄  database/migrations/xxxx_create_posts_table.php",
-  "📄  database/factories/PostFactory.php",
-  "📄  database/seeders/PostSeeder.php",
+  "├── src/",
+  "│   ├── controllers/",
+  "│   ├── services/",
+  "│   ├── models/",
+  "│   └── routes/",
+  "├── prisma/",
+  "│   └── schema.prisma      # Auto-generated schema",
+  "├── package.json           # With all selected deps",
+  "└── tsconfig.json",
 ];
 
-const REACT_FILES = [
-  "📦  my-project.zip",
+const FULLSTACK_FILES = [
+  "📦  fullstack-nextjs.zip",
   "",
-  "├── package.json",
-  "├── tsconfig.json",
-  "├── next.config.ts",
-  "├── src/",
-  "│   ├── app/",
-  "│   │   ├── layout.tsx",
-  "│   │   ├── page.tsx",
-  "│   │   └── posts/",
-  "│   │       ├── page.tsx          # list",
-  "│   │       ├── create/page.tsx   # create form",
-  "│   │       └── [id]/page.tsx     # detail",
-  "│   └── types/",
-  "│       └── Post.ts               # TS interface",
+  "├── src/app/",
+  "│   ├── api/               # API Routes per model",
+  "│   ├── posts/             # CRUD Pages",
+  "│   └── layout.tsx",
+  "├── src/lib/",
+  "│   └── prisma.ts          # Ready-to-use client",
+  "├── prisma/schema.prisma",
   "└── README.md",
 ];
 
-const TECH = ["Laravel 11", "Next.js 15", "React 19", "TypeScript 5", "Tailwind CSS 4", "Eloquent ORM"];
+const TECH = ["Laravel 13", "NestJS 11", "Express 4", "Next.js 15", "React 19", "Prisma ORM", "TypeScript 5", "Tailwind CSS 4"];
 
 export default function Home() {
   return (
@@ -296,47 +289,47 @@ export default function Home() {
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 16 }}>
-            {/* Laravel panel */}
+            {/* Backend panel */}
             <div style={{
-              borderRadius: 14, border: "1px solid rgba(255,45,32,.2)",
-              background: "rgba(255,45,32,.03)", overflow: "hidden",
+              borderRadius: 14, border: "1px solid rgba(245,200,66,.2)",
+              background: "rgba(245,200,66,.03)", overflow: "hidden",
             }}>
               <div style={{
                 display: "flex", alignItems: "center", gap: 10,
                 padding: "12px 16px",
-                borderBottom: "1px solid rgba(255,45,32,.12)",
-                background: "rgba(255,45,32,.04)",
+                borderBottom: "1px solid rgba(245,200,66,.12)",
+                background: "rgba(245,200,66,.04)",
               }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#FF2D20" }} />
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#ff7a6e" }}>Laravel output</span>
-                <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--text3)", fontFamily: "var(--font-jetbrains-mono)" }}>stack-init.yaml + CLI</span>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--gold)" }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--gold)" }}>Backend output (Express / NestJS)</span>
+                <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--text3)", fontFamily: "var(--font-jetbrains-mono)" }}>ZIP · instant download</span>
               </div>
               <div style={{ padding: 20, fontFamily: "var(--font-jetbrains-mono)", fontSize: 12, lineHeight: 1.9, color: "var(--text2)" }}>
-                {LARAVEL_FILES.map((line, i) => (
-                  <div key={i} style={{ color: line.startsWith("#") ? "var(--text3)" : undefined }}>
+                {BACKEND_FILES.map((line, i) => (
+                  <div key={i} style={{ color: line.includes("#") ? "var(--text3)" : undefined }}>
                     {line || <br />}
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* React panel */}
+            {/* Full-Stack panel */}
             <div style={{
-              borderRadius: 14, border: "1px solid rgba(97,219,251,.18)",
-              background: "rgba(97,219,251,.03)", overflow: "hidden",
+              borderRadius: 14, border: "1px solid rgba(157,111,255,.2)",
+              background: "rgba(157,111,255,.03)", overflow: "hidden",
             }}>
               <div style={{
                 display: "flex", alignItems: "center", gap: 10,
                 padding: "12px 16px",
-                borderBottom: "1px solid rgba(97,219,251,.1)",
-                background: "rgba(97,219,251,.04)",
+                borderBottom: "1px solid rgba(157,111,255,.12)",
+                background: "rgba(157,111,255,.04)",
               }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#61DBFB" }} />
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#7ee6ff" }}>React / Next.js output</span>
-                <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--text3)", fontFamily: "var(--font-jetbrains-mono)" }}>ZIP · instant download</span>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--purple)" }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#b494ff" }}>Next.js Full-Stack output</span>
+                <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--text3)", fontFamily: "var(--font-jetbrains-mono)" }}>ZIP · ready-to-run</span>
               </div>
               <div style={{ padding: 20, fontFamily: "var(--font-jetbrains-mono)", fontSize: 12, lineHeight: 1.9, color: "var(--text2)" }}>
-                {REACT_FILES.map((line, i) => (
+                {FULLSTACK_FILES.map((line, i) => (
                   <div key={i} style={{ color: line.includes("#") ? "var(--text3)" : undefined }}>
                     {line || <br />}
                   </div>

@@ -8,34 +8,53 @@ const STACKS = [
     icon: <img src="/icons/laravel.svg" alt="Laravel" style={{ width: 32, height: 32 }} />,
     title: "Laravel",
     badge: "PHP",
-    desc: "API REST or Blade backend with Eloquent, migrations, and artisan CLI.",
+    desc: "Robust backend with Eloquent, migrations, and powerful artisan CLI.",
     badgeColor: "#ff4d6d",
   },
   {
+    id: "nestjs" as const,
+    icon: <img src="/icons/nestjs.svg" alt="NestJS" style={{ width: 32, height: 32 }} />,
+    title: "NestJS",
+    badge: "Node",
+    desc: "Progressive Node.js framework for building efficient, scalable applications.",
+    badgeColor: "#ea2845",
+  },
+  {
+    id: "express" as const,
+    icon: <img src="/icons/expressjs.svg" alt="Express" style={{ width: 32, height: 32 }} />,
+    title: "Express",
+    badge: "Node",
+    desc: "Minimal and flexible Node.js web application framework.",
+    badgeColor: "#ffffff",
+  },
+  {
+    id: "nextjs" as const,
+    icon: <img src="/icons/nextdotjs.svg" alt="Next.js" style={{ width: 32, height: 32 }} />,
+    title: "Next.js",
+    badge: "Full",
+    desc: "The React Framework for the Web. Frontend or Full-stack (Prisma).",
+    badgeColor: "#000000",
+  },
+  {
     id: "react" as const,
-    icon: (
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <img src="/icons/nextdotjs.svg" alt="Next.js" style={{ width: 28, height: 28 }} />
-        <img src="/icons/react.svg" alt="React" style={{ width: 32, height: 32 }} />
-      </div>
-    ),
-    title: "React / Next.js",
-    badge: "TS",
-    desc: "Next.js front-end with TypeScript, routing, and component architecture.",
-    badgeColor: "#4d9fff",
+    icon: <img src="/icons/react.svg" alt="React" style={{ width: 32, height: 32 }} />,
+    title: "React SPA",
+    badge: "Front",
+    desc: "Vite-based Single Page Application. Frontend architecture only.",
+    badgeColor: "#61dafb",
   },
   {
     id: "laravel+react" as const,
     icon: (
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <img src="/icons/laravel.svg" alt="Laravel" style={{ width: 32, height: 32 }} />
-        <span style={{ color: "var(--text3)", fontSize: 18, fontWeight: 300 }}>+</span>
-        <img src="/icons/react.svg" alt="React" style={{ width: 32, height: 32 }} />
+        <img src="/icons/laravel.svg" alt="Laravel" style={{ width: 28, height: 28 }} />
+        <span style={{ color: "var(--text3)", fontSize: 16, fontWeight: 300 }}>+</span>
+        <img src="/icons/react.svg" alt="React" style={{ width: 28, height: 28 }} />
       </div>
     ),
     title: "Laravel + React",
-    badge: "Full",
-    desc: "Full-stack — a Laravel API paired with a Next.js SPA. Best of both worlds.",
+    badge: "Mixed",
+    desc: "The powerhouse combo. Laravel API and Next.js Frontend.",
     badgeColor: "#9d6fff",
   },
 ];

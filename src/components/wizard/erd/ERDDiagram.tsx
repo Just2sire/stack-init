@@ -10,7 +10,9 @@ import {
   useNodesState,
   useEdgesState,
   MarkerType,
+  BackgroundVariant,
 } from "@xyflow/react";
+
 import "@xyflow/react/dist/style.css";
 import dagre from "dagre";
 import { useWizardStore } from "@/stores/useWizardStore";
@@ -55,8 +57,8 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[]) => {
 
 export function ERDDiagram() {
   const { models } = useWizardStore();
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
   useEffect(() => {
     if (models.length === 0) {
@@ -82,15 +84,15 @@ export function ERDDiagram() {
           source: model.name,
           target: rel.model,
           label: rel.type,
-          labelStyle: { fill: "#a0a0a0", fontSize: 10, fontWeight: 700 },
-          labelBgStyle: { fill: "#161926", fillOpacity: 0.8 },
+          labelStyle: { fill: "var(--gold)", fontSize: 10, fontWeight: 800, textTransform: "uppercase" },
+          labelBgStyle: { fill: "var(--bg3)", fillOpacity: 0.9 },
           animated: true,
-          style: { stroke: "#6C63FF", strokeWidth: 2 },
+          style: { stroke: "var(--gold)", strokeWidth: 1.5, opacity: 0.6 },
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            width: 20,
-            height: 20,
-            color: "#6C63FF",
+            width: 16,
+            height: 16,
+            color: "var(--gold)",
           },
         });
       });
@@ -102,7 +104,7 @@ export function ERDDiagram() {
   }, [models, setNodes, setEdges]);
 
   return (
-    <div className="w-full h-full bg-[#0f111a] rounded-xl overflow-hidden border border-white/[0.08]">
+    <div className="w-full h-full bg-bg rounded-2xl overflow-hidden border border-white/[0.05] shadow-inner">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -111,12 +113,16 @@ export function ERDDiagram() {
         nodeTypes={nodeTypes}
         fitView
         colorMode="dark"
-        minZoom={0.2}
-        maxZoom={1.5}
+        minZoom={0.1}
+        maxZoom={2}
       >
-        <Background color="#ffffff" opacity={0.03} gap={20} />
-        <Controls showInteractive={false} className="!bg-[#161926] !border-white/[0.08] !fill-white" />
+        <Background color="var(--gold)" gap={24} variant={BackgroundVariant.Lines} />
+        <Controls 
+          showInteractive={false} 
+          className="!bg-bg2 !border-white/[0.08] !fill-gold !text-gold" 
+        />
       </ReactFlow>
     </div>
   );
 }
+
