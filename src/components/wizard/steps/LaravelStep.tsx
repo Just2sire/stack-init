@@ -12,10 +12,17 @@ export function LaravelStep() {
   const options = [
     { key: "migration", label: "Migration", desc: "Database table definition" },
     { key: "controller", label: "Controller", desc: "HTTP request handler" },
+    { key: "resource", label: "Resource", desc: "API JSON resource transformation" },
+    { key: "request", label: "Request", desc: "Form request validation rules" },
     { key: "seeder", label: "Seeder", desc: "Seed database with test data" },
     { key: "factory", label: "Factory", desc: "Generate fake model instances" },
     { key: "policy", label: "Policy", desc: "Authorization rules" },
+    { key: "service", label: "Service", desc: "Business logic layer" },
+    { key: "repository", label: "Repository", desc: "Data access abstraction" },
+    { key: "tests", label: "Tests", desc: "Feature and unit tests" },
     { key: "routes", label: "Routes", desc: "API / web route registration" },
+    { key: "swagger", label: "Swagger", desc: "L5-Swagger documentation" },
+    { key: "softDelete", label: "Soft Deletes", desc: "Use SoftDeletes trait" },
   ] as const;
 
   const activeModel = activeTab ? models.find(m => m.name === activeTab) : null;
@@ -31,62 +38,60 @@ export function LaravelStep() {
   };
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <h1 className="si-title mb-2">
+    <div className="si-step-panel">
+      <div className="si-section-label">Configuration</div>
+      <h1 className="si-title" style={{ marginBottom: 8 }}>
         {activeModel ? `Configure ${activeModel.name}` : "Laravel setup"}
       </h1>
-      <p className="si-subtitle mb-8">
+      <p className="si-subtitle" style={{ marginBottom: 32 }}>
         {activeModel
           ? `Toggle which files to generate for the ${activeModel.name} model.`
           : "Configure what should be generated for each model, or set global defaults."}
       </p>
 
       {/* Model tabs */}
-      <div className="flex gap-2 mb-8 flex-wrap">
+      <div style={{ display: "flex", gap: 8, marginBottom: 32, flexWrap: "wrap" }}>
         <button
           onClick={() => setActiveTab(null)}
-          className={cn(
-            "px-4 py-2 rounded-[10px] text-[13px] font-medium transition-all duration-200",
-            !activeTab
-              ? "bg-[#6C63FF]/12 text-[#a59bff] border border-[#6C63FF]/25"
-              : "bg-white/[0.03] text-[#5c6078] border border-white/[0.06] hover:text-[#8b8fa3] hover:border-white/[0.10]"
-          )}
+          style={{
+            padding: "7px 16px", borderRadius: 10, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all 0.2s",
+            background: !activeTab ? "var(--gold-subtle)" : "transparent",
+            border: `1px solid ${!activeTab ? "var(--gold-border)" : "var(--border-subtle)"}`,
+            color: !activeTab ? "var(--gold)" : "var(--text3)",
+          }}
         >
           All models
         </button>
         {models.map((m) => {
-          const allOn = options.every(o => m.generate[o.key]);
+          const allOn  = options.every(o => m.generate[o.key]);
           const noneOn = options.every(o => !m.generate[o.key]);
           return (
             <button
               key={m.name}
               onClick={() => setActiveTab(m.name)}
-              className={cn(
-                "px-4 py-2 rounded-[10px] text-[13px] font-medium transition-all duration-200 inline-flex items-center gap-2",
-                activeTab === m.name
-                  ? "bg-[#6C63FF]/12 text-[#a59bff] border border-[#6C63FF]/25"
-                  : "bg-white/[0.03] text-[#5c6078] border border-white/[0.06] hover:text-[#8b8fa3] hover:border-white/[0.10]"
-              )}
+              style={{
+                padding: "7px 16px", borderRadius: 10, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all 0.2s",
+                display: "inline-flex", alignItems: "center", gap: 6,
+                background: activeTab === m.name ? "var(--gold-subtle)" : "transparent",
+                border: `1px solid ${activeTab === m.name ? "var(--gold-border)" : "var(--border-subtle)"}`,
+                color: activeTab === m.name ? "var(--gold)" : "var(--text3)",
+              }}
             >
               {m.name}
-              <span className={cn(
-                "w-2 h-2 rounded-full",
-                allOn ? "bg-[#34D399]" : noneOn ? "bg-[#5c6078]" : "bg-[#FBBF24]"
-              )} />
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: allOn ? "var(--green)" : noneOn ? "var(--text3)" : "#FBBF24", display: "inline-block" }} />
             </button>
           );
         })}
       </div>
 
       {models.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 rounded-[14px] border border-dashed border-white/[0.08] text-[#5c6078]">
-          <Settings2 className="w-8 h-8 mb-3 opacity-40" />
-          <p className="text-[14px]">No models to configure</p>
-          <p className="text-[12px] mt-1 text-[#5c6078]/70">Go back and define your models first</p>
+        <div style={{ textAlign: "center", padding: "60px 20px", border: "1px dashed var(--border-medium)", borderRadius: 16, color: "var(--text3)" }}>
+          <span style={{ fontSize: 36, display: "block", marginBottom: 12, opacity: 0.3 }}>⚙</span>
+          <p style={{ fontSize: 14 }}>No models to configure</p>
+          <p style={{ fontSize: 12, marginTop: 4, opacity: 0.7 }}>Go back and define your models first</p>
         </div>
       ) : activeModel ? (
-        /* Single model view */
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, maxWidth: 720 }}>
           {options.map((opt) => (
             <ToggleCard
               key={opt.key}
@@ -98,9 +103,8 @@ export function LaravelStep() {
           ))}
         </div>
       ) : (
-        /* All models view */
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, maxWidth: 720, marginBottom: 20 }}>
             {options.map((opt) => {
               const state = getAllState(opt.key);
               return (
@@ -115,23 +119,12 @@ export function LaravelStep() {
               );
             })}
           </div>
-
-          <div className="si-info-card">
-            <div className="flex items-start gap-2">
-              <Info className="w-4 h-4 text-[#a59bff] mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-[12px] text-[#8b8fa3] leading-relaxed">
-                  <span className="inline-flex items-center gap-1.5 mr-2">
-                    <span className="w-2 h-2 rounded-full bg-[#6C63FF] inline-block" /> Indigo
-                  </span>
-                  = enabled on all models.
-                  <span className="inline-flex items-center gap-1.5 mx-2">
-                    <span className="w-2 h-2 rounded-full bg-[#FBBF24] inline-block" /> Amber
-                  </span>
-                  = enabled on some models only. Click to toggle all.
-                </p>
-              </div>
-            </div>
+          <div className="si-info-card" style={{ maxWidth: 720 }}>
+            <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>
+              <span style={{ color: "var(--gold)" }}>●</span> Gold = all models.
+              <span style={{ color: "#FBBF24", margin: "0 6px" }}>●</span> Amber = some models.
+              Click to toggle all.
+            </p>
           </div>
         </>
       )}
@@ -158,35 +151,17 @@ function ToggleCard({
   return (
     <button
       onClick={() => onChange(!checked)}
-      className={cn(
-        "si-toggle-card",
-        isOn && "on",
-        isPartial && "!border-[#FBBF24]/25 !bg-[#FBBF24]/[0.04]"
-      )}
+      className={cn("si-toggle-card", isOn && "on", isPartial && "partial")}
+      style={{ width: "100%", textAlign: "left" }}
     >
-      {/* Toggle switch */}
-      <div className={cn(
-        "si-toggle",
-        isOn && "on",
-        isPartial && "!bg-[#FBBF24]"
-      )}>
-        <div className={cn(
-          "si-toggle-knob",
-          (isOn || isPartial) && "!left-[21px]"
-        )} />
+      <div className={cn("si-toggle", isOn && "on", isPartial && "partial")}>
+        <div className="si-toggle-knob" />
       </div>
-
-      <div className="flex-1 text-left">
-        <span className={cn(
-          "block text-[13px] font-medium",
-          isOn ? "text-[#a59bff]" : isPartial ? "text-[#FBBF24]" : "text-[#c5c8d8]"
-        )}>
+      <div style={{ flex: 1 }}>
+        <span style={{ display: "block", fontSize: 13, fontWeight: 600, color: isOn ? "var(--gold)" : isPartial ? "#FBBF24" : "var(--text)" }}>
           {label}
         </span>
-        <span className={cn(
-          "block text-[11px] mt-0.5",
-          isOn ? "text-[#6C63FF]/70" : isPartial ? "text-[#FBBF24]/60" : "text-[#5c6078]"
-        )}>
+        <span style={{ display: "block", fontSize: 11, marginTop: 2, color: isOn ? "var(--gold-dim)" : isPartial ? "rgba(251,191,36,0.7)" : "var(--text3)" }}>
           {description}
         </span>
       </div>

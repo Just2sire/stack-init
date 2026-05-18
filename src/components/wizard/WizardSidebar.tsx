@@ -1,66 +1,120 @@
 "use client";
 
-import { useWizardStore } from "@/stores/useWizardStore";
+import { useWizardStore, StepId } from "@/stores/useWizardStore";
 import { cn } from "@/lib/utils";
-import { Check, Layers } from "lucide-react";
+import { Layers, Check } from "lucide-react";
+import Link from "next/link";
+
+const STEP_LABELS: Record<StepId, string> = {
+  stack:           "Stack & Project",
+  usage:           "Next.js Usage",
+  architecture:    "Architecture",
+  database:        "Database",
+  models:          "Models & Fields",
+  relations:       "Relations",
+  routes:          "Routes",
+  middlewares:     "Middlewares",
+  "laravel-setup": "Laravel Setup",
+  "nest-setup":    "NestJS Setup",
+  "fastapi-setup": "FastAPI Setup",
+  "react-setup":   "React Setup",
+  integration:     "Integration",
+  output:          "Output",
+};
 
 export function WizardSidebar() {
-  const { currentStep, stack } = useWizardStore();
+  const { steps, currentStepId, setStep, models, stack } = useWizardStore();
+  const currentIndex = steps.indexOf(currentStepId);
 
-  const isLaravel = stack === "laravel" || stack === "laravel+react";
-  const isReact = stack === "react" || stack === "laravel+react";
-
-  const allSteps = [
-    { label: "Stack & Project", index: 0, show: true },
-    { label: "Models & Fields", index: 1, show: true },
-    { label: "Relations", index: 2, show: true },
-    { label: "Laravel Setup", index: 3, show: isLaravel },
-    { label: "React Setup", index: isLaravel ? 4 : 3, show: isReact },
-    { label: "Output", index: (isLaravel && isReact) ? 5 : 4, show: true },
-  ];
-
-  const visibleSteps = allSteps.filter((s) => s.show);
+  // Badge : nombre de modèles définis
+  const getStepBadge = (step: StepId): string | null => {
+    if (step === 'models' && models.length > 0) return String(models.length);
+    return null;
+  };
 
   return (
     <div className="si-wizard-sidebar">
       {/* Logo */}
-      <div className="flex items-center gap-3 mb-10">
-        <div className="w-9 h-9 rounded-[10px] bg-[#6C63FF] text-white flex items-center justify-center shadow-[0_0_16px_rgba(108,99,255,0.3)]">
-          <Layers className="w-[18px] h-[18px]" />
+      <Link href="/" className="si-wiz-logo" style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textDecoration: "none" }}>
+        <div style={{ position: "relative", width: 28, height: 28 }}>
+          <div style={{
+            position: "absolute", top: 4, left: 4, width: 24, height: 24, borderRadius: 6,
+            background: "var(--gold-border)", border: "1px solid var(--gold-border)",
+          }} />
+          <div style={{
+            position: "absolute", top: 0, left: 0, width: 24, height: 24, borderRadius: 6,
+            background: "var(--gold)", color: "var(--bg)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 2,
+            boxShadow: "2px 2px 10px rgba(0,0,0,0.3)",
+          }}>
+            <Layers className="w-4 h-4" strokeWidth={3} />
+          </div>
         </div>
-        <span className="font-display text-[16px] text-white tracking-tight">Stack-Init</span>
-      </div>
+        <span style={{
+          fontFamily: "var(--font-syne), 'Syne', sans-serif",
+          fontSize: 18, fontWeight: 800, color: "var(--text)", letterSpacing: "-0.02em",
+        }}>
+          Stack<span style={{ color: "var(--gold)" }}>Init</span>
+        </span>
+      </Link>
 
       {/* Steps */}
-      <nav className="flex flex-col gap-1">
-        {visibleSteps.map((step) => {
-          const isActive = currentStep === step.index;
-          const isCompleted = currentStep > step.index;
+      <nav style={{ padding: "8px 0", flex: 1 }}>
+        {steps.map((id, idx) => {
+          const stepIndex = steps.indexOf(id);
+          const isActive = currentStepId === id;
+          const isCompleted = currentIndex > stepIndex;
+          const isClickable = isCompleted || isActive || !!stack;
+          const label = STEP_LABELS[id];
+          const badge = getStepBadge(id);
 
           return (
             <div
-              key={step.label}
+              key={id}
+              onClick={() => isClickable && setStep(id)}
               className={cn(
                 "si-step-item",
                 isActive && "active",
-                isCompleted && "done"
+                isCompleted && "done",
+                isClickable && "cursor-pointer"
               )}
+              style={{ opacity: !isCompleted && !isActive && !!stack ? 0.55 : undefined }}
             >
               <div className="si-step-dot">
-                {isCompleted ? <Check className="w-3.5 h-3.5" /> : visibleSteps.indexOf(step) + 1}
+                {isCompleted ? <Check size={14} /> : idx + 1}
               </div>
-              {step.label}
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400 }}>
+                  {label}
+                </span>
+                {badge && (
+                  <span className="si-badge si-badge-gold" style={{ fontSize: 10, padding: "1px 6px" }}>
+                    {badge}
+                  </span>
+                )}
+              </div>
             </div>
           );
         })}
       </nav>
 
-      {/* Bottom spacer for visual balance */}
-      <div className="mt-auto pt-6 border-t border-white/[0.04]">
-        <p className="text-[11px] text-[#5c6078] leading-relaxed">
-          Define your stack, design your models, and generate everything in one go.
-        </p>
+      {/* Footer */}
+      <div
+        style={{
+          padding: "16px 20px",
+          borderTop: "1px solid var(--border-subtle)",
+          fontSize: 11,
+          color: "var(--text3)",
+          lineHeight: 1.5,
+        }}
+      >
+        <div style={{ fontWeight: 600, color: "var(--text2)", marginBottom: 4, textTransform: "uppercase" }}>
+          Project
+        </div>
+        {useWizardStore.getState().projectName || "unnamed-project"}
       </div>
     </div>
   );
 }
+

@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useWizardStore } from "@/stores/useWizardStore";
 import { generate } from "@/lib/generator";
-import { Download, Loader2, Sparkles, FileCode, Check } from "lucide-react";
+import { generateShareUrl } from "@/lib/sharing";
+import { savePreset } from "@/lib/presets";
+import { Download, Loader2, Sparkles, FileCode, Check, ChevronDown, ChevronUp, Database, Box, Layers as LayersIcon, RefreshCw, Edit3, Share2, ClipboardCheck, BookmarkPlus } from "lucide-react";
 import type { ProjectConfig, ModelPages } from "@stack-init/schema";
 
 const DEFAULT_PAGES: ModelPages = { list: true, detail: true, create: true, edit: false };
@@ -25,6 +27,8 @@ function computeFileList(config: ProjectConfig): FileEntry[] {
   const files: FileEntry[] = [];
   const isLaravel = config.stack === 'laravel' || config.stack === 'laravel+react';
   const isReact   = config.stack === 'react'   || config.stack === 'laravel+react';
+  const isExpress = config.stack === 'express' || config.stack === 'express+react';
+  const isNest    = config.stack === 'nestjs';
 
   if (isLaravel) {
     files.push({ path: 'stack-init.yaml', icon: '📄' });
@@ -53,9 +57,32 @@ function computeFileList(config: ProjectConfig): FileEntry[] {
       if (g.policy) {
         files.push({ path: `app/Policies/${name}Policy.php`, icon: '📄' });
       }
+      if (g.service) {
+        files.push({ path: `app/Services/${name}Service.php`, icon: '📄' });
+      }
+      if (g.repository) {
+        files.push({ path: `app/Repositories/${name}Repository.php`, icon: '📄' });
+      }
+      if (g.tests) {
+        files.push({ path: `tests/Feature/${name}Test.php`, icon: '📄' });
+      }
       if (g.routes) {
         files.push({ path: `routes/api.php  ← ${name} routes added`, icon: '📝' });
       }
+    }
+  }
+
+  if (isExpress || isNest) {
+    files.push({ path: 'package.json', icon: '📄' });
+    files.push({ path: 'tsconfig.json', icon: '📄' });
+    files.push({ path: 'src/app.ts', icon: '📄' });
+    
+    for (const model of config.models) {
+      const slug = slugify(model.name);
+      files.push({ path: `src/models/${model.name}.ts`, icon: '📄' });
+      files.push({ path: `src/controllers/${model.name}Controller.ts`, icon: '📄' });
+      files.push({ path: `src/services/${model.name}Service.ts`, icon: '📄' });
+      files.push({ path: `src/repositories/${model.name}Repository.ts`, icon: '📄' });
     }
   }
 
@@ -66,7 +93,7 @@ function computeFileList(config: ProjectConfig): FileEntry[] {
     files.push({ path: 'src/app/layout.tsx', icon: '📄' });
     files.push({ path: 'src/app/page.tsx', icon: '📄' });
     files.push({ path: 'src/app/globals.css', icon: '📄' });
-    if (config.react.css === 'tailwind') {
+    if (config.react?.css === 'tailwind') {
       files.push({ path: 'tailwind.config.ts', icon: '📄' });
       files.push({ path: 'postcss.config.mjs', icon: '📄' });
     }
@@ -88,9 +115,16 @@ function computeFileList(config: ProjectConfig): FileEntry[] {
 }
 
 export function OutputStep() {
-  const { getConfig, stack } = useWizardStore();
+  const { getConfig, stack, reset, setStep, models, projectName } = useWizardStore();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDone, setIsDone] = useState(false);
+  const [isShared, setIsShared] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>("summary");
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [presetName, setPresetName] = useState('');
+  const [presetIcon, setPresetIcon] = useState('📦');
+  const [presetDesc, setPresetDesc] = useState('');
+  const [savedToast, setSavedToast] = useState(false);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -105,75 +139,331 @@ export function OutputStep() {
     }
   };
 
+  const handleShare = () => {
+    const url = generateShareUrl(getConfig());
+    navigator.clipboard.writeText(url);
+    setIsShared(true);
+    setTimeout(() => setIsShared(false), 2000);
+  };
+
+  const handleSavePreset = () => {
+    const name = presetName.trim() || projectName || 'My Preset';
+    savePreset(getConfig(), name, { icon: presetIcon, description: presetDesc.trim() || undefined });
+    setShowSaveModal(false);
+    setPresetName('');
+    setPresetDesc('');
+    setPresetIcon('📦');
+    setSavedToast(true);
+    setTimeout(() => setSavedToast(false), 2500);
+  };
+
   const isLaravel = stack === "laravel" || stack === "laravel+react";
-
   const fileList = isDone ? computeFileList(getConfig()) : [];
+  const config = getConfig();
 
-  return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col items-center text-center py-8">
-        <div className="w-16 h-16 rounded-full bg-[#6C63FF]/10 flex items-center justify-center mb-6 border border-[#6C63FF]/20">
-          <Sparkles className="w-7 h-7 text-[#a59bff]" />
-        </div>
-
-        <h1 className="si-title mb-3">Ready to generate</h1>
-        <p className="si-subtitle max-w-lg mx-auto mb-10">
-          Your project configuration is complete. Click below to generate and download your scaffolded codebase.
-        </p>
-
-        <button
-          onClick={handleGenerate}
-          disabled={isGenerating || isDone}
-          className="si-btn-primary text-[16px] py-4 px-10 inline-flex items-center gap-3 mb-12"
+  const SummaryItem = ({ id, title, icon, children }: { id: string; title: string; icon: any; children: any }) => {
+    const isExpanded = expanded === id;
+    return (
+      <div className="si-card mb-3 overflow-hidden" style={{ borderColor: isExpanded ? "var(--gold-border)" : undefined }}>
+        <div 
+          onClick={() => setExpanded(isExpanded ? null : id)}
+          className="si-card-header" 
+          style={{ cursor: "pointer", background: isExpanded ? "var(--bg4)" : "transparent" }}
         >
-          {isGenerating ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Generating...
-            </>
-          ) : isDone ? (
-            <>
-              <Check className="w-5 h-5" />
-              Generated!
-            </>
-          ) : (
-            <>
-              <Download className="w-5 h-5" />
-              Generate project
-            </>
-          )}
-        </button>
+          <div className="flex items-center gap-3">
+            <div className="text-gold">{icon}</div>
+            <span className="font-bold text-sm text-text">{title}</span>
+          </div>
+          {isExpanded ? <ChevronUp size={16} className="text-text3" /> : <ChevronDown size={16} className="text-text3" />}
+        </div>
+        {isExpanded && <div className="si-card-body border-t border-white/5 animate-in fade-in slide-in-from-top-2 duration-200">{children}</div>}
+      </div>
+    );
+  };
 
-        {isDone && (
-          <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="si-card overflow-hidden text-left">
-              <div className="si-card-header justify-between">
-                <div className="flex items-center gap-2">
-                  <FileCode className="w-4 h-4 text-[#a59bff]" />
-                  <span className="text-[13px] font-medium text-white">Generated files</span>
-                </div>
-                <span className="si-badge si-badge-teal">{fileList.length} files</span>
+  if (isDone) {
+    return (
+      <div className="si-step-panel flex flex-col items-center py-10">
+        <div className="w-16 h-16 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center mb-6 animate-in zoom-in duration-500">
+          <Check className="text-gold w-8 h-8" strokeWidth={3} />
+        </div>
+        <h1 className="si-title mb-2">Project Generated!</h1>
+        <p className="si-subtitle mb-10">Your project is ready. Check the files below.</p>
+
+        <div className="w-full max-w-[700px] space-y-6">
+          <div className="si-card">
+            <div className="si-card-header">
+              <div className="flex items-center gap-2">
+                <FileCode className="text-gold" size={16} />
+                <span className="font-bold text-sm">Generated Files</span>
               </div>
-              <div className="si-card-body text-[13px] font-mono text-[#8b8fa3] space-y-1 max-h-64 overflow-y-auto">
-                {fileList.map((f) => (
-                  <p key={f.path}>{f.icon} {f.path}</p>
-                ))}
+              <span className="si-badge si-badge-gold">{fileList.length} files</span>
+            </div>
+            <div className="si-card-body max-h-[300px] overflow-y-auto font-mono text-[11px] text-text2 space-y-1">
+              {fileList.map((f) => (
+                <div key={f.path} className="flex gap-3 py-1 border-b border-white/[0.03] last:border-0">
+                  <span className="opacity-50">{f.icon}</span>
+                  <span>{f.path}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {isLaravel && (
+            <div className="bg-bg4 border border-white/5 rounded-xl p-6">
+              <p className="text-[10px] font-bold text-gold uppercase tracking-widest mb-4">CLI Instructions</p>
+              <div className="bg-bg rounded-lg p-4 font-mono text-xs text-text2 border border-white/5 leading-relaxed">
+                <p className="opacity-40 mb-2"># 1. Run generation in your project</p>
+                <p className="text-text"><span className="opacity-40">$</span> npx stack-init generate</p>
+                <p className="opacity-40 mt-4 mb-2"># 2. Setup database & start</p>
+                <p className="text-text"><span className="opacity-40">$</span> php artisan migrate</p>
+                <p className="text-text"><span className="opacity-40">$</span> php artisan serve</p>
               </div>
             </div>
+          )}
 
-            {isLaravel && (
-              <div className="mt-4 rounded-[10px] bg-white/[0.02] border border-white/[0.06] p-4">
-                <p className="text-[11px] font-medium text-[#a59bff] mb-2 uppercase tracking-wider">Quick start</p>
-                <div className="font-mono text-[13px] text-[#c5c8d8] leading-[1.8] bg-white/[0.02] rounded-[8px] p-3 border border-white/[0.04]">
-                  <p><span className="text-[#5c6078]">$</span> cp stack-init.yaml ./my-laravel-project/</p>
-                  <p><span className="text-[#5c6078]">$</span> cd my-laravel-project</p>
-                  <p><span className="text-[#5c6078]">$</span> npx stack-init generate</p>
+          <div className="flex gap-4 pt-6">
+            <button 
+              onClick={() => { setIsDone(false); setStep('stack'); }} 
+              className="si-btn-secondary flex-1 flex items-center justify-center gap-2 py-3"
+            >
+              <Edit3 size={16} />
+              Modify Config
+            </button>
+            <button 
+              onClick={() => reset()} 
+              className="si-btn-ghost flex-1 flex items-center justify-center gap-2 py-3 border border-white/10"
+            >
+              <RefreshCw size={16} />
+              Start New Project
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="si-step-panel">
+      <div className="flex flex-col items-center text-center py-6 mb-10">
+        <div className="w-16 h-16 rounded-full bg-gold-subtle border border-gold-border flex items-center justify-center mb-6">
+          <Sparkles className="text-gold w-7 h-7" />
+        </div>
+        <div className="si-section-label justify-center">Final Step</div>
+        <h1 className="si-title mb-2">Review & Generate</h1>
+        <p className="si-subtitle max-w-[480px]">
+          Review your project structure before we scaffold the codebase.
+        </p>
+      </div>
+
+      <div className="max-w-[700px] mx-auto mb-12">
+        <SummaryItem id="summary" title="Project Summary" icon={<Box size={18} />}>
+          <div className="grid grid-cols-2 gap-y-4 text-sm">
+            <div>
+              <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-1">Project Name</p>
+              <p className="font-mono text-gold">{projectName || "my-project"}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-1">Stack</p>
+              <p className="text-text">{stack?.toUpperCase()}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-1">Database</p>
+              <p className="text-text">
+                {isLaravel ? config.laravel?.db_engine : (config.express?.db_engine || config.nest?.db_engine || config.fastapi?.db_engine || "SQLite")}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-1">ORM / Driver</p>
+              <p className="text-text">
+                {isLaravel ? "Eloquent" : (config.express?.database || config.nest?.database || config.fastapi?.orm || "None")}
+              </p>
+            </div>
+          </div>
+        </SummaryItem>
+
+        <SummaryItem id="models" title={`Models & Schema (${models.length})`} icon={<LayersIcon size={18} />}>
+          <div className="space-y-3">
+            {models.map(m => (
+              <div key={m.name} className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5">
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-gold text-xs font-bold">{m.name}</span>
+                  <span className="text-[10px] text-text3">{m.fields.length} fields</span>
+                </div>
+                <div className="flex gap-2">
+                  {m.relations.length > 0 && <span className="si-badge si-badge-gray !text-[9px]">{m.relations.length} rel</span>}
+                  {m.generate.controller && <span className="si-badge si-badge-gold !text-[9px]">API</span>}
+                </div>
+              </div>
+            ))}
+            {models.length === 0 && <p className="text-xs text-text3 italic">No models defined yet.</p>}
+          </div>
+        </SummaryItem>
+
+        <SummaryItem id="tech" title="Technical Options" icon={<Terminal size={18} />}>
+          <div className="space-y-4">
+            {isLaravel && config.laravel && (
+              <div>
+                <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-2">Laravel Config</p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="si-badge si-badge-gray">PHP {config.laravel.php_version}</span>
+                  <span className="si-badge si-badge-gray">Auth: {config.laravel.auth}</span>
+                  <span className="si-badge si-badge-gray">Pattern: {config.laravel.pattern}</span>
+                </div>
+              </div>
+            )}
+            {config.fastapi && (
+              <div>
+                <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-2">FastAPI Config</p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="si-badge si-badge-gray">Python {config.fastapi.python_version}</span>
+                  <span className="si-badge si-badge-gray">Auth: {config.fastapi.auth}</span>
+                  <span className="si-badge si-badge-gray">ORM: {config.fastapi.orm}</span>
+                </div>
+              </div>
+            )}
+            {config.express && config.express.middlewares && config.express.middlewares.length > 0 && (
+              <div>
+                <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-2">Middlewares</p>
+                <div className="flex flex-wrap gap-2">
+                  {config.express.middlewares.map(m => <span key={m} className="si-badge si-badge-gray">{m}</span>)}
+                </div>
+              </div>
+            )}
+            {config.react && (
+              <div>
+                <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-2">Frontend Stack</p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="si-badge si-badge-gray">{config.react.ui_lib}</span>
+                  <span className="si-badge si-badge-gray">{config.react.state_lib}</span>
+                  <span className="si-badge si-badge-gray">{config.react.http_lib}</span>
                 </div>
               </div>
             )}
           </div>
-        )}
+        </SummaryItem>
       </div>
+
+      <div className="flex flex-col items-center gap-4">
+        <button
+          onClick={handleGenerate}
+          disabled={isGenerating}
+          className="si-btn-primary px-16 py-4 text-lg font-bold gap-3 shadow-xl shadow-gold/10"
+        >
+          {isGenerating ? (
+            <>
+              <Loader2 className="w-6 h-6 animate-spin" />
+              Generating...
+            </>
+          ) : (
+            <>
+              <Download className="w-6 h-6" />
+              Generate {projectName || "Project"}
+            </>
+          )}
+        </button>
+
+        <div className="flex gap-3">
+          <button
+            onClick={handleShare}
+            className="si-btn-ghost text-xs gap-2 py-2"
+          >
+            {isShared ? <ClipboardCheck size={14} className="text-gold" /> : <Share2 size={14} />}
+            {isShared ? "Link copied!" : "Share config link"}
+          </button>
+          <button
+            onClick={() => setShowSaveModal(true)}
+            className="si-btn-ghost text-xs gap-2 py-2"
+          >
+            {savedToast ? <Check size={14} className="text-gold" /> : <BookmarkPlus size={14} />}
+            {savedToast ? "Preset saved!" : "Save as Preset"}
+          </button>
+        </div>
+
+        <p className="text-[10px] text-text3 flex items-center gap-2">
+          <ShieldCheck size={12} className="text-gold" />
+          By clicking generate, a ZIP or YAML file will be prepared for you.
+        </p>
+      </div>
+
+      {/* Save as Preset modal */}
+      {showSaveModal && (
+        <>
+          <div
+            onClick={() => setShowSaveModal(false)}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 49 }}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              zIndex: 50,
+              background: "var(--bg2)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: 16,
+              padding: 28,
+              width: 380,
+              boxShadow: "0 16px 60px rgba(0,0,0,0.5)",
+            }}
+          >
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--text)", marginBottom: 4, fontFamily: "var(--font-syne)" }}>
+              Save as Preset
+            </h3>
+            <p style={{ fontSize: 12, color: "var(--text3)", marginBottom: 20 }}>
+              Save your current configuration to reuse in future projects.
+            </p>
+
+            <div style={{ marginBottom: 14 }}>
+              <label className="si-section-label">Preset Name</label>
+              <input
+                autoFocus
+                value={presetName}
+                onChange={(e) => setPresetName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSavePreset()}
+                placeholder={projectName || 'My Preset'}
+                className="si-input"
+                style={{ marginTop: 6 }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+              <div style={{ flex: "0 0 80px" }}>
+                <label className="si-section-label">Icon</label>
+                <input
+                  value={presetIcon}
+                  onChange={(e) => setPresetIcon(e.target.value)}
+                  className="si-input"
+                  style={{ marginTop: 6, textAlign: "center", fontSize: 20 }}
+                  maxLength={2}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label className="si-section-label">Description (optional)</label>
+                <input
+                  value={presetDesc}
+                  onChange={(e) => setPresetDesc(e.target.value)}
+                  placeholder="Short description..."
+                  className="si-input"
+                  style={{ marginTop: 6 }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={handleSavePreset} className="si-btn-primary" style={{ flex: 1 }}>
+                Save Preset
+              </button>
+              <button onClick={() => setShowSaveModal(false)} className="si-btn-secondary" style={{ flex: 1 }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
+
+import { ShieldCheck, Terminal } from "lucide-react";

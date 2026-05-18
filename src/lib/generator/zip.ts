@@ -1,353 +1,185 @@
 import JSZip from 'jszip';
-import type { ProjectConfig, ReactOptions, ModelPages } from '@stack-init/schema';
+import type { ProjectConfig } from '@stack-init/schema';
+import { generateCommonReadme } from './common';
+import { generateExpressProject } from './express';
+import { generateNestProject } from './nest';
+import { generateNextjsProject } from './nextjs';
+import { generateFastAPIProject } from './fastapi';
+import { generateIntegration } from './integration';
+import { buildYamlContent, buildGettingStarted } from './yaml';
 
-// "BlogPost" → "blog-posts"
-function slugify(name: string): string {
-  return name
-    .replace(/([a-z])([A-Z])/g, '$1-$2')
-    .toLowerCase()
-    .replace(/([^s])$/, '$1s');
+function generateDevScripts(zip: JSZip, config: ProjectConfig): void {
+  const { stack, name } = config;
+  const isFastAPI = stack.includes('fastapi');
+  const isNestJS  = stack.includes('nestjs');
+
+  // Ports: FastAPI on 8000 (no conflict), Node.js on 3000 → frontend on 3001
+  const backendPort  = isFastAPI ? 8000 : 3000;
+  const frontendPort = isFastAPI ? 3000 : 3001;
+  const backendUrl   = `http://localhost:${backendPort}`;
+  const frontendUrl  = `http://localhost:${frontendPort}`;
+  const frontendPortEnv = isFastAPI ? '' : `PORT=${frontendPort} `;
+
+  // Backend commands
+  const backendInstall = isFastAPI
+    ? [ 'python3 -m venv .venv',
+        'source .venv/bin/activate',
+        'pip install -r requirements.txt',
+        'deactivate' ]
+    : [ 'npm install' ];
+
+  const backendStart = isFastAPI
+    ? `source .venv/bin/activate && uvicorn app.main:app --reload --port ${backendPort}`
+    : isNestJS
+    ? 'npm run start:dev'
+    : 'npm run dev';
+
+  const backendInstallWin = isFastAPI
+    ? [ 'python -m venv .venv',
+        'call .venv\\Scripts\\activate.bat',
+        'pip install -r requirements.txt',
+        'deactivate' ]
+    : [ 'npm install' ];
+
+  const backendStartWin = isFastAPI
+    ? `.venv\\Scripts\\activate.bat && uvicorn app.main:app --reload --port ${backendPort}`
+    : isNestJS
+    ? 'npm run start:dev'
+    : 'npm run dev';
+
+  // ── dev.sh ────────────────────────────────────────────────────────────────
+
+  const backendInstalledCheck = isFastAPI
+    ? '[ -d "backend/.venv" ]'
+    : '[ -d "backend/node_modules" ]';
+
+  const devSh = `#!/usr/bin/env bash
+set -euo pipefail
+
+CYAN='\\033[0;36m'
+GREEN='\\033[0;32m'
+YELLOW='\\033[1;33m'
+GRAY='\\033[0;90m'
+RESET='\\033[0m'
+
+echo -e "\${CYAN}=== ${name} ===\${RESET}"
+echo ""
+
+# ── Install backend ──────────────────────────────────────────────────────────
+if ${backendInstalledCheck}; then
+  echo -e "\${GRAY}[backend] Already installed, skipping.\${RESET}"
+else
+  echo -e "\${YELLOW}[backend]\${RESET} Installing dependencies..."
+  cd backend
+${backendInstall.map(l => '  ' + l).join('\n')}
+  cd ..
+  echo -e "\${GREEN}[backend] Done.\${RESET}"
+fi
+
+# ── Install frontend ─────────────────────────────────────────────────────────
+if [ -d "frontend/node_modules" ]; then
+  echo -e "\${GRAY}[frontend] Already installed, skipping.\${RESET}"
+else
+  echo -e "\${YELLOW}[frontend]\${RESET} npm install..."
+  (cd frontend && npm install)
+  echo -e "\${GREEN}[frontend] Done.\${RESET}"
+fi
+
+echo ""
+echo -e "\${GREEN}✅ Starting services...\${RESET}"
+echo -e "  Backend  → \${CYAN}${backendUrl}\${RESET}${isFastAPI ? ' · Swagger: ' + backendUrl + '/docs' : ''}"
+echo -e "  Frontend → \${CYAN}${frontendUrl}\${RESET}"
+echo ""
+echo "Press Ctrl+C to stop all services."
+echo ""
+
+# ── Start backend (background) ────────────────────────────────────────────────
+(cd backend && ${backendStart}) &
+BACK_PID=$!
+
+# Kill backend when this script exits (Ctrl+C or frontend crash)
+trap 'kill "$BACK_PID" 2>/dev/null || true' EXIT INT TERM
+
+# ── Start frontend (foreground) ───────────────────────────────────────────────
+(cd frontend && ${frontendPortEnv}npm run dev)
+`;
+
+  // ── dev.bat ───────────────────────────────────────────────────────────────
+
+  const backendInstalledCheckWin = isFastAPI
+    ? 'backend\\.venv\\'
+    : 'backend\\node_modules\\';
+
+  const devBat = `@echo off
+chcp 65001 > nul
+echo === ${name} — dev setup ===
+echo.
+
+if exist "${backendInstalledCheckWin}" (
+  echo [backend] Already installed, skipping.
+) else (
+  echo [backend] Installing dependencies...
+  cd backend
+  ${backendInstallWin.join('\r\n  ')}
+  cd ..
+  echo [backend] Done.
+)
+echo.
+
+if exist "frontend\\node_modules\\" (
+  echo [frontend] Already installed, skipping.
+) else (
+  echo [frontend] Installing dependencies...
+  cd frontend
+  npm install
+  cd ..
+  echo [frontend] Done.
+)
+echo.
+
+echo Starting services in separate windows...
+echo   Backend  -^> ${backendUrl}${isFastAPI ? ' (Swagger: ' + backendUrl + '/docs)' : ''}
+echo   Frontend -^> ${frontendUrl}
+echo.
+
+start "${name} — backend"  cmd /k "cd /d %~dp0backend && ${backendStartWin}"
+start "${name} — frontend" cmd /k "cd /d %~dp0frontend && ${frontendPortEnv}npm run dev"
+
+echo Both services started. Close the windows to stop them.
+`;
+
+  zip.file('dev.sh', devSh);
+  zip.file('dev.bat', devBat);
 }
-
-function toTs(fieldType: string): string {
-  const map: Record<string, string> = {
-    string: 'string', char: 'string', text: 'string',
-    longText: 'string', tinyText: 'string', mediumText: 'string',
-    integer: 'number', bigInteger: 'number', smallInteger: 'number',
-    unsignedInteger: 'number', unsignedBigInteger: 'number',
-    decimal: 'number', float: 'number', double: 'number',
-    boolean: 'boolean',
-    timestamp: 'string', timestampTz: 'string', date: 'string', dateTime: 'string',
-    json: 'unknown', jsonb: 'unknown',
-    uuid: 'string', ulid: 'string',
-    enum: 'string', set: 'string',
-    foreignId: 'number', foreignUuid: 'string',
-    binary: 'string', rememberToken: 'string',
-  };
-  return map[fieldType] ?? 'unknown';
-}
-
-function buildDeps(opts: ReactOptions): Record<string, string> {
-  const deps: Record<string, string> = {
-    next: '^15.0.0',
-    react: '^19.0.0',
-    'react-dom': '^19.0.0',
-  };
-  if (opts.state_lib === 'zustand')        { deps.zustand = '^5.0.0'; }
-  if (opts.state_lib === 'redux-toolkit')  { deps['@reduxjs/toolkit'] = '^2.0.0'; deps['react-redux'] = '^9.0.0'; }
-  if (opts.state_lib === 'jotai')          { deps.jotai = '^2.0.0'; }
-  if (opts.form_lib === 'react-hook-form') { deps['react-hook-form'] = '^7.0.0'; }
-  if (opts.form_lib === 'formik')          { deps.formik = '^2.0.0'; }
-  if (opts.http_lib === 'axios')           { deps.axios = '^1.0.0'; }
-  if (opts.http_lib === 'ky')              { deps.ky = '^1.0.0'; }
-  if (opts.ui_lib === 'shadcn')            {
-    deps['@radix-ui/react-slot'] = '^1.0.0';
-    deps['class-variance-authority'] = '^0.7.0';
-    deps.clsx = '^2.0.0';
-    deps['tailwind-merge'] = '^3.0.0';
-  }
-  if (opts.ui_lib === 'mui')               {
-    deps['@mui/material'] = '^6.0.0';
-    deps['@emotion/react'] = '^11.0.0';
-    deps['@emotion/styled'] = '^11.0.0';
-  }
-  if (opts.ui_lib === 'antd')              { deps.antd = '^5.0.0'; }
-  if (opts.css === 'tailwind')             {
-    deps.tailwindcss = '^4.0.0';
-    deps['@tailwindcss/postcss'] = '^4.0.0';
-  }
-  return deps;
-}
-
-const DEFAULT_PAGES: ModelPages = { list: true, detail: true, create: true, edit: false };
 
 export async function generateZip(config: ProjectConfig): Promise<void> {
   const zip = new JSZip();
-  const { react: opts, models, name: projectName } = config;
+  const { stack, name: projectName } = config;
 
-  // package.json
-  zip.file('package.json', JSON.stringify({
-    name: projectName,
-    version: '0.1.0',
-    private: true,
-    scripts: { dev: 'next dev', build: 'next build', start: 'next start' },
-    dependencies: buildDeps(opts),
-    devDependencies: {
-      typescript: '^5.0.0',
-      '@types/node': '^20.0.0',
-      '@types/react': '^19.0.0',
-      '@types/react-dom': '^19.0.0',
-    },
-  }, null, 2));
+  const isMixed = ['laravel+react', 'laravel+nextjs', 'express+react', 'nestjs+react', 'fastapi+react', 'fastapi+nextjs', 'mern', 'pern', 'mevn', 'mean'].includes(stack as any);
 
-  // tsconfig.json
-  zip.file('tsconfig.json', JSON.stringify({
-    compilerOptions: {
-      target: 'ES2017',
-      lib: ['dom', 'dom.iterable', 'esnext'],
-      allowJs: true,
-      skipLibCheck: true,
-      strict: true,
-      noEmit: true,
-      esModuleInterop: true,
-      module: 'esnext',
-      moduleResolution: 'bundler',
-      resolveJsonModule: true,
-      isolatedModules: true,
-      jsx: 'react-jsx',
-      incremental: true,
-      paths: { '@/*': ['./src/*'] },
-    },
-    include: ['next-env.d.ts', '**/*.ts', '**/*.tsx'],
-    exclude: ['node_modules'],
-  }, null, 2));
-
-  // next.config.ts
-  zip.file('next.config.ts', `import type { NextConfig } from 'next';
-
-const nextConfig: NextConfig = {};
-
-export default nextConfig;
-`);
-
-  // tailwind
-  if (opts.css === 'tailwind') {
-    zip.file('tailwind.config.ts', `import type { Config } from 'tailwindcss';
-
-const config: Config = {
-  content: ['./src/**/*.{ts,tsx}'],
-};
-
-export default config;
-`);
-    zip.file('postcss.config.mjs', `const config = {
-  plugins: {
-    '@tailwindcss/postcss': {},
-  },
-};
-
-export default config;
-`);
-    zip.file('src/app/globals.css', `@import "tailwindcss";
-`);
-  } else {
-    zip.file('src/app/globals.css', `* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: system-ui, sans-serif; }
-`);
+  if (stack === 'express' || stack === 'express+react' || stack === 'mern' || stack === 'pern' || stack === 'mevn' || stack === 'mean') {
+    await generateExpressProject(isMixed ? zip.folder('backend')! : zip, config);
+  } else if (stack === 'nestjs' || stack === 'nestjs+react') {
+    await generateNestProject(isMixed ? zip.folder('backend')! : zip, config);
+  } else if (stack === 'fastapi' || stack === 'fastapi+react' || stack === 'fastapi+nextjs') {
+    await generateFastAPIProject(isMixed ? zip.folder('backend')! : zip, config);
+  } else if (stack === 'nextjs' || stack === 'react') {
+    await generateNextjsProject(zip, config);
   }
 
-  // src/app/layout.tsx
-  zip.file('src/app/layout.tsx', `import type { Metadata } from 'next';
-${opts.css === 'tailwind' ? "import './globals.css';" : ''}
-
-export const metadata: Metadata = {
-  title: '${projectName}',
-  description: 'Generated by Stack-Init',
-};
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  );
-}
-`);
-
-  // src/app/page.tsx
-  const modelLinks = models
-    .map((m) => {
-      const slug = slugify(m.name);
-      return `      <li><a href="/${slug}">${m.name}</a></li>`;
-    })
-    .join('\n');
-
-  zip.file('src/app/page.tsx', `export default function Home() {
-  return (
-    <main style={{ padding: '2rem' }}>
-      <h1>${projectName}</h1>
-      <p>Generated by <a href="https://stackinit.dev">Stack-Init</a>. Start building!</p>
-      <ul style={{ marginTop: '1rem' }}>
-${modelLinks}
-      </ul>
-    </main>
-  );
-}
-`);
-
-  // Per-model TypeScript interfaces + pages
-  for (const model of models) {
-    const slug = slugify(model.name);
-    const pages: ModelPages = { ...DEFAULT_PAGES, ...model.pages };
-
-    // src/types/[ModelName].ts
-    const fieldLines = model.fields
-      .map((f) => `  ${f.name}${f.nullable ? '?' : ''}: ${f.values?.length ? f.values.map(v => `'${v}'`).join(' | ') : toTs(f.type)};`)
-      .join('\n');
-    zip.file(`src/types/${model.name}.ts`, `export interface ${model.name} {
-  id: number;
-${fieldLines}
-  created_at: string;
-  updated_at: string;
-}
-`);
-
-    // List page
-    if (pages.list) {
-      zip.file(`src/app/${slug}/page.tsx`, `'use client';
-
-import type { ${model.name} } from '@/types/${model.name}';
-
-export default function ${model.name}ListPage() {
-  // TODO: fetch ${model.name} list from your API
-  const items: ${model.name}[] = [];
-
-  return (
-    <main style={{ padding: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h1>${model.name} List</h1>
-        <a href="/${slug}/create">+ New ${model.name}</a>
-      </div>
-      {items.length === 0 ? (
-        <p>No ${model.name.toLowerCase()} records yet.</p>
-      ) : (
-        <ul>
-          {items.map((item) => (
-            <li key={item.id}>
-              <a href={\`/${slug}/\${item.id}\`}>${model.name} #{'{'}item.id{'}'}</a>
-            </li>
-          ))}
-        </ul>
-      )}
-    </main>
-  );
-}
-`);
-    }
-
-    // Detail page
-    if (pages.detail) {
-      zip.file(`src/app/${slug}/[id]/page.tsx`, `'use client';
-
-import type { ${model.name} } from '@/types/${model.name}';
-
-export default function ${model.name}DetailPage({ params }: { params: { id: string } }) {
-  // TODO: fetch ${model.name} with id params.id from your API
-  const item: ${model.name} | null = null;
-
-  if (!item) {
-    return <p>${model.name} not found.</p>;
-  }
-
-  return (
-    <main style={{ padding: '2rem' }}>
-      <h1>${model.name} #{'{'}params.id{'}'}</h1>
-      <pre>{JSON.stringify(item, null, 2)}</pre>
-      <a href="/${slug}">← Back to list</a>
-    </main>
-  );
-}
-`);
-    }
-
-    // Create page
-    if (pages.create) {
-      const formFields = model.fields
-        .filter((f) => !['foreignId', 'foreignUuid'].includes(f.type) || f.references)
-        .map((f) => `        <div>
-          <label htmlFor="${f.name}">${f.name}</label>
-          <input id="${f.name}" name="${f.name}" type="${f.type === 'boolean' ? 'checkbox' : 'text'}" />
-        </div>`)
-        .join('\n');
-
-      zip.file(`src/app/${slug}/create/page.tsx`, `'use client';
-
-export default function Create${model.name}Page() {
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const data = new FormData(e.currentTarget);
-    // TODO: POST data to your API endpoint
-    console.log(Object.fromEntries(data));
-  };
-
-  return (
-    <main style={{ padding: '2rem' }}>
-      <h1>Create ${model.name}</h1>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: 400 }}>
-${formFields}
-        <button type="submit">Create</button>
-      </form>
-      <a href="/${slug}">← Cancel</a>
-    </main>
-  );
-}
-`);
-    }
-
-    // Edit page
-    if (pages.edit) {
-      zip.file(`src/app/${slug}/[id]/edit/page.tsx`, `'use client';
-
-import type { ${model.name} } from '@/types/${model.name}';
-
-export default function Edit${model.name}Page({ params }: { params: { id: string } }) {
-  // TODO: fetch existing ${model.name} and pre-fill form
-  const item: ${model.name} | null = null;
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const data = new FormData(e.currentTarget);
-    // TODO: PUT/PATCH data to your API endpoint
-    console.log(Object.fromEntries(data));
-  };
-
-  return (
-    <main style={{ padding: '2rem' }}>
-      <h1>Edit ${model.name} #{'{'}params.id{'}'}</h1>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: 400 }}>
-        <button type="submit">Save changes</button>
-      </form>
-      <a href="/${slug}/{params.id}">← Cancel</a>
-    </main>
-  );
-}
-`);
+  if (isMixed) {
+    await generateNextjsProject(zip.folder('frontend')!, config);
+    await generateIntegration(zip, config, 'frontend');
+    // Laravel backend is PHP — no Node dev scripts applicable
+    if (!stack.includes('laravel')) {
+      generateDevScripts(zip, config);
     }
   }
 
-  // README.md
-  const modelList = models
-    .map((m) => `- \`${m.name}\` — ${m.fields.length} field(s)`)
-    .join('\n');
-
-  zip.file('README.md', `# ${projectName}
-
-> Generated by [Stack-Init](https://stackinit.dev)
-
-## Stack
-
-| | |
-|---|---|
-| Framework | Next.js 15 (App Router) |
-| State | ${opts.state_lib} |
-| Forms | ${opts.form_lib} |
-| UI | ${opts.ui_lib} |
-| HTTP | ${opts.http_lib} |
-| CSS | ${opts.css} |
-
-## Models
-
-${modelList}
-
-## Quick Start
-
-\`\`\`bash
-npm install
-npm run dev
-\`\`\`
-
-Open [http://localhost:3000](http://localhost:3000) to see your app.
-`);
+  // Embed YAML config and common README inside the ZIP
+  zip.file('stack-init.yaml', buildYamlContent(config));
+  zip.file('README.md', generateCommonReadme(config));
 
   const content = await zip.generateAsync({ type: 'blob' });
   const url = URL.createObjectURL(content);
@@ -358,4 +190,18 @@ Open [http://localhost:3000](http://localhost:3000) to see your app.
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+
+  // Download GETTING_STARTED.md separately after the ZIP
+  setTimeout(() => {
+    const md = buildGettingStarted(config, true);
+    const mdBlob = new Blob([md], { type: 'text/markdown' });
+    const mdUrl = URL.createObjectURL(mdBlob);
+    const mdLink = document.createElement('a');
+    mdLink.href = mdUrl;
+    mdLink.download = 'GETTING_STARTED.md';
+    document.body.appendChild(mdLink);
+    mdLink.click();
+    document.body.removeChild(mdLink);
+    URL.revokeObjectURL(mdUrl);
+  }, 500);
 }

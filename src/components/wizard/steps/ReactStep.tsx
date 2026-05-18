@@ -56,28 +56,27 @@ export function ReactStep() {
   const { models, reactOptions, setReactOptions, setModelPages } = useWizardStore();
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <h1 className="si-title mb-2">React setup</h1>
-      <p className="si-subtitle mb-10">
+    <div className="si-step-panel">
+      <div className="si-section-label">Frontend</div>
+      <h1 className="si-title" style={{ marginBottom: 8 }}>React setup</h1>
+      <p className="si-subtitle" style={{ marginBottom: 40 }}>
         Configure your Next.js front-end — pages to generate and libraries to include.
       </p>
 
       {/* Pages per model */}
-      <div className="mb-10">
-        <label className="si-section-label">Pages per model</label>
+      <div style={{ marginBottom: 40 }}>
+        <div className="si-section-label">Pages per model</div>
 
         {models.length === 0 ? (
-          <p className="text-[13px] text-[#5c6078] italic py-4">
+          <p style={{ fontSize: 13, color: "var(--text3)", fontStyle: "italic", padding: "16px 0" }}>
             Add models in the previous step to configure their pages.
           </p>
         ) : (
-          <div className="flex flex-col gap-8">
+          <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
             {models.map((model) => (
               <div key={model.name}>
-                <p className="text-[12px] font-medium text-[#8b8fa3] mb-3 uppercase tracking-wider font-mono">
-                  {model.name}
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <p style={{ fontSize: 12, fontFamily: "var(--font-jetbrains-mono)", color: "var(--gold)", marginBottom: 12, fontWeight: 700 }}>{model.name}</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
                   {PAGE_TYPES.map((p) => {
                     const Icon = p.icon;
                     const enabled = model.pages?.[p.key] ?? p.defaultEnabled;
@@ -85,25 +84,15 @@ export function ReactStep() {
                       <button
                         key={p.key}
                         onClick={() => setModelPages(model.name, { [p.key]: !enabled })}
-                        className={cn(
-                          "si-toggle-card flex-col items-start gap-3 p-5 text-left",
-                          enabled && "on"
-                        )}
+                        className={cn("si-toggle-card", enabled && "on")}
+                        style={{ flexDirection: "column", alignItems: "flex-start", gap: 10, padding: 16 }}
                       >
-                        <div className={cn(
-                          "w-8 h-8 rounded-[8px] flex items-center justify-center",
-                          enabled ? "bg-[#6C63FF]/12 text-[#a59bff]" : "bg-white/[0.04] text-[#5c6078]"
-                        )}>
-                          <Icon className="w-4 h-4" />
+                        <div style={{ width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: enabled ? "var(--gold-subtle)" : "var(--bg4)", color: enabled ? "var(--gold)" : "var(--text3)" }}>
+                          <Icon style={{ width: 16, height: 16 }} />
                         </div>
                         <div>
-                          <span className={cn(
-                            "block text-[13px] font-medium",
-                            enabled ? "text-[#a59bff]" : "text-[#c5c8d8]"
-                          )}>
-                            {p.label}
-                          </span>
-                          <span className="block text-[11px] text-[#5c6078] mt-0.5">{p.desc}</span>
+                          <span style={{ display: "block", fontSize: 12, fontWeight: 600, color: enabled ? "var(--gold)" : "var(--text)" }}>{p.label}</span>
+                          <span style={{ display: "block", fontSize: 11, color: "var(--text3)", marginTop: 2 }}>{p.desc}</span>
                         </div>
                       </button>
                     );
@@ -117,26 +106,20 @@ export function ReactStep() {
 
       {/* Libraries */}
       <div>
-        <label className="si-section-label">Libraries</label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="si-section-label">Libraries</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16, maxWidth: 720 }}>
           {LIBRARY_CONFIG.map((lib) => (
-            <div key={lib.category} className="si-card p-5">
-              <p className="text-[12px] font-medium text-[#8b8fa3] mb-3 uppercase tracking-wider">
-                {lib.category}
-              </p>
-              <div className="flex flex-wrap gap-2">
+            <div key={lib.category} className="si-card" style={{ padding: 20 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text3)", marginBottom: 12 }}>{lib.category}</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {lib.options.map((opt) => {
                   const selected = reactOptions[lib.key] === opt.value;
                   return (
                     <button
                       key={opt.value}
                       onClick={() => setReactOptions({ [lib.key]: opt.value })}
-                      className={cn(
-                        "px-4 py-2 rounded-[10px] text-[13px] font-medium transition-all duration-200 border",
-                        selected
-                          ? "bg-[#6C63FF]/10 text-[#a59bff] border-[#6C63FF]/25"
-                          : "bg-white/[0.02] text-[#5c6078] border-white/[0.06] hover:border-white/[0.12] hover:text-[#8b8fa3]"
-                      )}
+                      className="si-opt-chip"
+                      style={selected ? { background: "var(--gold-subtle)", borderColor: "var(--gold)", color: "var(--gold)" } : {}}
                     >
                       {opt.label}
                     </button>

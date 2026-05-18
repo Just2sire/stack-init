@@ -5,25 +5,11 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ================================================================
-   Stack-Init Design System — Premium Dark Mode
-   Refined indigo accent · Glass surfaces · Generous spacing
+   Stack-Init Design System — Gold Dark Mode
+   Based on stack-init.html reference design
    ================================================================ */
 
 @theme inline {
-  /* ── Brand Colors ────────────────────────────────────────────── */
-  --color-si-bg:        #0a0b14;
-  --color-si-bg-raised: #12131f;
-  --color-si-bg-card:   #16172a;
-  --color-si-surface:   rgba(108, 99, 255, 0.04);
-  --color-si-indigo:    #6C63FF;
-  --color-si-indigo-hover: #5851E6;
-  --color-si-text:      #e2e4ed;
-  --color-si-text-dim:  #8b8fa3;
-  --color-si-text-muted:#5c6078;
-  --color-si-border:    rgba(255, 255, 255, 0.07);
-  --color-si-border-strong: rgba(255, 255, 255, 0.12);
-
-  /* ── Shadcn Semantic Color Mapping ──────────────────────────── */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -42,11 +28,6 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -56,141 +37,122 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* ── Typography ─────────────────────────────────────────────── */
-  --font-sans: var(--font-inter);
-  --font-mono: var(--font-ibm-plex-mono);
-  --font-heading: var(--font-space-grotesk);
-
-  /* ── Border Radius ──────────────────────────────────────────── */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
-  --radius-full: 9999px;
-  --radius-cards: 14px;
+  --font-sans: var(--font-space-grotesk);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-display: var(--font-syne);
 }
 
 /* ================================================================
-   Dark Theme — Default
+   Root Design Tokens — Gold System
    ================================================================ */
-
 :root {
-  /* Shadcn semantic */
-  --background: #0a0b14;
-  --foreground: #e2e4ed;
-  --card: #16172a;
-  --card-foreground: #e2e4ed;
-  --popover: #12131f;
-  --popover-foreground: #e2e4ed;
-  --primary: #6C63FF;
-  --primary-foreground: #ffffff;
-  --secondary: rgba(108, 99, 255, 0.08);
-  --secondary-foreground: #c5c8d8;
-  --muted: #1e2035;
-  --muted-foreground: #8b8fa3;
-  --accent: rgba(108, 99, 255, 0.10);
-  --accent-foreground: #c5c8d8;
-  --destructive: #E24B4A;
-  --border: rgba(255, 255, 255, 0.07);
-  --input: rgba(255, 255, 255, 0.05);
-  --ring: #6C63FF;
-  --chart-1: #6C63FF;
-  --chart-2: #8b8fa3;
-  --chart-3: #5c6078;
-  --chart-4: #c5c8d8;
-  --chart-5: #e2e4ed;
-  --radius: 0.625rem;
-  --sidebar: #0e0f1a;
-  --sidebar-foreground: #e2e4ed;
-  --sidebar-primary: #6C63FF;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: rgba(108, 99, 255, 0.08);
-  --sidebar-accent-foreground: #c5c8d8;
-  --sidebar-border: rgba(255, 255, 255, 0.07);
-  --sidebar-ring: #6C63FF;
+  /* Gold palette */
+  --gold:           #F5C842;
+  --gold-dim:       #C9A227;
+  --gold-glow:      rgba(245, 200, 66, 0.18);
+  --gold-subtle:    rgba(245, 200, 66, 0.07);
+  --gold-border:    rgba(245, 200, 66, 0.25);
 
-  /* Stack-Init design tokens */
-  --si-accent:         #6C63FF;
-  --si-accent-hover:   #5851E6;
-  --si-accent-subtle:  rgba(108, 99, 255, 0.10);
-  --si-accent-border:  rgba(108, 99, 255, 0.25);
-  --si-accent-glow:    rgba(108, 99, 255, 0.35);
-  --si-danger:         #E24B4A;
-  --si-success:        #34D399;
-  --si-warning:        #FBBF24;
+  /* Backgrounds */
+  --bg:    #080809;
+  --bg2:   #0e0e10;
+  --bg3:   #141417;
+  --bg4:   #1a1a1e;
+  --surface:  #1f1f24;
+  --surface2: #26262c;
+
+  /* Borders */
+  --border-subtle:  rgba(255, 255, 255, 0.06);
+  --border-medium:  rgba(255, 255, 255, 0.10);
+
+  /* Text */
+  --text:  #f0f0f0;
+  --text2: #a0a0b0;
+  --text3: #5a5a70;
+
+  /* Semantic */
+  --red:    #ff4d6d;
+  --green:  #4dff91;
+  --blue:   #4d9fff;
+  --purple: #9d6fff;
+
+  /* Shadcn mapping */
+  --background: #080809;
+  --foreground:  #f0f0f0;
+  --card:        #141417;
+  --card-foreground: #f0f0f0;
+  --popover:     #0e0e10;
+  --popover-foreground: #f0f0f0;
+  --primary:     #F5C842;
+  --primary-foreground: #080809;
+  --secondary:   rgba(245, 200, 66, 0.07);
+  --secondary-foreground: #f0f0f0;
+  --muted:       #1a1a1e;
+  --muted-foreground: #a0a0b0;
+  --accent:      rgba(245, 200, 66, 0.07);
+  --accent-foreground: #f0f0f0;
+  --destructive: #ff4d6d;
+  --border:      rgba(255, 255, 255, 0.06);
+  --input:       rgba(255, 255, 255, 0.05);
+  --ring:        #F5C842;
+  --radius:      10px;
+  --sidebar:          #0e0e10;
+  --sidebar-foreground: #f0f0f0;
+  --sidebar-primary:  #F5C842;
+  --sidebar-primary-foreground: #080809;
+  --sidebar-accent:   rgba(245, 200, 66, 0.07);
+  --sidebar-accent-foreground: #f0f0f0;
+  --sidebar-border:   rgba(255, 255, 255, 0.06);
+  --sidebar-ring:     #F5C842;
 }
 
 /* ================================================================
-   Base Styles
+   Base
    ================================================================ */
 
 @layer base {
-  * {
+  *, *::before, *::after {
     @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
+    box-sizing: border-box;
   }
   html {
-    @apply font-sans antialiased;
     scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-}
-
-/* ================================================================
-   Utilities
-   ================================================================ */
-
-@layer utilities {
-  .font-display {
-    font-family: var(--font-heading);
-    letter-spacing: -0.02em;
-  }
-
-  .font-mono-tabular {
-    font-family: var(--font-mono);
-    letter-spacing: 0.1px;
-    font-feature-settings: "tnum";
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
   }
 
-  .glass-card {
-    background: rgba(22, 23, 42, 0.6);
-    border-radius: var(--radius-cards);
-    backdrop-filter: blur(24px) saturate(1.2);
-    box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.04),
-      0 0 0 1px rgba(255, 255, 255, 0.05),
-      0 20px 40px -12px rgba(0, 0, 0, 0.5);
+  /* Grid noise background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(245, 200, 66, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245, 200, 66, 0.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
   }
 
-  .glass-surface {
-    background: rgba(255, 255, 255, 0.02);
-    backdrop-filter: blur(12px);
-  }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 2px; }
 
-  .gradient-divider {
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(108, 99, 255, 0.2),
-      transparent
-    );
-    height: 1px;
-  }
-
-  .gradient-glow {
-    background: linear-gradient(
-      135deg,
-      #6C63FF 0%,
-      #a78bfa 100%
-    );
-  }
+  button { cursor: pointer; }
+  a { color: inherit; text-decoration: none; }
 }
 
 /* ================================================================
    Reduced Motion
    ================================================================ */
-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     transition-duration: 0.01ms !important;
@@ -199,148 +161,201 @@
 }
 
 /* ================================================================
-   Stack-Init Component System — Dark Mode
+   Stack-Init Component System — Gold Dark Mode
    ================================================================ */
 
 @layer components {
 
-  /* ─── Wizard Layout ────────────────────────────────────────── */
+  /* ─── Wizard Layout ─────────────────────────────────────────── */
 
   .si-wizard-layout {
-    display: grid;
-    grid-template-columns: 260px 1fr;
-    min-height: 100vh;
-    background: #0a0b14;
-    color: #e2e4ed;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--bg);
   }
 
   .si-wizard-sidebar {
-    background: #0e0f1a;
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 28px 20px;
-    position: sticky;
-    top: 0;
-    height: 100vh;
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--bg2);
+    border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 
   .si-wizard-main {
-    padding: 48px 56px;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .si-wiz-body {
+    flex: 1;
     overflow-y: auto;
+    padding: 40px 48px;
   }
 
   .si-wizard-footer {
+    padding: 20px 40px;
+    border-top: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-top: 24px;
-    margin-top: auto;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: var(--bg2);
+    flex-shrink: 0;
   }
 
-  /* ─── Sidebar Steps ────────────────────────────────────────── */
+  /* ─── Sidebar ───────────────────────────────────────────────── */
+
+  .si-wiz-logo {
+    padding: 24px 24px 20px;
+    font-family: var(--font-syne), 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .si-wiz-logo span { color: var(--gold); }
 
   .si-step-item {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 14px;
-    border-radius: 12px;
-    margin-bottom: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    color: #5c6078;
-    transition: all 0.2s ease;
-    user-select: none;
-  }
-  .si-step-item:hover {
-    color: #8b8fa3;
-    background: rgba(255, 255, 255, 0.02);
+    padding: 10px 20px;
+    cursor: default;
+    position: relative;
+    transition: all 0.2s;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text3);
   }
   .si-step-item.active {
-    background: rgba(108, 99, 255, 0.10);
-    color: #a59bff;
-    font-weight: 500;
+    background: var(--gold-subtle);
+    color: var(--text);
+  }
+  .si-step-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--gold);
   }
   .si-step-item.done {
-    color: #c5c8d8;
+    color: var(--text2);
   }
 
   .si-step-dot {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    border: 1.5px solid rgba(255, 255, 255, 0.10);
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
-    font-weight: 500;
-    color: #5c6078;
-    transition: all 0.25s ease;
-    flex-shrink: 0;
-    background: transparent;
-  }
-  .si-step-item.done .si-step-dot {
-    background: #6C63FF;
-    border-color: #6C63FF;
-    color: #fff;
-    box-shadow: 0 0 12px rgba(108, 99, 255, 0.3);
+    font-size: 12px;
+    font-weight: 700;
+    transition: all 0.2s;
+    border: 1.5px solid var(--border-medium);
+    color: var(--text3);
+    background: var(--bg3);
   }
   .si-step-item.active .si-step-dot {
-    border-color: #6C63FF;
-    color: #a59bff;
-    background: rgba(108, 99, 255, 0.12);
+    border-color: var(--gold);
+    color: var(--gold);
+    background: var(--gold-subtle);
+  }
+  .si-step-item.done .si-step-dot {
+    border-color: var(--green);
+    color: var(--green);
+    background: rgba(77, 255, 145, 0.1);
   }
 
-  /* ─── Buttons ──────────────────────────────────────────────── */
+  /* ─── Wizard Header ─────────────────────────────────────────── */
+
+  .si-wiz-header {
+    padding: 24px 40px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg2);
+    flex-shrink: 0;
+  }
+
+  /* ─── Progress Dots ─────────────────────────────────────────── */
+
+  .si-progress-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border-medium);
+    transition: all 0.2s;
+  }
+  .si-progress-dot.active {
+    background: var(--gold);
+    width: 20px;
+    border-radius: 3px;
+  }
+  .si-progress-dot.done {
+    background: var(--green);
+  }
+
+  /* ─── Buttons ───────────────────────────────────────────────── */
 
   .si-btn-primary {
-    background: #6C63FF;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 10px 22px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--gold);
+    color: var(--bg);
     font-size: 14px;
-    font-weight: 500;
-    transition: all 200ms ease;
+    font-weight: 700;
+    padding: 10px 24px;
+    border-radius: 10px;
+    border: none;
+    transition: all 0.2s;
     cursor: pointer;
-    box-shadow: 0 0 20px rgba(108, 99, 255, 0.2);
-    letter-spacing: -0.01em;
+    font-family: inherit;
+    white-space: nowrap;
   }
   .si-btn-primary:hover:not(:disabled) {
-    background: #5851E6;
-    box-shadow: 0 0 28px rgba(108, 99, 255, 0.35);
+    background: #f0c020;
     transform: translateY(-1px);
-  }
-  .si-btn-primary:active:not(:disabled) {
-    transform: translateY(0);
   }
   .si-btn-primary:disabled {
     opacity: 0.35;
     cursor: not-allowed;
-    box-shadow: none;
+    transform: none;
   }
 
   .si-btn-secondary {
-    background: rgba(255, 255, 255, 0.04);
-    color: #c5c8d8;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    padding: 10px 22px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid var(--border-medium);
+    color: var(--text2);
     font-size: 14px;
-    transition: all 200ms ease;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 10px;
+    transition: all 0.2s;
     cursor: pointer;
-    letter-spacing: -0.01em;
+    font-family: inherit;
+    white-space: nowrap;
   }
   .si-btn-secondary:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(255, 255, 255, 0.14);
-    color: #e2e4ed;
+    border-color: var(--border-medium);
+    color: var(--text);
   }
   .si-btn-secondary:disabled {
     opacity: 0.3;
@@ -350,282 +365,411 @@
   .si-btn-ghost {
     background: none;
     border: none;
-    color: #a59bff;
-    padding: 8px 16px;
-    font-size: 14px;
+    color: var(--gold);
+    padding: 6px 12px;
+    font-size: 13px;
     cursor: pointer;
-    transition: color 150ms;
-    font-weight: 500;
+    transition: color 0.15s;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
-  .si-btn-ghost:hover {
-    color: #c5bfff;
-  }
+  .si-btn-ghost:hover { color: #f0c020; }
 
   .si-btn-danger {
     background: none;
-    color: #E24B4A;
-    border: 1px solid rgba(226, 75, 74, 0.2);
+    color: var(--red);
+    border: 1px solid rgba(255, 77, 109, 0.25);
     border-radius: 10px;
-    padding: 10px 22px;
-    font-size: 14px;
+    padding: 8px 16px;
+    font-size: 13px;
     cursor: pointer;
-    transition: all 200ms;
+    transition: all 0.2s;
+    font-family: inherit;
   }
   .si-btn-danger:hover {
-    background: rgba(226, 75, 74, 0.08);
-    border-color: rgba(226, 75, 74, 0.35);
+    background: rgba(255, 77, 109, 0.08);
+    border-color: rgba(255, 77, 109, 0.4);
   }
 
   .si-btn-icon {
-    width: 32px;
-    height: 32px;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
     background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text3);
+    font-size: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #5c6078;
     cursor: pointer;
-    transition: all 150ms;
+    transition: all 0.2s;
+    flex-shrink: 0;
   }
   .si-btn-icon:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: #e2e4ed;
-    border-color: rgba(255, 255, 255, 0.12);
+    border-color: var(--red);
+    color: var(--red);
+    background: rgba(255, 77, 109, 0.08);
+  }
+  .si-btn-icon.edit:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: var(--gold-subtle);
   }
 
-  /* ─── Progress Dots ────────────────────────────────────────── */
-
-  .si-progress-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.10);
-    transition: all 0.3s ease;
-  }
-  .si-progress-dot.active {
-    background: #6C63FF;
-    box-shadow: 0 0 8px rgba(108, 99, 255, 0.4);
-  }
-
-  /* ─── Cards ────────────────────────────────────────────────── */
-
-  .si-card {
-    background: rgba(22, 23, 42, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 14px;
-    backdrop-filter: blur(12px);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  }
-  .si-card:hover {
-    border-color: rgba(255, 255, 255, 0.10);
-  }
-
-  .si-card-header {
-    background: rgba(255, 255, 255, 0.02);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 14px 18px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .si-card-body {
-    padding: 16px 18px;
-  }
-
-  /* ─── Inputs ───────────────────────────────────────────────── */
+  /* ─── Inputs ────────────────────────────────────────────────── */
 
   .si-input {
     width: 100%;
-    padding: 10px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
+    background: var(--bg4);
+    border: 1px solid var(--border-medium);
+    color: var(--text);
+    font-family: var(--font-space-grotesk), inherit;
     font-size: 14px;
-    background: rgba(255, 255, 255, 0.03);
-    color: #e2e4ed;
-    transition: all 0.2s ease;
+    padding: 9px 12px;
+    border-radius: 10px;
     outline: none;
+    transition: all 0.2s;
   }
-  .si-input::placeholder {
-    color: #5c6078;
-  }
+  .si-input::placeholder { color: var(--text3); }
   .si-input:focus {
-    border-color: rgba(108, 99, 255, 0.5);
-    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.12);
-    background: rgba(108, 99, 255, 0.03);
+    border-color: var(--gold);
+    background: var(--bg);
   }
 
   .si-select {
-    appearance: none;
-    padding: 10px 36px 10px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
+    width: 100%;
+    background: var(--bg4);
+    border: 1px solid var(--border-medium);
+    color: var(--text);
+    font-family: inherit;
     font-size: 14px;
-    background: rgba(255, 255, 255, 0.03);
-    color: #e2e4ed;
-    transition: all 0.2s ease;
+    padding: 9px 12px;
+    border-radius: 10px;
     outline: none;
+    appearance: none;
     cursor: pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235c6078' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    transition: all 0.2s;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235a5a70' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 12px center;
+    padding-right: 32px;
   }
-  .si-select:focus {
-    border-color: rgba(108, 99, 255, 0.5);
-    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.12);
+  .si-select:focus { border-color: var(--gold); }
+  .si-select option { background: var(--bg3); }
+
+  /* ─── Cards ─────────────────────────────────────────────────── */
+
+  .si-card {
+    background: var(--bg3);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+  .si-card:hover { border-color: var(--gold-border); }
+
+  .si-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--bg4);
+    border-bottom: 1px solid var(--border-subtle);
   }
 
-  /* ─── Badges ───────────────────────────────────────────────── */
+  .si-card-body {
+    padding: 12px 20px 16px;
+  }
+
+  .si-stack-card {
+    background: var(--bg3);
+    border: 1.5px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 28px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .si-stack-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--gold-subtle), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .si-stack-card:hover {
+    border-color: var(--gold-border);
+    transform: translateY(-2px);
+  }
+  .si-stack-card.selected {
+    border-color: var(--gold);
+    background: var(--gold-subtle);
+  }
+  .si-stack-card.selected::after { opacity: 1; }
+
+  /* ─── Badges ────────────────────────────────────────────────── */
 
   .si-badge {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 4px 10px;
-    border-radius: 20px;
+    padding: 3px 8px;
+    border-radius: 100px;
     font-size: 11px;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: 0.02em;
   }
+  .si-badge-gold   { background: var(--gold-subtle); color: var(--gold); border: 1px solid var(--gold-border); }
+  .si-badge-purple { background: rgba(157, 111, 255, 0.15); color: var(--purple); }
+  .si-badge-teal   { background: rgba(77, 255, 145, 0.1);  color: var(--green); }
+  .si-badge-amber  { background: rgba(245, 200, 66, 0.1);  color: var(--gold); }
+  .si-badge-gray   { background: rgba(255, 255, 255, 0.06); color: var(--text2); }
+  .si-badge-red    { background: rgba(255, 77, 109, 0.1);  color: var(--red); }
+  .si-badge-blue   { background: rgba(77, 159, 255, 0.1);  color: var(--blue); }
 
-  .si-badge-purple { background: rgba(108, 99, 255, 0.15); color: #a59bff; }
-  .si-badge-teal   { background: rgba(52, 211, 153, 0.12); color: #6ee7b7; }
-  .si-badge-amber  { background: rgba(251, 191, 36, 0.12); color: #fcd34d; }
-  .si-badge-gray   { background: rgba(255, 255, 255, 0.06); color: #8b8fa3; }
-  .si-badge-red    { background: rgba(226, 75, 74, 0.12);  color: #fca5a5; }
+  /* ─── Field type chips ──────────────────────────────────────── */
 
-  /* ─── Toggle Cards ─────────────────────────────────────────── */
+  .si-type-chip {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-family: var(--font-jetbrains-mono), monospace;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .si-type-string, .si-type-char, .si-type-tinytext
+    { background: rgba(77, 255, 145, 0.1); color: #4dff91; }
+  .si-type-text, .si-type-mediumtext, .si-type-longtext
+    { background: rgba(160, 160, 176, 0.1); color: var(--text2); }
+  .si-type-integer, .si-type-biginteger, .si-type-smallinteger
+    { background: rgba(77, 159, 255, 0.1); color: var(--blue); }
+  .si-type-decimal, .si-type-float, .si-type-double
+    { background: rgba(77, 255, 200, 0.1); color: #4dffc8; }
+  .si-type-boolean
+    { background: rgba(245, 200, 66, 0.1); color: var(--gold); }
+  .si-type-timestamp, .si-type-date, .si-type-datetime
+    { background: rgba(255, 77, 109, 0.1); color: var(--red); }
+  .si-type-foreignid, .si-type-foreignuuid
+    { background: rgba(157, 111, 255, 0.1); color: var(--purple); }
+  .si-type-enum, .si-type-set
+    { background: rgba(255, 127, 77, 0.1); color: #ff7f4d; }
+  .si-type-json, .si-type-jsonb
+    { background: rgba(160, 160, 176, 0.1); color: var(--text2); }
+  .si-type-uuid, .si-type-ulid
+    { background: rgba(77, 159, 255, 0.1); color: var(--blue); }
+  .si-type-default
+    { background: rgba(255, 255, 255, 0.06); color: var(--text2); }
+
+  /* ─── Toggle Card ───────────────────────────────────────────── */
 
   .si-toggle-card {
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 14px;
-    padding: 16px 18px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
+    background: var(--bg3);
+    border: 1.5px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 20px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    user-select: none;
+    transition: all 0.2s;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
   }
-  .si-toggle-card:hover {
-    border-color: rgba(255, 255, 255, 0.10);
-    background: rgba(255, 255, 255, 0.03);
-  }
+  .si-toggle-card:hover { border-color: var(--border-medium); }
   .si-toggle-card.on {
-    border-color: rgba(108, 99, 255, 0.30);
-    background: rgba(108, 99, 255, 0.06);
+    border-color: var(--gold-border);
+    background: var(--gold-subtle);
   }
-  .si-toggle-card.on:hover {
-    border-color: rgba(108, 99, 255, 0.40);
-    background: rgba(108, 99, 255, 0.08);
+  .si-toggle-card.partial {
+    border-color: rgba(245, 200, 66, 0.15);
+    background: rgba(245, 200, 66, 0.03);
   }
 
-  /* ─── Toggle Switch ────────────────────────────────────────── */
+  /* ─── Toggle Switch ─────────────────────────────────────────── */
 
   .si-toggle {
-    width: 40px;
-    height: 22px;
-    border-radius: 11px;
-    background: rgba(255, 255, 255, 0.10);
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+    background: var(--bg4);
+    border: 1px solid var(--border-medium);
     position: relative;
-    cursor: pointer;
-    transition: background 0.25s ease;
     flex-shrink: 0;
-  }
-  .si-toggle.on {
-    background: #6C63FF;
-    box-shadow: 0 0 10px rgba(108, 99, 255, 0.3);
+    transition: all 0.2s;
+    cursor: pointer;
   }
   .si-toggle-knob {
     position: absolute;
     top: 3px;
     left: 3px;
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
-    background: #fff;
-    transition: left 0.25s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    background: var(--text3);
+    transition: all 0.2s;
+  }
+  .si-toggle.on {
+    background: var(--gold);
+    border-color: var(--gold-dim);
   }
   .si-toggle.on .si-toggle-knob {
-    left: 21px;
+    background: var(--bg);
+    left: 19px;
+  }
+  .si-toggle.partial {
+    background: rgba(245, 200, 66, 0.3);
+  }
+  .si-toggle.partial .si-toggle-knob {
+    left: 19px;
+    background: var(--gold);
   }
 
-  /* ─── Field Row ────────────────────────────────────────────── */
+  /* ─── Field Row ─────────────────────────────────────────────── */
 
   .si-field-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    font-size: 13px;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: var(--font-jetbrains-mono), monospace;
+    border-bottom: 1px solid var(--border-subtle);
   }
-  .si-field-row:last-child {
-    border-bottom: none;
-  }
+  .si-field-row:last-child { border-bottom: none; }
+  .si-field-row:hover { background: var(--bg4); }
 
-  /* ─── Info Card (accent left border) ───────────────────────── */
+  /* ─── Info Card ─────────────────────────────────────────────── */
 
   .si-info-card {
-    border-left: 3px solid #6C63FF;
+    border-left: 3px solid var(--gold);
     border-radius: 10px;
-    background: rgba(108, 99, 255, 0.05);
-    border-top: 1px solid rgba(255, 255, 255, 0.04);
-    border-right: 1px solid rgba(255, 255, 255, 0.04);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    padding: 16px 20px;
+    background: var(--gold-subtle);
+    border-top: 1px solid var(--gold-border);
+    border-right: 1px solid var(--gold-border);
+    border-bottom: 1px solid var(--gold-border);
+    padding: 14px 16px;
   }
 
-  /* ─── Stack Card (selection cards) ─────────────────────────── */
-
-  .si-stack-card {
-    border: 1.5px solid rgba(255, 255, 255, 0.06);
-    border-radius: 16px;
-    padding: 24px;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    background: rgba(255, 255, 255, 0.02);
-  }
-  .si-stack-card:hover {
-    border-color: rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.035);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.4);
-  }
-  .si-stack-card.selected {
-    border-color: rgba(108, 99, 255, 0.5);
-    background: rgba(108, 99, 255, 0.08);
-    box-shadow: 0 0 24px rgba(108, 99, 255, 0.12);
-  }
-
-  /* ─── Section Label ────────────────────────────────────────── */
+  /* ─── Section Label ─────────────────────────────────────────── */
 
   .si-section-label {
     font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #5c6078;
+    color: var(--gold);
+    font-weight: 600;
     margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .si-section-label::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: var(--gold);
   }
 
-  /* ─── Typography helpers ───────────────────────────────────── */
+  /* ─── Typography ────────────────────────────────────────────── */
 
   .si-title {
+    font-family: var(--font-syne), 'Syne', sans-serif;
     font-size: 26px;
-    font-weight: 500;
-    color: #e2e4ed;
+    font-weight: 800;
+    line-height: 1.15;
     letter-spacing: -0.02em;
-    line-height: 1.2;
+    color: var(--text);
   }
 
   .si-subtitle {
-    font-size: 15px;
-    color: #8b8fa3;
+    font-size: 14px;
+    color: var(--text2);
     line-height: 1.6;
+  }
+
+  /* ─── Model Card (in step 2) ────────────────────────────────── */
+
+  .si-model-card {
+    background: var(--bg3);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+  .si-model-card:hover { border-color: var(--gold-border); }
+  .si-model-card.active { border-color: var(--gold-border); }
+
+  .si-model-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+    background: var(--bg4);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  /* ─── Output / YAML ─────────────────────────────────────────── */
+
+  .si-yaml-preview {
+    background: var(--bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 16px;
+    font-family: var(--font-jetbrains-mono), monospace;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--text2);
+    overflow-x: auto;
+  }
+
+  /* ─── Opt chip (React step) ─────────────────────────────────── */
+
+  .si-opt-chip {
+    background: var(--bg4);
+    border: 1.5px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text2);
+  }
+  .si-opt-chip:hover { border-color: var(--border-medium); color: var(--text); }
+  .si-opt-chip.selected {
+    border-color: var(--gold);
+    background: var(--gold-subtle);
+    color: var(--gold);
+  }
+
+  /* ─── Step panel animation ──────────────────────────────────── */
+
+  .si-step-panel {
+    animation: fadeUp 0.3s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── No-items empty state ──────────────────────────────────── */
+
+  .si-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text3);
+  }
+  .si-empty i {
+    font-size: 40px;
+    display: block;
+    margin-bottom: 12px;
+    opacity: 0.3;
   }
 }
