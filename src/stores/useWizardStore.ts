@@ -1,24 +1,28 @@
 import { create } from 'zustand';
+import { COMBO_DEFINITIONS, type ComboId } from '../types/combos';
 import type {
   Stack, Model, NamedField, Relation,
   LaravelOptions, ReactOptions, ModelPages,
   LaravelGenerateOptions, ProjectConfig,
-  ExpressConfig, NestConfig, NextjsOptions
-} from '@stack-init/schema';
+  ExpressConfig, NestConfig, NextjsOptions,
+  FastAPIConfig
+} from '../types/schema';
 
 // Identifiants des étapes du wizard
 export type StepId =
   | 'stack'
   | 'usage'          // Next.js uniquement
-  | 'architecture'   // React, Next.js, Express, NestJS
-  | 'database'       // Express, NestJS, Next.js Full-Stack
-  | 'models'         // Laravel, Express, NestJS, Next.js Full-Stack
+  | 'architecture'   // React, Next.js, Express, NestJS, FastAPI
+  | 'database'       // Express, NestJS, Next.js Full-Stack, FastAPI
+  | 'models'         // Laravel, Express, NestJS, Next.js Full-Stack, FastAPI
   | 'relations'
-  | 'routes'         // Express, NestJS
+  | 'routes'         // Express, NestJS, FastAPI
   | 'middlewares'    // Express
   | 'laravel-setup'
   | 'nest-setup'
   | 'react-setup'
+  | 'fastapi-setup'
+  | 'integration'    // Pour les combos
   | 'output';
 
 const DEFAULT_LARAVEL_OPTIONS: LaravelOptions = {
@@ -52,6 +56,22 @@ const DEFAULT_NEST_OPTIONS: NestConfig = {
   swagger: true,
 };
 
+const DEFAULT_FASTAPI_OPTIONS: FastAPIConfig = {
+  architecture: 'layered',
+  orm: 'sqlmodel',
+  db_engine: 'postgresql',
+  auth: 'none',
+  migrations: true,
+  cors: true,
+  swagger: true,
+  rate_limiting: false,
+  background_tasks: false,
+  websockets: false,
+  runner: 'makefile',
+  python_version: '3.11',
+  async_mode: true,
+};
+
 const DEFAULT_MODEL_PAGES: ModelPages = {
   list: true,
   detail: true,
@@ -78,6 +98,8 @@ interface WizardStore {
   reactOptions: ReactOptions;
   expressOptions: ExpressConfig;
   nestOptions: NestConfig;
+  fastapiOptions: FastAPIConfig;
+  backendUrl: string;
 
   // UI State
   isDrawerOpen: boolean;
@@ -87,15 +109,19 @@ interface WizardStore {
 
   // Actions config principale
   setStack: (stack: Stack) => void;
+  loadCombo: (id: ComboId) => void;
   setNextjsUsage: (usage: 'frontend-only' | 'full-stack') => void;
   setProjectName: (name: string) => void;
   setLaravelOptions: (patch: Partial<LaravelOptions>) => void;
   setReactOptions: (patch: Partial<ReactOptions>) => void;
   setExpressOptions: (patch: Partial<ExpressConfig>) => void;
   setNestOptions: (patch: Partial<NestConfig>) => void;
+  setFastAPIOptions: (patch: Partial<FastAPIConfig>) => void;
+  setBackendUrl: (url: string) => void;
 
   // Actions modèles
   addModel: (model: Model) => void;
+  applyTemplate: (models: Model[]) => void;
   updateModel: (name: string, patch: Partial<Model>) => void;
   removeModel: (name: string) => void;
 
@@ -118,6 +144,7 @@ interface WizardStore {
   // Utilitaires
   canProceed: () => boolean;
   getConfig: () => ProjectConfig;
+  importConfig: (config: ProjectConfig) => void;
   reset: () => void;
 }
 
@@ -146,12 +173,31 @@ function computeSteps(stack: Stack | null, nextjsUsage: string | null): StepId[]
     case 'nestjs':
       return [...base, 'architecture', 'database', 'models', 'relations', 'nest-setup', 'output'];
 
+    case 'nestjs+react':
+      return [...base, 'architecture', 'database', 'models', 'relations', 'nest-setup', 'react-setup', 'integration', 'output'];
+
+    case 'fastapi':
+      return [...base, 'architecture', 'database', 'models', 'relations', 'fastapi-setup', 'output'];
+
     case 'laravel+react':
     case 'laravel+nextjs':
       return [...base, 'models', 'relations', 'laravel-setup', 'react-setup', 'output'];
 
     case 'express+react':
-      return [...base, 'architecture', 'database', 'models', 'relations', 'middlewares', 'react-setup', 'output'];
+      return [...base, 'architecture', 'database', 'models', 'relations', 'middlewares', 'react-setup', 'integration', 'output'];
+
+    case 'fastapi+react':
+    case 'fastapi+nextjs':
+      return [...base, 'architecture', 'database', 'models', 'relations', 'fastapi-setup', 'react-setup', 'integration', 'output'];
+
+    case 'mern':
+    case 'pern':
+    case 'mevn':
+    case 'mean':
+      return [...base, 'architecture', 'database', 'models', 'relations', 'middlewares', 'react-setup', 'integration', 'output'];
+
+    case 't3':
+      return [...base, 'database', 'models', 'relations', 'output'];
 
     default:
       return [...base, 'output'];
@@ -169,6 +215,8 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
   reactOptions: { ...DEFAULT_REACT_OPTIONS },
   expressOptions: { ...DEFAULT_EXPRESS_OPTIONS },
   nestOptions: { ...DEFAULT_NEST_OPTIONS },
+  fastapiOptions: { ...DEFAULT_FASTAPI_OPTIONS },
+  backendUrl: '',
 
   // UI State
   isDrawerOpen: false,
@@ -197,6 +245,19 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
     const newSteps = computeSteps(stack, nextjsUsage);
     set({ stack, steps: newSteps });
   },
+
+  loadCombo: (id) => {
+    const def = COMBO_DEFINITIONS[id];
+    const { nextjsUsage } = get();
+    
+    set((s) => ({
+      stack: def.stack as any,
+      expressOptions: def.backend === 'express' ? { ...s.expressOptions, ...(def.backendConfig as any) } : s.expressOptions,
+      fastapiOptions: def.backend === 'fastapi' ? { ...s.fastapiOptions, ...(def.backendConfig as any) } : s.fastapiOptions,
+      reactOptions: { ...s.reactOptions, ...(def.frontendConfig as any) },
+      steps: computeSteps(def.stack as any, nextjsUsage),
+    }));
+  },
   
   setNextjsUsage: (usage) => {
     const { stack } = get();
@@ -218,8 +279,11 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
   setReactOptions: (patch) => set((s) => ({ reactOptions: { ...s.reactOptions, ...patch } })),
   setExpressOptions: (patch) => set((s) => ({ expressOptions: { ...s.expressOptions, ...patch } })),
   setNestOptions: (patch) => set((s) => ({ nestOptions: { ...s.nestOptions, ...patch } })),
+  setFastAPIOptions: (patch) => set((s) => ({ fastapiOptions: { ...s.fastapiOptions, ...patch } })),
+  setBackendUrl: (url) => set({ backendUrl: url }),
 
-  addModel: (model) => set((s) => ({ models: [...s.models, model] })),
+  addModel: (model) => set((s) => s.models.some((m) => m.name === model.name) ? s : { models: [...s.models, model] }),
+  applyTemplate: (models) => set({ models }),
   updateModel: (name, patch) => set((s) => ({
     models: s.models.map((m) => m.name === name ? { ...m, ...patch } : m),
   })),
@@ -227,11 +291,30 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
     models: s.models.filter((m) => m.name !== name),
   })),
 
-  addField: (modelName, field) => set((s) => ({
-    models: s.models.map((m) =>
-      m.name === modelName ? { ...m, fields: [...m.fields, field] } : m
-    ),
-  })),
+  addField: (modelName, field) => {
+    set((s) => ({
+      models: s.models.map((m) =>
+        m.name === modelName ? { ...m, fields: [...m.fields, field] } : m
+      ),
+    }));
+
+    const FK_TYPES = ['foreignId', 'foreignUuid', 'foreignUlid'];
+    if (FK_TYPES.includes(field.type) && (field as any).references) {
+      const state = get();
+      const targetModel = state.models.find(m =>
+        (m.table || `${m.name.toLowerCase()}s`) === (field as any).references
+      );
+      if (targetModel) {
+        const currentModel = state.models.find(m => m.name === modelName);
+        const alreadyHasRelation = currentModel?.relations.some(
+          r => r.model === targetModel.name && r.type === 'belongsTo'
+        );
+        if (!alreadyHasRelation) {
+          get().addRelation(modelName, { type: 'belongsTo', model: targetModel.name });
+        }
+      }
+    }
+  },
   updateField: (modelName, fieldName, patch) => set((s) => ({
     models: s.models.map((m) =>
       m.name === modelName
@@ -303,37 +386,62 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
   })),
 
   canProceed: () => {
-    const { currentStepId, stack, projectName, models, nextjsUsage } = get();
-    if (currentStepId === 'stack') return !!stack && projectName.trim().length > 0;
+    const { currentStepId, stack, nextjsUsage } = get();
+    if (currentStepId === 'stack') return !!stack;
     if (currentStepId === 'usage') return !!nextjsUsage;
-    if (currentStepId === 'models') return models.length > 0;
     return true;
   },
 
   getConfig: () => {
-    const { stack, projectName, models, laravelOptions, reactOptions, expressOptions, nestOptions } = get();
+    const { stack, projectName, models, nextjsUsage, laravelOptions, reactOptions, expressOptions, nestOptions, fastapiOptions, backendUrl } = get();
+    const s = stack!;
+
+    const hasFrontend = ['react', 'nextjs', 'express+react', 'nestjs+react', 'fastapi+react', 'fastapi+nextjs', 'laravel+react', 'laravel+nextjs', 'mern', 'pern', 'mevn', 'mean', 't3'].includes(s);
+    const hasExpress  = ['express', 'express+react', 'mern', 'pern', 'mevn', 'mean'].includes(s);
+    const hasNest     = ['nestjs', 'nestjs+react'].includes(s);
+    const hasFastAPI  = ['fastapi', 'fastapi+react', 'fastapi+nextjs'].includes(s);
+
     return {
       name: projectName,
-      stack: stack!,
+      stack: s,
       models,
-      laravel: laravelOptions,
-      react: reactOptions,
-      express: expressOptions,
-      nest: nestOptions,
+      ...(backendUrl                     && { backendUrl }),
+      ...(nextjsUsage                  && { nextjsUsage }),
+      ...(s.includes('laravel')        && { laravel: laravelOptions }),
+      ...(hasFrontend                  && { react: reactOptions }),
+      ...(hasExpress                   && { express: expressOptions }),
+      ...(hasNest                      && { nest: nestOptions }),
+      ...(hasFastAPI                   && { fastapi: fastapiOptions }),
     } as ProjectConfig;
   },
+
+  importConfig: (config) => set((s) => ({
+    projectName:    config.name,
+    stack:          config.stack,
+    nextjsUsage:    config.nextjsUsage || s.nextjsUsage,
+    models:         config.models,
+    laravelOptions: config.laravel || s.laravelOptions,
+    reactOptions:   config.react || s.reactOptions,
+    expressOptions: config.express || s.expressOptions,
+    nestOptions:    config.nest || s.nestOptions,
+    fastapiOptions: config.fastapi || s.fastapiOptions,
+    backendUrl:     config.backendUrl || '',
+    steps:          computeSteps(config.stack, config.nextjsUsage || null),
+  })),
 
   reset: () => set({
     steps: ['stack'],
     currentStepId: 'stack',
     stack: null,
-    projectName: '',
+    projectName: 'my-project',
     nextjsUsage: null,
     models: [],
     laravelOptions: { ...DEFAULT_LARAVEL_OPTIONS },
     reactOptions: { ...DEFAULT_REACT_OPTIONS },
     expressOptions: { ...DEFAULT_EXPRESS_OPTIONS },
     nestOptions: { ...DEFAULT_NEST_OPTIONS },
+    fastapiOptions: { ...DEFAULT_FASTAPI_OPTIONS },
+    backendUrl: '',
   }),
 }));
 

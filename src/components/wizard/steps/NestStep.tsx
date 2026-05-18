@@ -1,7 +1,7 @@
 "use client";
 
 import { useWizardStore } from "@/stores/useWizardStore";
-import { Box, Code2, Globe, ShieldCheck } from "lucide-react";
+import { Box, Code2, Globe, ShieldCheck, Lock } from "lucide-react";
 
 export function NestStep() {
   const { nestOptions, setNestOptions } = useWizardStore();
@@ -76,7 +76,7 @@ export function NestStep() {
           </div>
 
           <div
-            onClick={() => setNestOptions({ validation: true })}
+            onClick={() => setNestOptions({ validation: !nestOptions.validation })}
             className={[
               "si-toggle-card",
               nestOptions.validation ? "on" : ""
@@ -90,6 +90,25 @@ export function NestStep() {
               <div>
                 <div className="font-bold text-sm">Global Validation</div>
                 <p className="text-[11px] text-text3">Enforce class-validator and ValidationPipe</p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            onClick={() => setNestOptions({ auth: nestOptions.auth === 'jwt' ? 'none' : 'jwt' })}
+            className={[
+              "si-toggle-card",
+              nestOptions.auth === 'jwt' ? "on" : ""
+            ].join(" ")}
+          >
+            <div className="si-toggle">
+              <div className="si-toggle-knob" />
+            </div>
+            <div className="flex items-center gap-3">
+              <Lock size={18} className="text-gold" />
+              <div>
+                <div className="font-bold text-sm">JWT Authentication</div>
+                <p className="text-[11px] text-text3">Add Passport JWT Guard, Strategy and AuthModule</p>
               </div>
             </div>
           </div>

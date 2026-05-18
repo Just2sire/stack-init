@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useWizardStore } from "@/stores/useWizardStore";
 import { generate } from "@/lib/generator";
-import { Download, Loader2, Sparkles, FileCode, Check, ChevronDown, ChevronUp, Database, Box, Layers as LayersIcon, RefreshCw, Edit3 } from "lucide-react";
+import { generateShareUrl } from "@/lib/sharing";
+import { savePreset } from "@/lib/presets";
+import { Download, Loader2, Sparkles, FileCode, Check, ChevronDown, ChevronUp, Database, Box, Layers as LayersIcon, RefreshCw, Edit3, Share2, ClipboardCheck, BookmarkPlus } from "lucide-react";
 import type { ProjectConfig, ModelPages } from "@stack-init/schema";
 
 const DEFAULT_PAGES: ModelPages = { list: true, detail: true, create: true, edit: false };
@@ -91,7 +93,7 @@ function computeFileList(config: ProjectConfig): FileEntry[] {
     files.push({ path: 'src/app/layout.tsx', icon: '📄' });
     files.push({ path: 'src/app/page.tsx', icon: '📄' });
     files.push({ path: 'src/app/globals.css', icon: '📄' });
-    if (config.react.css === 'tailwind') {
+    if (config.react?.css === 'tailwind') {
       files.push({ path: 'tailwind.config.ts', icon: '📄' });
       files.push({ path: 'postcss.config.mjs', icon: '📄' });
     }
@@ -116,7 +118,13 @@ export function OutputStep() {
   const { getConfig, stack, reset, setStep, models, projectName } = useWizardStore();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDone, setIsDone] = useState(false);
+  const [isShared, setIsShared] = useState(false);
   const [expanded, setExpanded] = useState<string | null>("summary");
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [presetName, setPresetName] = useState('');
+  const [presetIcon, setPresetIcon] = useState('📦');
+  const [presetDesc, setPresetDesc] = useState('');
+  const [savedToast, setSavedToast] = useState(false);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -129,6 +137,24 @@ export function OutputStep() {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleShare = () => {
+    const url = generateShareUrl(getConfig());
+    navigator.clipboard.writeText(url);
+    setIsShared(true);
+    setTimeout(() => setIsShared(false), 2000);
+  };
+
+  const handleSavePreset = () => {
+    const name = presetName.trim() || projectName || 'My Preset';
+    savePreset(getConfig(), name, { icon: presetIcon, description: presetDesc.trim() || undefined });
+    setShowSaveModal(false);
+    setPresetName('');
+    setPresetDesc('');
+    setPresetIcon('📦');
+    setSavedToast(true);
+    setTimeout(() => setSavedToast(false), 2500);
   };
 
   const isLaravel = stack === "laravel" || stack === "laravel+react";
@@ -244,13 +270,13 @@ export function OutputStep() {
             <div>
               <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-1">Database</p>
               <p className="text-text">
-                {isLaravel ? config.laravel.db_engine : (config.express?.db_engine || config.nest?.db_engine || "SQLite")}
+                {isLaravel ? config.laravel?.db_engine : (config.express?.db_engine || config.nest?.db_engine || config.fastapi?.db_engine || "SQLite")}
               </p>
             </div>
             <div>
               <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-1">ORM / Driver</p>
               <p className="text-text">
-                {isLaravel ? "Eloquent" : (config.express?.database || config.nest?.database || "None")}
+                {isLaravel ? "Eloquent" : (config.express?.database || config.nest?.database || config.fastapi?.orm || "None")}
               </p>
             </div>
           </div>
@@ -276,13 +302,23 @@ export function OutputStep() {
 
         <SummaryItem id="tech" title="Technical Options" icon={<Terminal size={18} />}>
           <div className="space-y-4">
-            {isLaravel && (
+            {isLaravel && config.laravel && (
               <div>
                 <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-2">Laravel Config</p>
                 <div className="flex flex-wrap gap-2">
                   <span className="si-badge si-badge-gray">PHP {config.laravel.php_version}</span>
                   <span className="si-badge si-badge-gray">Auth: {config.laravel.auth}</span>
                   <span className="si-badge si-badge-gray">Pattern: {config.laravel.pattern}</span>
+                </div>
+              </div>
+            )}
+            {config.fastapi && (
+              <div>
+                <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-2">FastAPI Config</p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="si-badge si-badge-gray">Python {config.fastapi.python_version}</span>
+                  <span className="si-badge si-badge-gray">Auth: {config.fastapi.auth}</span>
+                  <span className="si-badge si-badge-gray">ORM: {config.fastapi.orm}</span>
                 </div>
               </div>
             )}
@@ -308,7 +344,7 @@ export function OutputStep() {
         </SummaryItem>
       </div>
 
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center gap-4">
         <button
           onClick={handleGenerate}
           disabled={isGenerating}
@@ -326,11 +362,106 @@ export function OutputStep() {
             </>
           )}
         </button>
-        <p className="text-[10px] text-text3 mt-4 flex items-center gap-2">
+
+        <div className="flex gap-3">
+          <button
+            onClick={handleShare}
+            className="si-btn-ghost text-xs gap-2 py-2"
+          >
+            {isShared ? <ClipboardCheck size={14} className="text-gold" /> : <Share2 size={14} />}
+            {isShared ? "Link copied!" : "Share config link"}
+          </button>
+          <button
+            onClick={() => setShowSaveModal(true)}
+            className="si-btn-ghost text-xs gap-2 py-2"
+          >
+            {savedToast ? <Check size={14} className="text-gold" /> : <BookmarkPlus size={14} />}
+            {savedToast ? "Preset saved!" : "Save as Preset"}
+          </button>
+        </div>
+
+        <p className="text-[10px] text-text3 flex items-center gap-2">
           <ShieldCheck size={12} className="text-gold" />
           By clicking generate, a ZIP or YAML file will be prepared for you.
         </p>
       </div>
+
+      {/* Save as Preset modal */}
+      {showSaveModal && (
+        <>
+          <div
+            onClick={() => setShowSaveModal(false)}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 49 }}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              zIndex: 50,
+              background: "var(--bg2)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: 16,
+              padding: 28,
+              width: 380,
+              boxShadow: "0 16px 60px rgba(0,0,0,0.5)",
+            }}
+          >
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--text)", marginBottom: 4, fontFamily: "var(--font-syne)" }}>
+              Save as Preset
+            </h3>
+            <p style={{ fontSize: 12, color: "var(--text3)", marginBottom: 20 }}>
+              Save your current configuration to reuse in future projects.
+            </p>
+
+            <div style={{ marginBottom: 14 }}>
+              <label className="si-section-label">Preset Name</label>
+              <input
+                autoFocus
+                value={presetName}
+                onChange={(e) => setPresetName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSavePreset()}
+                placeholder={projectName || 'My Preset'}
+                className="si-input"
+                style={{ marginTop: 6 }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+              <div style={{ flex: "0 0 80px" }}>
+                <label className="si-section-label">Icon</label>
+                <input
+                  value={presetIcon}
+                  onChange={(e) => setPresetIcon(e.target.value)}
+                  className="si-input"
+                  style={{ marginTop: 6, textAlign: "center", fontSize: 20 }}
+                  maxLength={2}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label className="si-section-label">Description (optional)</label>
+                <input
+                  value={presetDesc}
+                  onChange={(e) => setPresetDesc(e.target.value)}
+                  placeholder="Short description..."
+                  className="si-input"
+                  style={{ marginTop: 6 }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={handleSavePreset} className="si-btn-primary" style={{ flex: 1 }}>
+                Save Preset
+              </button>
+              <button onClick={() => setShowSaveModal(false)} className="si-btn-secondary" style={{ flex: 1 }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

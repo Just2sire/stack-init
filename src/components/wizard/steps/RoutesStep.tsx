@@ -7,11 +7,11 @@ export function RoutesStep() {
   const { models, setGenerate } = useWizardStore();
 
   const OPTIONS = [
-    { key: 'controller', label: 'Controller', icon: <Code2 size={14} /> },
-    { key: 'routes', label: 'Routes', icon: <Zap size={14} /> },
-    { key: 'service', label: 'Service', icon: <Code2 size={14} /> },
-    { key: 'repository', label: 'Repository', icon: <Table size={14} /> },
-    { key: 'tests', label: 'Tests', icon: <Check size={14} /> },
+    { key: 'controller', label: 'Controller', icon: <Code2 size={14} />, tooltip: 'Generates a CRUD controller with HTTP handler methods (index, show, store, update, destroy).' },
+    { key: 'routes', label: 'Routes', icon: <Zap size={14} />, tooltip: 'Registers RESTful API routes for this model in the router (GET, POST, PUT/PATCH, DELETE).' },
+    { key: 'service', label: 'Service', icon: <Code2 size={14} />, tooltip: 'Generates a Service class with business logic, separating it from the controller layer.' },
+    { key: 'repository', label: 'Repository', icon: <Table size={14} />, tooltip: 'Generates a Repository class abstracting data access — useful for testing and swapping ORMs.' },
+    { key: 'tests', label: 'Tests', icon: <Check size={14} />, tooltip: 'Generates unit/feature test files with example test cases for CRUD operations.' },
   ];
 
   return (
@@ -28,9 +28,10 @@ export function RoutesStep() {
               <th className="py-4 px-6 text-[11px] font-bold text-text3 uppercase tracking-wider">Model</th>
               {OPTIONS.map(opt => (
                 <th key={opt.key} className="py-4 px-6 text-[11px] font-bold text-text3 uppercase tracking-wider text-center">
-                  <div className="flex flex-col items-center gap-1">
+                  <div className="flex flex-col items-center gap-1" title={opt.tooltip}>
                     {opt.icon}
                     <span>{opt.label}</span>
+                    <span style={{ fontSize: 10, opacity: 0.4, cursor: 'help' }}>ⓘ</span>
                   </div>
                 </th>
               ))}

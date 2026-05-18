@@ -16,6 +16,8 @@ import { RoutesStep } from "./steps/RoutesStep";
 import { MiddlewaresStep } from "./steps/MiddlewaresStep";
 import { OutputStep } from "./steps/OutputStep";
 import { ReactStep } from "./steps/ReactStep";
+import { FastAPISetupStep } from "./steps/FastAPISetupStep";
+import { IntegrationStep } from "./steps/IntegrationStep";
 import { ArchitectDrawer } from "./ArchitectDrawer";
 
 export function WizardShell() {
@@ -33,7 +35,9 @@ export function WizardShell() {
       case "middlewares":   return <MiddlewaresStep />;
       case "laravel-setup": return <LaravelStep />;
       case "nest-setup":    return <NestStep />;
+      case "fastapi-setup": return <FastAPISetupStep />;
       case "react-setup":   return <ReactStep />;
+      case "integration":   return <IntegrationStep />;
       case "output":        return <OutputStep />;
       default:              return <div className="si-empty">Step not implemented: {currentStepId}</div>;
     }
@@ -51,7 +55,9 @@ export function WizardShell() {
     relations: "Connect your models",
     'laravel-setup': "Configure your backend",
     'nest-setup': "Configure your NestJS backend",
+    'fastapi-setup': "Configure FastAPI backend",
     'react-setup': "Configure your frontend",
+    'integration': "Connect Frontend & Backend",
     output: "Generate and download",
     routes: "Define your API routes",
     middlewares: "Select your middlewares",

@@ -16,12 +16,14 @@ const STEP_LABELS: Record<StepId, string> = {
   middlewares:     "Middlewares",
   "laravel-setup": "Laravel Setup",
   "nest-setup":    "NestJS Setup",
+  "fastapi-setup": "FastAPI Setup",
   "react-setup":   "React Setup",
+  integration:     "Integration",
   output:          "Output",
 };
 
 export function WizardSidebar() {
-  const { steps, currentStepId, setStep, models } = useWizardStore();
+  const { steps, currentStepId, setStep, models, stack } = useWizardStore();
   const currentIndex = steps.indexOf(currentStepId);
 
   // Badge : nombre de modèles définis
@@ -63,19 +65,21 @@ export function WizardSidebar() {
           const stepIndex = steps.indexOf(id);
           const isActive = currentStepId === id;
           const isCompleted = currentIndex > stepIndex;
+          const isClickable = isCompleted || isActive || !!stack;
           const label = STEP_LABELS[id];
           const badge = getStepBadge(id);
 
           return (
             <div
               key={id}
-              onClick={() => (isCompleted || isActive) && setStep(id)}
+              onClick={() => isClickable && setStep(id)}
               className={cn(
                 "si-step-item",
                 isActive && "active",
                 isCompleted && "done",
-                (isCompleted || isActive) && "cursor-pointer"
+                isClickable && "cursor-pointer"
               )}
+              style={{ opacity: !isCompleted && !isActive && !!stack ? 0.55 : undefined }}
             >
               <div className="si-step-dot">
                 {isCompleted ? <Check size={14} /> : idx + 1}

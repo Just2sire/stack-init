@@ -2,140 +2,162 @@ import yaml from 'js-yaml';
 import type { ProjectConfig } from '@stack-init/schema';
 import { isCliStack } from '@stack-init/schema';
 
-export function generateYaml(config: ProjectConfig): void {
+export function buildYamlContent(config: ProjectConfig): string {
   const output: Record<string, unknown> = {
     name: config.name,
     stack: config.stack,
+    generated_at: new Date().toISOString(),
+    ...(config.nextjsUsage && { nextjsUsage: config.nextjsUsage }),
     models: config.models.map((model) => {
-      const fields = model.fields.map((f) => {
-        const fieldObj: Record<string, unknown> = { name: f.name, type: f.type };
-        if (f.nullable)               fieldObj.nullable   = true;
-        if (f.unique)                 fieldObj.unique     = true;
-        if (f.values?.length)         fieldObj.values     = f.values;
-        if (f.references)             fieldObj.references = f.references;
-        if (f.length != null)         fieldObj.length     = f.length;
-        if (f.precision != null)      fieldObj.precision  = f.precision;
-        if (f.scale != null)          fieldObj.scale      = f.scale;
+      const fields = model.fields.map((f: any) => {
+        const fieldObj: Record<string, unknown> = {
+          name: f.name,
+          type: f.type,
+        };
+
+        if (f.nullable)              fieldObj.nullable    = true;
+        if (f.unique)                fieldObj.unique      = true;
+        if (f.index)                 fieldObj.index       = true;
+        if (f.default !== undefined) fieldObj.default     = f.default;
+        if (f.comment)               fieldObj.comment     = f.comment;
+        if (f.unsigned)              fieldObj.unsigned    = true;
+        if (f.constrained === false) fieldObj.constrained = false;
+
+        if (f.values?.length)        fieldObj.values      = f.values;
+        if (f.references)            fieldObj.references  = f.references;
+        if (f.length != null)        fieldObj.length      = f.length;
+        if (f.precision != null)     fieldObj.precision   = f.precision;
+        if (f.scale != null)         fieldObj.scale       = f.scale;
+        if (f.dimensions != null)    fieldObj.dimensions  = f.dimensions;
+        if (f.on_delete)             fieldObj.on_delete   = f.on_delete;
+        if (f.on_update)             fieldObj.on_update   = f.on_update;
+
         return fieldObj;
       });
 
-      const modelObj: Record<string, unknown> = { name: model.name };
-      if (model.table) modelObj.table = model.table;
-      modelObj.fields = fields;
-
-      if (model.relations.length > 0) {
-        modelObj.relations = model.relations.map((r) => ({ type: r.type, model: r.model }));
-      }
-
-      const migrationObj: Record<string, unknown> = {
-        primary_key:  model.migration.primary_key || "id",
-        timestamps:   model.migration?.timestamps ?? true,
-        softDeletes:  model.migration?.softDeletes ?? false,
-      };
-
-      if (model.migration.engine)  migrationObj.engine  = model.migration.engine;
-      if (model.migration.charset) migrationObj.charset = model.migration.charset;
-
-      modelObj.migration = migrationObj;
-
-      modelObj.generate = {
-        migration:  model.generate.migration,
-        controller: model.generate.controller,
-        resource:   model.generate.resource,
-        request:    model.generate.request,
-        factory:    model.generate.factory,
-        seeder:     model.generate.seeder,
-        policy:     model.generate.policy,
-        service:    model.generate.service,
-        repository: model.generate.repository,
-        tests:      model.generate.tests,
-        routes:     model.generate.routes,
-        swagger:    model.generate.swagger,
-        softDelete: model.generate.softDelete,
+      const modelObj: Record<string, unknown> = {
+        name: model.name,
+        table: model.table,
+        fields: fields,
+        relations: model.relations.map(r => {
+          const rel: Record<string, unknown> = {
+            type: r.type,
+            model: r.model,
+          };
+          if (r.name)         rel.name         = r.name;
+          if (r.foreign_key)  rel.foreign_key  = r.foreign_key;
+          if (r.local_key)    rel.local_key    = r.local_key;
+          if (r.pivot_table)  rel.pivot_table  = r.pivot_table;
+          if (r.through)      rel.through      = r.through;
+          if (r.with_trashed) rel.with_trashed = r.with_trashed;
+          return rel;
+        }),
+        migration: {
+          primary_key:    model.migration?.primary_key || 'id',
+          timestamps:     model.migration?.timestamps ?? true,
+          softDeletes:    model.migration?.softDeletes ?? false,
+          ...(model.migration?.timestampsTz  && { timestampsTz:  true }),
+          ...(model.migration?.softDeletesTz && { softDeletesTz: true }),
+          ...(model.migration?.engine        && { engine:        model.migration.engine }),
+          ...(model.migration?.charset       && { charset:       model.migration.charset }),
+          ...(model.migration?.collation     && { collation:     model.migration.collation }),
+        },
+        generate: model.generate,
       };
 
       return modelObj;
     }),
   };
 
-  if (isCliStack(config.stack)) {
-    output.laravel = {
-      pattern:         config.laravel.pattern,
-      auth:            config.laravel.auth,
-      php_version:     config.laravel.php_version,
-      laravel_version: config.laravel.laravel_version,
-      db_engine:       config.laravel.db_engine,
-    };
-  }
+  if (config.laravel) output.laravel = config.laravel;
+  if (config.react)   output.react   = config.react;
+  if (config.express) output.express = config.express;
+  if (config.nest)    output.nest    = config.nest;
+  if (config.fastapi) output.fastapi = config.fastapi;
 
-  const yamlStr = yaml.dump(output, {
+  return yaml.dump(output, {
     lineWidth: 120,
     quotingType: '"',
     forceQuotes: false,
     noRefs: true,
   });
+}
 
-  const blob = new Blob([yamlStr], { type: 'text/yaml' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = 'stack-init.yaml';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
-  // Second download: GETTING_STARTED.md
+export function buildGettingStarted(config: ProjectConfig, isZip: boolean): string {
   const today = new Date().toISOString().split('T')[0];
   const modelLines = config.models
     .map((m) => `- \`${m.name}\` — ${m.fields.length} field(s)`)
     .join('\n');
 
-  const gettingStarted = `# ${config.name} — Getting Started
+  if (isZip) {
+    return `# ${config.name} — Getting Started
 
-> Généré avec Stack-Init le ${today}
+> Generated with Stack-Init on ${today}
 
-## Ce qui a été généré
-- \`stack-init.yaml\` — la config de ton projet
+## What was generated
+- \`${config.name}.zip\` — the complete project (includes \`stack-init.yaml\`)
 
-## Prochaines étapes
+## Next steps
 
-### 1. Installer le CLI
+### 1. Use the generated project
+Unzip \`${config.name}.zip\` and follow the \`README.md\` instructions inside.
+
+### 2. Regenerate with the CLI
+The \`stack-init.yaml\` file inside the ZIP lets you regenerate or share the project config.
+
 \`\`\`bash
-npm install -g stack-init   # ou npx stack-init
+npx @stack-init/cli generate stack-init.yaml
 \`\`\`
 
-### 2. Générer les fichiers Laravel
-\`\`\`bash
-cp stack-init.yaml ./mon-projet-laravel/
-cd mon-projet-laravel
-npx stack-init generate
-\`\`\`
-
-### 3. Lancer les migrations
-\`\`\`bash
-php artisan migrate
-php artisan db:seed          # si les seeders sont activés
-\`\`\`
-
-### 4. Démarrer le serveur
-\`\`\`bash
-php artisan serve            # http://localhost:8000
-\`\`\`
-
-## Modèles générés
+## Configured models
 ${modelLines}
+
+---
+Scaffold faster, ship sooner with [Stack-Init](https://stackinit.dev)
 `;
+  }
+
+  return `# ${config.name} — Getting Started
+
+> Generated with Stack-Init on ${today}
+
+## What was generated
+- \`${config.name}.stack-init.yaml\` — the complete project config
+
+## Next steps
+
+### 1. Use the CLI
+The CLI transforms this YAML file into a full project (Laravel, NestJS, Express, etc.) with all selected options.
+
+\`\`\`bash
+npx @stack-init/cli generate ${config.name}.stack-init.yaml
+\`\`\`
+
+## Configured models
+${modelLines}
+
+---
+Scaffold faster, ship sooner with [Stack-Init](https://stackinit.dev)
+`;
+}
+
+function downloadBlob(content: string, mimeType: string, filename: string): void {
+  const blob = new Blob([content], { type: mimeType });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Only used for CLI-only stacks (Laravel) that have no ZIP
+export function generateYaml(config: ProjectConfig): void {
+  downloadBlob(buildYamlContent(config), 'text/yaml', `${config.name}.stack-init.yaml`);
 
   setTimeout(() => {
-    const mdBlob = new Blob([gettingStarted], { type: 'text/markdown' });
-    const mdUrl  = URL.createObjectURL(mdBlob);
-    const mdLink = document.createElement('a');
-    mdLink.href     = mdUrl;
-    mdLink.download = 'GETTING_STARTED.md';
-    document.body.appendChild(mdLink);
-    mdLink.click();
-    document.body.removeChild(mdLink);
-    URL.revokeObjectURL(mdUrl);
+    downloadBlob(buildGettingStarted(config, false), 'text/markdown', 'GETTING_STARTED.md');
   }, 300);
 }

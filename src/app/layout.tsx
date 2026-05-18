@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Syne, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import "@xyflow/react/dist/style.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -33,7 +34,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "stack-init — Generate your stack in seconds",
+  title: "stackInit — Generate your stack in seconds",
   description:
     "Generate production-ready Laravel + React codebases with a visual wizard. Define models, fields, and relations — let Stack-Init write the boilerplate.",
 };

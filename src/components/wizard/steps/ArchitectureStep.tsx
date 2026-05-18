@@ -7,19 +7,28 @@ import type { ExpressConfig, NestConfig, ReactOptions } from "@stack-init/schema
 type ArchPattern = 'feature-first' | 'ddd' | 'mvvm' | 'mvc' | 'layered' | 'minimal';
 
 export function ArchitectureStep() {
-  const { stack, reactOptions, setReactOptions, expressOptions, setExpressOptions, nestOptions, setNestOptions } = useWizardStore();
+  const { stack, reactOptions, setReactOptions, expressOptions, setExpressOptions, nestOptions, setNestOptions, fastapiOptions, setFastAPIOptions } = useWizardStore();
 
   const isFrontend = stack === 'react' || stack === 'nextjs';
-  const isBackend = stack === 'express' || stack === 'nestjs';
 
-  const currentPattern = isFrontend 
-    ? reactOptions.architecture 
-    : (stack === 'express' ? expressOptions.architecture : nestOptions.architecture);
+  const isExpressLike = stack === 'express' || stack === 'express+react'
+    || stack === 'mern' || stack === 'pern' || stack === 'mevn' || stack === 'mean';
+  const isNestLike    = stack === 'nestjs' || stack === 'nestjs+react';
+  const isFastapiLike = stack === 'fastapi' || stack === 'fastapi+react' || stack === 'fastapi+nextjs';
+  const isBackend     = isExpressLike || isNestLike || isFastapiLike;
+
+  const currentPattern = isFrontend
+    ? reactOptions.architecture
+    : isExpressLike ? expressOptions.architecture
+    : isNestLike    ? nestOptions.architecture
+    : isFastapiLike ? fastapiOptions.architecture
+    : undefined;
 
   const setPattern = (pattern: ArchPattern) => {
-    if (stack === 'react' || stack === 'nextjs') setReactOptions({ architecture: pattern as any });
-    else if (stack === 'express') setExpressOptions({ architecture: pattern as any });
-    else if (stack === 'nestjs') setNestOptions({ architecture: pattern as any });
+    if (isFrontend)    setReactOptions({ architecture: pattern as any });
+    else if (isExpressLike) setExpressOptions({ architecture: pattern as any });
+    else if (isNestLike)    setNestOptions({ architecture: pattern as any });
+    else if (isFastapiLike) setFastAPIOptions({ architecture: pattern as any });
   };
 
   const patterns = [

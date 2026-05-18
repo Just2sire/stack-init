@@ -4,9 +4,18 @@ export type Stack =
   | 'laravel+react' 
   | 'express' 
   | 'nestjs' 
+  | 'nestjs+react'
   | 'nextjs' 
   | 'express+react' 
-  | 'laravel+nextjs';
+  | 'laravel+nextjs'
+  | 'fastapi'
+  | 'fastapi+react'
+  | 'fastapi+nextjs'
+  | 'mern'
+  | 'pern'
+  | 't3'
+  | 'mevn'
+  | 'mean';
 
 export interface NamedField {
   default?: any;
@@ -22,12 +31,22 @@ export interface NamedField {
   precision?: number;      // decimal / float / double
   scale?: number;          // decimal / float / double
   dimensions?: number;     // vector
+  comment?: string;
+  unsigned?: boolean;
+  on_delete?: string;
+  on_update?: string;
+  constrained?: boolean;
 }
 
 export interface Relation {
   type: 'hasOne' | 'hasMany' | 'belongsTo' | 'belongsToMany' | 'morphTo' | 'morphMany' | 'morphToMany' | 'morphedByMany';
   model: string;
   name?: string;
+  foreign_key?: string;
+  local_key?: string;
+  pivot_table?: string;
+  through?: string;
+  with_trashed?: boolean;
 }
 
 export interface LaravelGenerateOptions {
@@ -49,9 +68,12 @@ export interface LaravelGenerateOptions {
 export interface MigrationOptions {
   timestamps: boolean;
   softDeletes?: boolean;
+  softDeletesTz?: boolean;
+  timestampsTz?: boolean;
   primary_key?: 'id' | 'uuid' | 'ulid' | 'custom' | string;
   engine?: string;
   charset?: string;
+  collation?: string;
 }
 
 export interface ModelPages {
@@ -118,27 +140,55 @@ export interface NextjsOptions {
   usage: 'frontend-only' | 'full-stack';
 }
 
+export interface FastAPIConfig {
+  architecture: 'flat' | 'layered' | 'feature-based' | 'domain';
+  orm: 'sqlalchemy' | 'sqlmodel' | 'tortoise-orm' | 'beanie' | 'none';
+  db_engine: 'postgresql' | 'mysql' | 'sqlite' | 'mongodb';
+  auth: 'jwt' | 'oauth2' | 'api-key' | 'none';
+  migrations: boolean;
+  cors: boolean;
+  swagger: boolean;
+  rate_limiting: boolean;
+  background_tasks: boolean;
+  websockets: boolean;
+  runner: 'makefile' | 'bash' | 'none';
+  python_version: '3.10' | '3.11' | '3.12';
+  async_mode: boolean;
+}
+
 export interface ProjectConfig {
   name: string;
   stack: Stack;
   models: Model[];
-  laravel: LaravelOptions;
-  react: ReactOptions;
+  backendUrl?: string;
+  nextjsUsage?: 'frontend-only' | 'full-stack';
+  laravel?: LaravelOptions;
+  react?: ReactOptions;
   express?: ExpressConfig;
   nest?: NestConfig;
+  fastapi?: FastAPIConfig;
 }
 
 export function isZipStack(stack: Stack | null): boolean {
   if (!stack) return false;
-  return ['react', 'nextjs', 'express', 'nestjs', 'express+react'].includes(stack as any);
+  const zipStacks: string[] = [
+    'react', 'nextjs',
+    'express', 'nestjs', 'nestjs+react', 'express+react',
+    'laravel+react', 'laravel+nextjs',
+    'fastapi', 'fastapi+react', 'fastapi+nextjs',
+    'mern', 'pern', 't3', 'mevn', 'mean',
+  ];
+  return zipStacks.includes(stack as any);
 }
 
 export function isCliStack(stack: Stack | null): boolean {
   if (!stack) return false;
-  return ['laravel', 'nestjs', 'express', 'laravel+react', 'laravel+nextjs', 'express+react'].includes(stack as any);
+  const cliStacks: string[] = ['laravel', 'nestjs', 'nestjs+react', 'express', 'fastapi', 'laravel+react', 'laravel+nextjs', 'express+react', 'fastapi+react', 'fastapi+nextjs', 'mern', 'pern', 't3', 'mevn', 'mean'];
+  return cliStacks.includes(stack as any);
 }
 
 export function isMixedStack(stack: Stack | null): boolean {
   if (!stack) return false;
-  return ['laravel+react', 'laravel+nextjs', 'express+react'].includes(stack as any);
+  const mixedStacks: string[] = ['laravel+react', 'laravel+nextjs', 'express+react', 'nestjs+react', 'fastapi+react', 'fastapi+nextjs', 'mern', 'pern', 't3', 'mevn', 'mean'];
+  return mixedStacks.includes(stack as any);
 }
