@@ -55,15 +55,15 @@ export const metadata: Metadata = {
     "ERD tool",
   ],
   openGraph: {
-    title: "StackInit | Tech-Stack Boilerplate Generator",
-    description: "Visually design and generate production-ready full-stack codebases in seconds.",
+    title: "StackInit | Tech-Stack Boilerplate Generator & Scaffolder",
+    description: "Visually design your data models, pick your stack, and generate production-ready Laravel, Next.js, Express, or FastAPI codebases in seconds. No signup.",
     url: "https://stack-init-dev.vercel.app",
     siteName: "StackInit",
     images: [
       {
         url: "/og-image.png",
-        width: 1200,
-        height: 630,
+        width: 1350,
+        height: 685,
         alt: "StackInit Preview",
       },
     ],
@@ -72,8 +72,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "StackInit | Tech-Stack Boilerplate Generator",
-    description: "Generate production-ready codebases with a visual wizard.",
+    title: "StackInit | Tech-Stack Boilerplate Generator & Scaffolder",
+    description: "Visually design your data models, pick your stack, and generate production-ready Laravel, Next.js, Express, or FastAPI codebases in seconds. No signup.",
     images: ["/og-image.png"],
   },
 };
