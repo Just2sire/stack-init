@@ -34,9 +34,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "stackInit — Generate your stack in seconds",
+  title: "StackInit — Generate your stack in seconds",
   description:
-    "Generate production-ready Laravel + React codebases with a visual wizard. Define models, fields, and relations — let Stack-Init write the boilerplate.",
+    "Generate production-ready Laravel, React, NextJS, Express... codebases with a visual wizard. Define models, fields, and relations — let Stack-Init write the boilerplate.",
 };
 
 export default function RootLayout({

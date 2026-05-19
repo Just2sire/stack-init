@@ -2,7 +2,8 @@
 
 import { useWizardStore, StepId } from "@/stores/useWizardStore";
 import { cn } from "@/lib/utils";
-import { Layers, Check } from "lucide-react";
+import { Check } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 const SERVICE_ICONS: Record<string, string> = {
@@ -52,21 +53,7 @@ export function WizardSidebar() {
     <div className="si-wizard-sidebar">
       {/* Logo */}
       <Link href="/" className="si-wiz-logo" style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textDecoration: "none" }}>
-        <div style={{ position: "relative", width: 28, height: 28 }}>
-          <div style={{
-            position: "absolute", top: 4, left: 4, width: 24, height: 24, borderRadius: 6,
-            background: "var(--gold-border)", border: "1px solid var(--gold-border)",
-          }} />
-          <div style={{
-            position: "absolute", top: 0, left: 0, width: 24, height: 24, borderRadius: 6,
-            background: "var(--gold)", color: "var(--bg)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            zIndex: 2,
-            boxShadow: "2px 2px 10px rgba(0,0,0,0.3)",
-          }}>
-            <Layers className="w-4 h-4" strokeWidth={3} />
-          </div>
-        </div>
+        <Image src="/favicon.svg" alt="StackInit" width={28} height={28} />
         <span style={{
           fontFamily: "var(--font-syne), 'Syne', sans-serif",
           fontSize: 18, fontWeight: 800, color: "var(--text)", letterSpacing: "-0.02em",

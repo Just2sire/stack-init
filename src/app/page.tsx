@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight, Layers, Database, Zap, FileCode, Globe,
   Sparkles, Table, GitBranch, Package, BookOpen, Download,
@@ -181,19 +182,7 @@ export default function Home() {
         position: "sticky", top: 0, zIndex: 100,
       }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-          <div style={{ position: "relative", width: 30, height: 30 }}>
-            <div style={{
-              position: "absolute", top: 4, left: 4, width: 22, height: 22, borderRadius: 6,
-              background: "var(--gold-border)",
-            }} />
-            <div style={{
-              position: "absolute", top: 0, left: 0, width: 22, height: 22, borderRadius: 6,
-              background: "var(--gold)", color: "var(--bg)",
-              display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2,
-            }}>
-              <Layers size={13} strokeWidth={3} />
-            </div>
-          </div>
+          <Image src="/favicon.svg" alt="StackInit" width={28} height={28} />
           <span style={{ fontFamily: "var(--font-syne)", fontSize: 17, fontWeight: 800, letterSpacing: "-0.02em" }}>
             Stack<span style={{ color: "var(--gold)" }}>Init</span>
           </span>
@@ -854,7 +843,7 @@ export default function Home() {
         flexWrap: "wrap", gap: 12,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Layers size={13} style={{ color: "var(--gold)" }} />
+          <Image src="/favicon.svg" alt="StackInit" width={14} height={14} />
           <span>StackInit — scaffold faster, ship sooner</span>
         </div>
         <div style={{ display: "flex", gap: 20 }}>
