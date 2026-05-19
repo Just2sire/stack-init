@@ -28,6 +28,12 @@ export type StepId =
 
 export type ServiceId = 'auth' | 'file-upload' | 'email' | 'cache' | 'websockets' | 'queue';
 
+// Steps that have internal sub-steps; value = total sub-step count.
+export const SUB_STEP_COUNTS: Partial<Record<StepId, number>> = {
+  'react-setup':   2,
+  'fastapi-setup': 2,
+};
+
 const DEFAULT_LARAVEL_OPTIONS: LaravelOptions = {
   pattern: 'api-only',
   auth: 'sanctum',
@@ -86,7 +92,9 @@ interface WizardStore {
   // Navigation
   steps: StepId[];
   currentStepId: StepId;
+  currentSubStep: number;
   setStep: (id: StepId) => void;
+  setCurrentSubStep: (n: number) => void;
   nextStep: () => void;
   prevStep: () => void;
 
@@ -213,6 +221,7 @@ function computeSteps(stack: Stack | null, nextjsUsage: string | null): StepId[]
 export const useWizardStore = create<WizardStore>((set, get) => ({
   steps: ['stack'],
   currentStepId: 'stack',
+  currentSubStep: 0,
   stack: null,
   projectName: 'my-project',
   nextjsUsage: null,
@@ -231,19 +240,29 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
   activePreviewTab: 'erd',
   setActivePreviewTab: (tab) => set({ activePreviewTab: tab }),
 
-  setStep: (id) => set({ currentStepId: id }),
+  setStep: (id) => set({ currentStepId: id, currentSubStep: 0 }),
+  setCurrentSubStep: (n) => set({ currentSubStep: n }),
   nextStep: () => {
-    const { steps, currentStepId } = get();
+    const { steps, currentStepId, currentSubStep } = get();
+    const total = SUB_STEP_COUNTS[currentStepId] ?? 1;
+    if (currentSubStep < total - 1) {
+      set({ currentSubStep: currentSubStep + 1 });
+      return;
+    }
     const idx = steps.indexOf(currentStepId);
     if (idx < steps.length - 1) {
-      set({ currentStepId: steps[idx + 1] });
+      set({ currentStepId: steps[idx + 1], currentSubStep: 0 });
     }
   },
   prevStep: () => {
-    const { steps, currentStepId } = get();
+    const { steps, currentStepId, currentSubStep } = get();
+    if (currentSubStep > 0) {
+      set({ currentSubStep: currentSubStep - 1 });
+      return;
+    }
     const idx = steps.indexOf(currentStepId);
     if (idx > 0) {
-      set({ currentStepId: steps[idx - 1] });
+      set({ currentStepId: steps[idx - 1], currentSubStep: 0 });
     }
   },
 
