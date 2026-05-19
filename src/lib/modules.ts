@@ -6,6 +6,9 @@ export interface LibraryModule {
   icon: string;
   description: string;
   models: Model[];
+  services?: string[];
+  requires?: string[];
+  userLinks?: Array<{ model: string; field: string; references: string }>;
 }
 
 const DEFAULT_GENERATE = {
@@ -20,6 +23,7 @@ export const MODULE_LIBRARY: LibraryModule[] = [
   /* ── Auth ───────────────────────────────────────────────────────── */
   {
     id: 'auth',
+    services: ['auth'],
     name: 'Auth',
     icon: '🔐',
     description: 'Full authentication — users, sessions, password resets.',
@@ -81,6 +85,11 @@ export const MODULE_LIBRARY: LibraryModule[] = [
   /* ── Blog ───────────────────────────────────────────────────────── */
   {
     id: 'blog',
+    requires: ['auth'],
+    userLinks: [
+      { model: 'Post',    field: 'author_id', references: 'users' },
+      { model: 'Comment', field: 'user_id',   references: 'users' },
+    ],
     name: 'Blog',
     icon: '✍️',
     description: 'Full blog engine — posts, categories, tags and comments.',
@@ -157,6 +166,10 @@ export const MODULE_LIBRARY: LibraryModule[] = [
   /* ── E-commerce ─────────────────────────────────────────────────── */
   {
     id: 'ecommerce',
+    requires: ['auth'],
+    userLinks: [
+      { model: 'Order', field: 'customer_id', references: 'users' },
+    ],
     name: 'E-commerce',
     icon: '🛒',
     description: 'Store-ready — products, categories, orders, order items.',

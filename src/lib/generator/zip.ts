@@ -7,6 +7,7 @@ import { generateNextjsProject } from './nextjs';
 import { generateFastAPIProject } from './fastapi';
 import { generateIntegration } from './integration';
 import { buildYamlContent, buildGettingStarted } from './yaml';
+import { generateDockerCompose, generateGithubCI } from './docker';
 
 function generateDevScripts(zip: JSZip, config: ProjectConfig): void {
   const { stack, name } = config;
@@ -180,6 +181,12 @@ export async function generateZip(config: ProjectConfig): Promise<void> {
   // Embed YAML config and common README inside the ZIP
   zip.file('stack-init.yaml', buildYamlContent(config));
   zip.file('README.md', generateCommonReadme(config));
+
+  // DevOps files (skip for pure frontend stacks)
+  if (stack !== 'nextjs' && stack !== 'react') {
+    zip.file('docker-compose.yml', generateDockerCompose(config));
+  }
+  zip.folder('.github/workflows')!.file('ci.yml', generateGithubCI(config));
 
   const content = await zip.generateAsync({ type: 'blob' });
   const url = URL.createObjectURL(content);

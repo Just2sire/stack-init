@@ -67,7 +67,15 @@ export async function generateNestProject(zip: JSZip, config: ProjectConfig) {
     },
   }, null, 2));
 
-  zip.file('.env', `DATABASE_URL="${dbUrl}"\nJWT_SECRET="super-secret"`);
+  zip.file('.env', `DATABASE_URL="${dbUrl}"\n${useAuth ? 'JWT_SECRET="stack-init-secret-change-me"\nJWT_EXPIRES_IN="7d"\n' : ''}`);
+
+  const envExLines = [
+    `NODE_ENV=development`,
+    `PORT=3000`,
+    isMongoose ? `MONGODB_URI="mongodb://localhost:27017/${projectName}"` : `DATABASE_URL="${dbUrl}"`,
+    ...(useAuth ? [`JWT_SECRET="change-me-in-production"`, `JWT_EXPIRES_IN="7d"`] : []),
+  ];
+  zip.file('.env.example', envExLines.join('\n') + '\n');
 
   // ── main.ts ──────────────────────────────────────────────────────────────────
 

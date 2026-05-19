@@ -78,8 +78,13 @@ export async function generateFastAPIProject(zip: JSZip, config: ProjectConfig) 
     ? `mongodb://localhost:27017/${projectName}`
     : `postgresql://user:password@localhost:5432/${projectName}`;
 
-  zip.file('.env.example', `DATABASE_URL="${dbDefault}"\nSECRET_KEY="your-secret-key-here"\nAPI_KEY="your-api-key-here"\n`);
-  zip.file('.env', `DATABASE_URL="${dbDefault}"\nSECRET_KEY="stack-init-dev-secret"\nAPI_KEY="stack-init-api-key"\n`);
+  const fapiEnvLines = [
+    `DATABASE_URL="${dbDefault}"`,
+    ...(useJwt    ? [`SECRET_KEY="change-me-in-production"`, `ACCESS_TOKEN_EXPIRE_MINUTES="30"`] : []),
+    ...(useApiKey ? [`API_KEY="your-api-key-here"`] : []),
+  ];
+  zip.file('.env.example', fapiEnvLines.join('\n') + '\n');
+  zip.file('.env', `DATABASE_URL="${dbDefault}"\nSECRET_KEY="stack-init-dev-secret"\nACCESS_TOKEN_EXPIRE_MINUTES="30"\n`);
 
   // ── auth.py ───────────────────────────────────────────────────────────────────
 

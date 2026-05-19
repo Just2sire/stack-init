@@ -18,10 +18,29 @@ import { OutputStep } from "./steps/OutputStep";
 import { ReactStep } from "./steps/ReactStep";
 import { FastAPISetupStep } from "./steps/FastAPISetupStep";
 import { IntegrationStep } from "./steps/IntegrationStep";
+import { ServicesStep } from "./steps/ServicesStep";
 import { ArchitectDrawer } from "./ArchitectDrawer";
 
 export function WizardShell() {
-  const { currentStepId, nextStep, prevStep, canProceed, steps } = useWizardStore();
+  const { currentStepId, nextStep, prevStep, canProceed, steps, setStack, setProjectName } = useWizardStore();
+
+  const QUICK_STARTS = [
+    {
+      label: 'Blog simple',
+      icon: '📝',
+      action: () => { setProjectName('my-blog'); setStack('express+react'); nextStep(); },
+    },
+    {
+      label: 'API REST',
+      icon: '🔌',
+      action: () => { setProjectName('my-api'); setStack('express'); nextStep(); },
+    },
+    {
+      label: 'SaaS Starter',
+      icon: '🚀',
+      action: () => { setProjectName('my-saas'); setStack('nestjs+react'); nextStep(); },
+    },
+  ];
 
   const renderStep = () => {
     switch (currentStepId) {
@@ -29,6 +48,7 @@ export function WizardShell() {
       case "usage":         return <UsageStep />;
       case "architecture":  return <ArchitectureStep />;
       case "database":      return <DatabaseStep />;
+      case "services":      return <ServicesStep />;
       case "models":        return <ModelsStep />;
       case "relations":     return <RelationsStep />;
       case "routes":        return <RoutesStep />;
@@ -51,6 +71,7 @@ export function WizardShell() {
     usage: "Select how you will use Next.js",
     architecture: "Define your project architecture",
     database: "Configure your database & ORM",
+    services: "Select service modules to generate",
     models: "Define your data structure",
     relations: "Connect your models",
     'laravel-setup': "Configure your backend",
@@ -98,6 +119,43 @@ export function WizardShell() {
           </div>
           <ArchitectDrawer />
         </div>
+
+        {/* Quick-start presets */}
+        {currentStepId === 'stack' && (
+          <div style={{
+            padding: '8px 32px',
+            borderBottom: '1px solid var(--border-subtle)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            background: 'var(--bg2)',
+          }}>
+            <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 4 }}>
+              Quick start:
+            </span>
+            {QUICK_STARTS.map(qs => (
+              <button
+                key={qs.label}
+                onClick={() => qs.action()}
+                style={{
+                  fontSize: 11, fontWeight: 600,
+                  padding: '4px 12px', borderRadius: 100,
+                  border: '1px solid var(--border-subtle)',
+                  background: 'var(--bg3)',
+                  color: 'var(--text2)',
+                  cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold-border)'; e.currentTarget.style.color = 'var(--gold)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.color = 'var(--text2)'; }}
+              >
+                <span>{qs.icon}</span>
+                {qs.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Body */}
         <div className="si-wiz-body">

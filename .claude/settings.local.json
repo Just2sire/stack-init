@@ -6,7 +6,11 @@
       "Bash(Select-Object Name, PSIsContainer)",
       "Bash(bash scripts/start-server.sh --project-dir \"C:\\\\Users\\\\Desire\\\\Documents\\\\Projets\\\\Scaffolder\\\\stack-init\")",
       "Bash(xargs cat)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(pnpm install *)",
+      "Bash(git add *)",
+      "Bash(git checkout *)",
+      "Bash(git pull *)"
     ]
   }
 }
