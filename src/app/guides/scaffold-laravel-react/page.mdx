@@ -1,0 +1,141 @@
+export const metadata = {
+  title: "How to Scaffold a Laravel + React Project | StackInit Guides",
+  description:
+    "Set up a Laravel API backend and a React (Vite) frontend in minutes. StackInit generates controllers, models, migrations, and routes from a visual schema — no boilerplate.",
+  keywords: [
+    "laravel react boilerplate",
+    "laravel react scaffold",
+    "laravel api react frontend",
+    "laravel boilerplate generator",
+    "scaffold laravel project",
+  ],
+};
+
+# How to Scaffold a Laravel + React Project
+
+Setting up a Laravel + React stack from scratch means writing the same boilerplate every time: Eloquent models, migrations, API controllers, route files, CORS config, and a separate Vite frontend with typed API calls. StackInit eliminates all of that in under two minutes.
+
+This guide walks through generating a production-ready **Laravel API + React (Vite) frontend** with StackInit, using a real-world SaaS example: a multi-tenant task management app with Users, Teams, Projects, and Tasks.
+
+---
+
+## Prerequisites
+
+- PHP 8.2+ and Composer
+- Node.js 18+ and pnpm (or npm)
+- Basic familiarity with Laravel and React
+
+---
+
+## Step 1 — Pick your stack in StackInit
+
+Open [StackInit](/create) and select **Laravel** as your backend framework. On the frontend panel, choose **React + Vite**. This combo generates:
+
+- A Laravel 11 API project (controllers, models, migrations, routes, CORS middleware)
+- A React 18 + TypeScript frontend with Vite, pre-configured to proxy to the Laravel API
+
+---
+
+## Step 2 — Model your data visually
+
+In the **Models** step, define your entities. For this example:
+
+- **User** — `name: string`, `email: string (unique)`, `role: enum(admin, member)`
+- **Team** — `name: string`, `slug: string (unique)`
+- **Project** — `title: string`, `description: text (nullable)`, `status: enum(active, archived)`
+- **Task** — `title: string`, `done: boolean`, `due_date: date (nullable)`
+
+StackInit lets you add fields with types, nullable flags, unique constraints, and default values — all without touching a migration file.
+
+---
+
+## Step 3 — Define relations
+
+Switch to the **Relations** step and wire up:
+
+- `User` **belongsToMany** `Team` (pivot: `team_user`)
+- `Team` **hasMany** `Project`
+- `Project` **hasMany** `Task`
+- `Task` **belongsTo** `User` (assignee)
+
+StackInit renders a live ERD as you define relations so you can catch mistakes before generating.
+
+---
+
+## Step 4 — Configure the output
+
+In the **Options** step, toggle what gets generated:
+
+<table style={{width:"100%",borderCollapse:"collapse",marginBottom:24,fontSize:14}}>
+<thead><tr style={{borderBottom:"1px solid var(--border-medium)"}}>
+<th style={{textAlign:"left",padding:"8px 12px",color:"var(--text)",fontWeight:700}}>Option</th>
+<th style={{textAlign:"left",padding:"8px 12px",color:"var(--text)",fontWeight:700}}>What it produces</th>
+</tr></thead>
+<tbody>
+<tr style={{borderBottom:"1px solid var(--border-subtle)"}}><td style={{padding:"8px 12px",color:"var(--text2)"}}><code>Controllers</code></td><td style={{padding:"8px 12px",color:"var(--text2)"}}>UserController, ProjectController, TaskController with full CRUD</td></tr>
+<tr style={{borderBottom:"1px solid var(--border-subtle)"}}><td style={{padding:"8px 12px",color:"var(--text2)"}}><code>Form Requests</code></td><td style={{padding:"8px 12px",color:"var(--text2)"}}>Validation classes for store/update actions</td></tr>
+<tr style={{borderBottom:"1px solid var(--border-subtle)"}}><td style={{padding:"8px 12px",color:"var(--text2)"}}><code>API Resources</code></td><td style={{padding:"8px 12px",color:"var(--text2)"}}>JSON transformers for each model</td></tr>
+<tr><td style={{padding:"8px 12px",color:"var(--text2)"}}><code>Sanctum Auth</code></td><td style={{padding:"8px 12px",color:"var(--text2)"}}>Authentication scaffolding with /login, /logout, /me</td></tr>
+</tbody>
+</table>
+
+---
+
+## Step 5 — Generate and download
+
+Click **Generate**. StackInit produces a `.zip` containing:
+
+```
+laravel-api/
+├── app/
+│   ├── Http/Controllers/Api/
+│   │   ├── UserController.php
+│   │   ├── ProjectController.php
+│   │   └── TaskController.php
+│   ├── Models/
+│   │   ├── User.php        # With Team relationship
+│   │   ├── Team.php
+│   │   ├── Project.php
+│   │   └── Task.php
+│   └── Http/Resources/
+├── database/migrations/    # All tables with foreign keys
+└── routes/api.php          # RESTful routes registered
+
+react-frontend/
+├── src/
+│   ├── api/                # Axios client + typed endpoints
+│   ├── pages/              # Route-based pages
+│   └── components/
+├── vite.config.ts          # Proxy to Laravel API
+└── package.json
+```
+
+---
+
+## Running the project
+
+```bash
+# Laravel API
+cd laravel-api
+composer install
+cp .env.example .env && php artisan key:generate
+php artisan migrate
+php artisan serve
+
+# React frontend (new terminal)
+cd react-frontend
+pnpm install
+pnpm dev
+```
+
+The frontend runs on `http://localhost:5173` and proxies API calls to `http://localhost:8000`.
+
+---
+
+## What's next?
+
+- Add authentication via **Laravel Sanctum** (already scaffolded if you toggled it)
+- Customise the React pages — the API client is already typed to your models
+- Deploy the Laravel API on [Laravel Forge](https://forge.laravel.com) and the frontend on Vercel
+
+> **Ready to build?** [Open StackInit](/create) and scaffold your Laravel + React project now — no account required.

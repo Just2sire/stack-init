@@ -1,0 +1,168 @@
+export const metadata = {
+  title: "How to Scaffold an Express TypeScript REST API | StackInit Guides",
+  description:
+    "Bootstrap a production-ready Express.js API with TypeScript, controllers, services, Prisma ORM, and Swagger docs — generated from your models in under 2 minutes.",
+  keywords: [
+    "express typescript boilerplate generator",
+    "express typescript scaffold",
+    "express rest api boilerplate",
+    "nodejs api boilerplate generator",
+    "scaffold express project",
+  ],
+};
+
+# How to Scaffold an Express TypeScript REST API
+
+Writing an Express + TypeScript REST API from scratch means creating the same files every time: a server entry point, route files, controller classes, service layers, Prisma models, input validation, and Swagger annotations. StackInit generates the entire structure in under two minutes.
+
+This guide walks through scaffolding a **production-ready Express TypeScript API** with Prisma ORM, service/repository architecture, and Swagger docs — using a real-world example: an e-commerce backend with Products, Categories, Orders, and Users.
+
+---
+
+## Prerequisites
+
+- Node.js 18+ and pnpm
+- A PostgreSQL or SQLite database
+- Familiarity with Express.js and TypeScript basics
+
+---
+
+## Step 1 — Pick Express in StackInit
+
+Open [StackInit](/create) and select **Express** as your stack. Under **Options**, choose:
+
+- **TypeScript** — yes (always recommended)
+- **ORM** — Prisma
+- **Architecture** — Service layer (Controller → Service → Prisma)
+- **Validation** — Zod
+
+---
+
+## Step 2 — Define your data models
+
+In the **Models** step, add your entities:
+
+- **User** — `name: string`, `email: string (unique)`, `passwordHash: string`, `role: enum(customer, admin)`
+- **Category** — `name: string`, `slug: string (unique)`
+- **Product** — `name: string`, `price: decimal`, `stock: integer (default: 0)`, `description: text (nullable)`
+- **Order** — `total: decimal`, `status: enum(pending, paid, shipped, cancelled)`, `createdAt: timestamp`
+
+---
+
+## Step 3 — Set up relations
+
+- `Product` **belongsTo** `Category`
+- `Order` **belongsToMany** `Product` (pivot: `order_items` with `quantity: integer`, `unitPrice: decimal`)
+- `Order` **belongsTo** `User`
+
+The pivot table fields (`quantity`, `unitPrice`) can be added directly in StackInit's relation editor.
+
+---
+
+## Step 4 — Configure generation options
+
+<table style={{width:"100%",borderCollapse:"collapse",marginBottom:24,fontSize:14}}>
+<thead><tr style={{borderBottom:"1px solid var(--border-medium)"}}>
+<th style={{textAlign:"left",padding:"8px 12px",color:"var(--text)",fontWeight:700}}>Option</th>
+<th style={{textAlign:"left",padding:"8px 12px",color:"var(--text)",fontWeight:700}}>Output</th>
+</tr></thead>
+<tbody>
+<tr style={{borderBottom:"1px solid var(--border-subtle)"}}><td style={{padding:"8px 12px",color:"var(--text2)"}}><code>Controllers</code></td><td style={{padding:"8px 12px",color:"var(--text2)"}}>ProductController.ts, OrderController.ts — HTTP handlers only</td></tr>
+<tr style={{borderBottom:"1px solid var(--border-subtle)"}}><td style={{padding:"8px 12px",color:"var(--text2)"}}><code>Services</code></td><td style={{padding:"8px 12px",color:"var(--text2)"}}>ProductService.ts, OrderService.ts — business logic</td></tr>
+<tr style={{borderBottom:"1px solid var(--border-subtle)"}}><td style={{padding:"8px 12px",color:"var(--text2)"}}><code>Prisma schema</code></td><td style={{padding:"8px 12px",color:"var(--text2)"}}>All models with relations, enums, indexes</td></tr>
+<tr style={{borderBottom:"1px solid var(--border-subtle)"}}><td style={{padding:"8px 12px",color:"var(--text2)"}}><code>Zod schemas</code></td><td style={{padding:"8px 12px",color:"var(--text2)"}}>Input validation for create/update endpoints</td></tr>
+<tr style={{borderBottom:"1px solid var(--border-subtle)"}}><td style={{padding:"8px 12px",color:"var(--text2)"}}><code>Swagger/OpenAPI</code></td><td style={{padding:"8px 12px",color:"var(--text2)"}}>JSDoc annotations + swagger-ui-express setup</td></tr>
+<tr><td style={{padding:"8px 12px",color:"var(--text2)"}}><code>Jest stubs</code></td><td style={{padding:"8px 12px",color:"var(--text2)"}}>One test file per service</td></tr>
+</tbody>
+</table>
+
+---
+
+## Step 5 — Generate and download
+
+```
+express-api/
+├── src/
+│   ├── controllers/
+│   │   ├── ProductController.ts   # GET /products, POST /products, etc.
+│   │   ├── OrderController.ts
+│   │   └── UserController.ts
+│   ├── services/
+│   │   ├── ProductService.ts      # Business logic, calls Prisma
+│   │   └── OrderService.ts
+│   ├── routes/
+│   │   ├── products.ts
+│   │   ├── orders.ts
+│   │   └── index.ts               # Router registry
+│   ├── schemas/
+│   │   └── product.schema.ts      # Zod validation
+│   ├── lib/
+│   │   └── prisma.ts              # Prisma singleton
+│   └── app.ts                     # Express setup + Swagger
+├── prisma/
+│   └── schema.prisma
+├── tests/
+│   └── product.service.test.ts
+├── package.json
+└── tsconfig.json
+```
+
+---
+
+## Running the project
+
+```bash
+pnpm install
+
+# Configure your database
+cp .env.example .env
+# Edit .env: DATABASE_URL="postgresql://..."
+
+# Run migrations
+pnpm prisma migrate dev --name init
+
+# Start dev server (ts-node-dev)
+pnpm dev
+```
+
+The API starts on `http://localhost:3000`. Swagger UI is available at `http://localhost:3000/api-docs`.
+
+---
+
+## Example: a generated service
+
+```typescript
+// src/services/ProductService.ts
+import { prisma } from "../lib/prisma";
+import { CreateProductInput } from "../schemas/product.schema";
+
+export class ProductService {
+  async findAll() {
+    return prisma.product.findMany({ include: { category: true } });
+  }
+
+  async create(data: CreateProductInput) {
+    return prisma.product.create({ data });
+  }
+
+  async update(id: string, data: Partial<CreateProductInput>) {
+    return prisma.product.update({ where: { id }, data });
+  }
+
+  async delete(id: string) {
+    return prisma.product.delete({ where: { id } });
+  }
+}
+```
+
+Every service is generated with your actual field names, your Prisma relations, and your validation schema — not Lorem Ipsum placeholders.
+
+---
+
+## What's next?
+
+- Add JWT authentication — the `UserController` already has the `/register` and `/login` stubs
+- Deploy on **Railway** or **Render** with a managed Postgres add-on
+- Generate additional models later and regenerate — the service/controller pattern stays consistent
+
+> **Ready to build?** [Open StackInit](/create) and scaffold your Express TypeScript API — no account required.

@@ -1,0 +1,137 @@
+export const metadata = {
+  title: "How to Scaffold a Next.js App with Prisma | StackInit Guides",
+  description:
+    "Generate a full-stack Next.js application with a Prisma schema, typed server actions, and API routes — all wired from your data models, no boilerplate writing.",
+  keywords: [
+    "nextjs prisma scaffold",
+    "nextjs prisma boilerplate",
+    "prisma schema generator",
+    "next.js full-stack boilerplate",
+    "scaffold nextjs project",
+  ],
+};
+
+# How to Scaffold a Next.js App with Prisma
+
+Starting a Next.js + Prisma project involves a lot of tedious setup: defining the Prisma schema, writing CRUD server actions or API routes, creating TypeScript interfaces that match your schema, and wiring everything to your UI. StackInit generates all of this from a visual data model.
+
+This guide covers scaffolding a **Next.js 14 full-stack app** with Prisma ORM, server actions, and typed API routes — using a real example: a SaaS platform with Users, Organisations, Posts, and Comments.
+
+---
+
+## Prerequisites
+
+- Node.js 18+ and pnpm
+- A PostgreSQL (or SQLite) database
+- Basic knowledge of Next.js App Router and Prisma
+
+---
+
+## Step 1 — Pick Next.js in StackInit
+
+Open [StackInit](/create) and select **Next.js** as your stack. You'll be offered two output modes:
+
+- **App Router + Server Actions** — recommended for new projects
+- **App Router + API Routes** — for projects that need a REST layer
+
+This guide uses Server Actions.
+
+---
+
+## Step 2 — Model your data
+
+In the **Models** step, define your entities:
+
+- **User** — `name: string`, `email: string (unique)`, `avatarUrl: string (nullable)`
+- **Organisation** — `name: string`, `slug: string (unique)`, `plan: enum(free, pro, enterprise)`
+- **Post** — `title: string`, `content: text`, `published: boolean (default: false)`
+- **Comment** — `body: text`, `createdAt: timestamp`
+
+Set field types, constraints, and defaults — all reflected instantly in the generated Prisma schema.
+
+---
+
+## Step 3 — Add relations
+
+Wire up relationships in the **Relations** step:
+
+- `User` **belongsToMany** `Organisation` (pivot: `members`)
+- `Organisation` **hasMany** `Post`
+- `Post` **hasMany** `Comment`
+- `Comment` **belongsTo** `User`
+
+---
+
+## Step 4 — Configure the output
+
+Toggle the generation options:
+
+<table style={{width:"100%",borderCollapse:"collapse",marginBottom:24,fontSize:14}}>
+<thead><tr style={{borderBottom:"1px solid var(--border-medium)"}}>
+<th style={{textAlign:"left",padding:"8px 12px",color:"var(--text)",fontWeight:700}}>Option</th>
+<th style={{textAlign:"left",padding:"8px 12px",color:"var(--text)",fontWeight:700}}>Output</th>
+</tr></thead>
+<tbody>
+<tr style={{borderBottom:"1px solid var(--border-subtle)"}}><td style={{padding:"8px 12px",color:"var(--text2)"}}><code>Prisma schema</code></td><td style={{padding:"8px 12px",color:"var(--text2)"}}>schema.prisma with all models, relations, and indexes</td></tr>
+<tr style={{borderBottom:"1px solid var(--border-subtle)"}}><td style={{padding:"8px 12px",color:"var(--text2)"}}><code>Server actions</code></td><td style={{padding:"8px 12px",color:"var(--text2)"}}>actions/post.ts, actions/comment.ts with CRUD operations</td></tr>
+<tr style={{borderBottom:"1px solid var(--border-subtle)"}}><td style={{padding:"8px 12px",color:"var(--text2)"}}><code>Type definitions</code></td><td style={{padding:"8px 12px",color:"var(--text2)"}}>types/index.ts — inferred from Prisma client</td></tr>
+<tr><td style={{padding:"8px 12px",color:"var(--text2)"}}><code>Route handlers</code></td><td style={{padding:"8px 12px",color:"var(--text2)"}}>app/api/[model]/route.ts for REST access</td></tr>
+</tbody>
+</table>
+
+---
+
+## Step 5 — Generate and download
+
+StackInit produces a `.zip` with this structure:
+
+```
+my-app/
+├── prisma/
+│   └── schema.prisma          # Your models, enums, relations
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── posts/route.ts
+│   │   │   └── comments/route.ts
+│   │   └── (app)/
+│   │       └── page.tsx
+│   ├── actions/
+│   │   ├── post.ts            # createPost, updatePost, deletePost
+│   │   └── comment.ts
+│   ├── lib/
+│   │   └── prisma.ts          # Prisma client singleton
+│   └── types/
+│       └── index.ts           # Post, Comment, Organisation types
+├── package.json               # next, prisma, @prisma/client
+└── tsconfig.json
+```
+
+---
+
+## Running the project
+
+```bash
+pnpm install
+
+# Set your DATABASE_URL in .env
+echo 'DATABASE_URL="postgresql://user:pass@localhost:5432/myapp"' > .env
+
+# Run migrations and generate Prisma client
+pnpm prisma migrate dev --name init
+
+# Start the dev server
+pnpm dev
+```
+
+Your app is at `http://localhost:3000` with a fully typed data layer ready to use.
+
+---
+
+## What's next?
+
+- Add authentication with **NextAuth.js** or **Clerk** (both integrate cleanly with the generated Prisma schema)
+- Deploy on **Vercel** with a Neon or Supabase Postgres database
+- Extend models by regenerating — StackInit preserves your existing code structure
+
+> **Ready to build?** [Open StackInit](/create) and scaffold your Next.js + Prisma project — no signup required.

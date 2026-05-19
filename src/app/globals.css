@@ -759,6 +759,25 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
+  /* ─── Guide card ───────────────────────────────────────────── */
+
+  .guide-card {
+    padding: 28px 28px 24px;
+    border-radius: 18px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg3);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: pointer;
+  }
+  .guide-card:hover {
+    border-color: var(--gold-border);
+    transform: translateY(-2px);
+  }
+
   /* ─── No-items empty state ──────────────────────────────────── */
 
   .si-empty {

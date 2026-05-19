@@ -6,6 +6,7 @@ import {
   Code2, Settings2, Check, Blocks,
 } from "lucide-react";
 
+
 /* ─── Static data ─────────────────────────────────────────────────── */
 
 const STATS = [
@@ -189,6 +190,15 @@ export default function Home() {
         </Link>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Link href="/guides" style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "7px 14px", borderRadius: 8,
+            fontSize: 13, color: "var(--text2)",
+            fontWeight: 500, textDecoration: "none",
+          }}>
+            <BookOpen size={14} />
+            Guides
+          </Link>
           <div style={{
             display: "flex", alignItems: "center", gap: 6,
             padding: "5px 12px", borderRadius: 8,
@@ -266,7 +276,7 @@ export default function Home() {
             color: "var(--text2)", lineHeight: 1.65,
             maxWidth: 420, marginBottom: 32,
           }}>
-            Design your data models visually, pick your stack, and download a fully-wired codebase — no boilerplate, no copy-paste.
+            StackInit is the fastest <strong>tech-stack boilerplate generator</strong>. Design your data models visually, pick your stack, and download a fully-wired codebase — no boilerplate, no copy-paste.
           </p>
 
           {/* CTAs */}

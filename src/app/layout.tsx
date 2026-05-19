@@ -4,6 +4,7 @@ import "./globals.css";
 import "@xyflow/react/dist/style.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import JsonLd from "@/components/landing/JsonLd";
 
 /**
  * Stack-Init Typography (from stack-init.html reference)
@@ -34,9 +35,47 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "StackInit — Generate your stack in seconds",
+  metadataBase: new URL("https://stack-init-dev.vercel.app"),
+  title: "StackInit | Tech-Stack Boilerplate Generator & Visual Scaffolder",
   description:
-    "Generate production-ready Laravel, React, NextJS, Express... codebases with a visual wizard. Define models, fields, and relations — let Stack-Init write the boilerplate.",
+    "The ultimate tech-stack boilerplate generator. Visually design your data models and generate production-ready Laravel, React, Next.js, and Express codebases in seconds. No signup required.",
+  keywords: [
+    "tech-stack boilerplate generator",
+    "visual scaffolder",
+    "code generator",
+    "code scaffolding",
+    "project generator",
+    "laravel boilerplate",
+    "nextjs boilerplate",
+    "express boilerplate",
+    "nestjs boilerplate",
+    "fastapi boilerplate",
+    "full-stack generator",
+    "database modeler",
+    "ERD tool",
+  ],
+  openGraph: {
+    title: "StackInit | Tech-Stack Boilerplate Generator",
+    description: "Visually design and generate production-ready full-stack codebases in seconds.",
+    url: "https://stack-init-dev.vercel.app",
+    siteName: "StackInit",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "StackInit Preview",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "StackInit | Tech-Stack Boilerplate Generator",
+    description: "Generate production-ready codebases with a visual wizard.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
@@ -53,6 +92,7 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-full flex flex-col">
+        <JsonLd />
         <TooltipProvider>{children}</TooltipProvider>
       </body>
     </html>
