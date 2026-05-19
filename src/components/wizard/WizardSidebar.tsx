@@ -5,11 +5,21 @@ import { cn } from "@/lib/utils";
 import { Layers, Check } from "lucide-react";
 import Link from "next/link";
 
+const SERVICE_ICONS: Record<string, string> = {
+  'auth':        '🔐',
+  'file-upload': '📁',
+  'email':       '📧',
+  'cache':       '⚡',
+  'websockets':  '🔌',
+  'queue':       '📬',
+};
+
 const STEP_LABELS: Record<StepId, string> = {
   stack:           "Stack & Project",
   usage:           "Next.js Usage",
   architecture:    "Architecture",
   database:        "Database",
+  services:        "Services",
   models:          "Models & Fields",
   relations:       "Relations",
   routes:          "Routes",
@@ -23,8 +33,14 @@ const STEP_LABELS: Record<StepId, string> = {
 };
 
 export function WizardSidebar() {
-  const { steps, currentStepId, setStep, models, stack } = useWizardStore();
+  const { steps, currentStepId, setStep, models, stack, enabledServices } = useWizardStore();
   const currentIndex = steps.indexOf(currentStepId);
+
+  const baseFiles = 8;
+  const perModel = 4;
+  const authFiles = enabledServices.includes('auth') ? 4 : 0;
+  const envDockerCI = 3;
+  const estimatedFiles = baseFiles + (models.length * perModel) + authFiles + envDockerCI;
 
   // Badge : nombre de modèles définis
   const getStepBadge = (step: StepId): string | null => {
@@ -113,6 +129,14 @@ export function WizardSidebar() {
           Project
         </div>
         {useWizardStore.getState().projectName || "unnamed-project"}
+        <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 4 }}>
+          ~{estimatedFiles} files will be generated
+        </div>
+        {enabledServices.length > 0 && (
+          <div style={{ marginTop: 8, display: "flex", gap: 4, flexWrap: "wrap" }}>
+            {enabledServices.map(s => <span key={s} title={s}>{SERVICE_ICONS[s] ?? s}</span>)}
+          </div>
+        )}
       </div>
     </div>
   );

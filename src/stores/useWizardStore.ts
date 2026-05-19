@@ -14,6 +14,7 @@ export type StepId =
   | 'usage'          // Next.js uniquement
   | 'architecture'   // React, Next.js, Express, NestJS, FastAPI
   | 'database'       // Express, NestJS, Next.js Full-Stack, FastAPI
+  | 'services'       // Express, NestJS, FastAPI, Laravel — sélection de modules de service
   | 'models'         // Laravel, Express, NestJS, Next.js Full-Stack, FastAPI
   | 'relations'
   | 'routes'         // Express, NestJS, FastAPI
@@ -24,6 +25,8 @@ export type StepId =
   | 'fastapi-setup'
   | 'integration'    // Pour les combos
   | 'output';
+
+export type ServiceId = 'auth' | 'file-upload' | 'email' | 'cache' | 'websockets' | 'queue';
 
 const DEFAULT_LARAVEL_OPTIONS: LaravelOptions = {
   pattern: 'api-only',
@@ -92,7 +95,8 @@ interface WizardStore {
   projectName: string;
   nextjsUsage: 'frontend-only' | 'full-stack' | null;
   models: Model[];
-  
+  enabledServices: ServiceId[];
+
   // Options par stack
   laravelOptions: LaravelOptions;
   reactOptions: ReactOptions;
@@ -118,6 +122,8 @@ interface WizardStore {
   setNestOptions: (patch: Partial<NestConfig>) => void;
   setFastAPIOptions: (patch: Partial<FastAPIConfig>) => void;
   setBackendUrl: (url: string) => void;
+  toggleService: (id: ServiceId) => void;
+  addEnabledServices: (services: string[]) => void;
 
   // Actions modèles
   addModel: (model: Model) => void;
@@ -168,33 +174,33 @@ function computeSteps(stack: Stack | null, nextjsUsage: string | null): StepId[]
       return [...base, 'models', 'relations', 'laravel-setup', 'output'];
 
     case 'express':
-      return [...base, 'architecture', 'database', 'models', 'relations', 'routes', 'middlewares', 'output'];
+      return [...base, 'architecture', 'database', 'services', 'models', 'relations', 'routes', 'middlewares', 'output'];
 
     case 'nestjs':
-      return [...base, 'architecture', 'database', 'models', 'relations', 'nest-setup', 'output'];
+      return [...base, 'architecture', 'database', 'services', 'models', 'relations', 'nest-setup', 'output'];
 
     case 'nestjs+react':
-      return [...base, 'architecture', 'database', 'models', 'relations', 'nest-setup', 'react-setup', 'integration', 'output'];
+      return [...base, 'architecture', 'database', 'services', 'models', 'relations', 'nest-setup', 'react-setup', 'integration', 'output'];
 
     case 'fastapi':
-      return [...base, 'architecture', 'database', 'models', 'relations', 'fastapi-setup', 'output'];
+      return [...base, 'architecture', 'database', 'services', 'models', 'relations', 'fastapi-setup', 'output'];
 
     case 'laravel+react':
     case 'laravel+nextjs':
       return [...base, 'models', 'relations', 'laravel-setup', 'react-setup', 'output'];
 
     case 'express+react':
-      return [...base, 'architecture', 'database', 'models', 'relations', 'middlewares', 'react-setup', 'integration', 'output'];
+      return [...base, 'architecture', 'database', 'services', 'models', 'relations', 'middlewares', 'react-setup', 'integration', 'output'];
 
     case 'fastapi+react':
     case 'fastapi+nextjs':
-      return [...base, 'architecture', 'database', 'models', 'relations', 'fastapi-setup', 'react-setup', 'integration', 'output'];
+      return [...base, 'architecture', 'database', 'services', 'models', 'relations', 'fastapi-setup', 'react-setup', 'integration', 'output'];
 
     case 'mern':
     case 'pern':
     case 'mevn':
     case 'mean':
-      return [...base, 'architecture', 'database', 'models', 'relations', 'middlewares', 'react-setup', 'integration', 'output'];
+      return [...base, 'architecture', 'database', 'services', 'models', 'relations', 'middlewares', 'react-setup', 'integration', 'output'];
 
     case 't3':
       return [...base, 'database', 'models', 'relations', 'output'];
@@ -211,6 +217,7 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
   projectName: 'my-project',
   nextjsUsage: null,
   models: [],
+  enabledServices: [],
   laravelOptions: { ...DEFAULT_LARAVEL_OPTIONS },
   reactOptions: { ...DEFAULT_REACT_OPTIONS },
   expressOptions: { ...DEFAULT_EXPRESS_OPTIONS },
@@ -281,6 +288,26 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
   setNestOptions: (patch) => set((s) => ({ nestOptions: { ...s.nestOptions, ...patch } })),
   setFastAPIOptions: (patch) => set((s) => ({ fastapiOptions: { ...s.fastapiOptions, ...patch } })),
   setBackendUrl: (url) => set({ backendUrl: url }),
+
+  addEnabledServices: (services) => set((s) => ({
+    enabledServices: [...new Set([...s.enabledServices, ...services as ServiceId[]])] as ServiceId[],
+  })),
+
+  toggleService: (id) => set((s) => {
+    const enabled = s.enabledServices.includes(id)
+      ? s.enabledServices.filter(sid => sid !== id)
+      : [...s.enabledServices, id];
+
+    // Propagate auth service to stack-specific config
+    const authEnabled = enabled.includes('auth');
+    return {
+      enabledServices: enabled,
+      expressOptions: { ...s.expressOptions, auth: authEnabled ? 'jwt' : 'none' } as any,
+      nestOptions:    { ...s.nestOptions,    auth: authEnabled ? 'jwt' : 'none' } as any,
+      fastapiOptions: { ...s.fastapiOptions, auth: authEnabled ? 'jwt' : 'none' } as any,
+      laravelOptions: { ...s.laravelOptions, auth: authEnabled ? 'sanctum' : 'none' } as any,
+    };
+  }),
 
   addModel: (model) => set((s) => s.models.some((m) => m.name === model.name) ? s : { models: [...s.models, model] }),
   applyTemplate: (models) => set({ models }),
@@ -436,6 +463,7 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
     projectName: 'my-project',
     nextjsUsage: null,
     models: [],
+    enabledServices: [],
     laravelOptions: { ...DEFAULT_LARAVEL_OPTIONS },
     reactOptions: { ...DEFAULT_REACT_OPTIONS },
     expressOptions: { ...DEFAULT_EXPRESS_OPTIONS },

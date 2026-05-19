@@ -101,7 +101,15 @@ export async function generateExpressProject(zip: JSZip, config: ProjectConfig) 
     ? `file:./dev.db`
     : `postgresql://user:password@localhost:5432/${projectName}?schema=public`;
 
-  zip.file('.env', `DATABASE_URL="${defaultDbUrl}"\nPORT=3000\nJWT_SECRET="stack-init-secret-change-me"`);
+  zip.file('.env', `DATABASE_URL="${defaultDbUrl}"\nPORT=3000\n${useAuth ? 'JWT_SECRET="stack-init-secret-change-me"\nJWT_EXPIRES_IN="7d"\n' : ''}`);
+
+  const envExampleLines = [
+    `NODE_ENV=development`,
+    `PORT=3000`,
+    orm === 'mongoose' ? `MONGODB_URI="mongodb://localhost:27017/${projectName}"` : `DATABASE_URL="${defaultDbUrl}"`,
+    ...(useAuth ? [`JWT_SECRET="change-me-in-production"`, `JWT_EXPIRES_IN="7d"`] : []),
+  ];
+  zip.file('.env.example', envExampleLines.join('\n') + '\n');
 
   // ── ORM setup files ──────────────────────────────────────────────────────────
 
@@ -188,7 +196,10 @@ app.use((err: any, req: any, res: any, next: any) => {
 
   const routeImports = architecture === 'minimal'
     ? '' // routes inline
-    : models.map(m => `import ${m.name.toLowerCase()}Routes from './routes/${slugify(m.name)}';`).join('\n');
+    : [
+        ...models.map(m => `import ${m.name.toLowerCase()}Routes from './routes/${slugify(m.name)}';`),
+        ...(useAuth ? [`import authRoutes from './routes/auth.routes';`] : []),
+      ].join('\n');
 
   zip.file('src/index.ts', `import express from 'express';
 ${mwImports.join('\n')}
@@ -217,7 +228,10 @@ app.post('/api/${slug}', async (req, res) => { res.status(201).json({ ...req.bod
 app.put('/api/${slug}/:id', async (req, res) => { res.json({ id: req.params.id, ...req.body }); });
 app.delete('/api/${slug}/:id', async (req, res) => { res.status(204).send(); });`;
     }).join('\n')
-  : models.map(m => `app.use('/api/${slugify(m.name)}', ${m.name.toLowerCase()}Routes);`).join('\n')
+  : [
+    ...models.map(m => `app.use('/api/${slugify(m.name)}', ${m.name.toLowerCase()}Routes);`),
+    ...(useAuth ? [`app.use('/api/auth', authRoutes);`] : []),
+  ].join('\n')
 }
 
 app.get('/', (req, res) => { res.json({ message: 'Welcome to ${projectName} API' }); });
@@ -231,19 +245,127 @@ app.listen(port, () => {
   // ── Auth + Validation middlewares ────────────────────────────────────────────
 
   if (useAuth) {
-    zip.file('src/middlewares/auth.ts', `import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+    const hasUserModel = models.some(m => m.name.toLowerCase() === 'user');
+    const userAccess = orm === 'mongoose'
+      ? `import { User } from '../models/User';`
+      : `import { prisma } from '../lib/prisma';`;
 
-export const authMiddleware = (req: any, res: Response, next: NextFunction) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    const findByEmail = orm === 'mongoose'
+      ? `await User.findOne({ email: data.email })`
+      : `await prisma.user.findUnique({ where: { email: data.email } })`;
+
+    const checkExists = orm === 'mongoose'
+      ? `await User.findOne({ email: data.email })`
+      : `await prisma.user.findUnique({ where: { email: data.email } })`;
+
+    const createUser = orm === 'mongoose'
+      ? `const user = await User.create({ ...data, password: hashed });\n    return { id: user._id, name: user.name, email: user.email };`
+      : `const user = await prisma.user.create({ data: { ...data, password: hashed }, select: { id: true, name: true, email: true } });\n    return user;`;
+
+    const findById = orm === 'mongoose'
+      ? `return User.findById(id).select('-password');`
+      : `return prisma.user.findUnique({ where: { id }, select: { id: true, name: true, email: true } });`;
+
+    zip.file('src/services/auth.service.ts', `import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+${userAccess}
+
+export interface RegisterDto { name: string; email: string; password: string; }
+export interface LoginDto    { email: string; password: string; }
+
+export class AuthService {
+  async register(data: RegisterDto) {
+    const existing = ${checkExists};
+    if (existing) throw new Error('Email already in use');
+    const hashed = await bcrypt.hash(data.password, 10);
+    ${createUser}
+  }
+
+  async login(data: LoginDto) {
+    const user = ${findByEmail};
+    if (!user) throw new Error('Invalid credentials');
+    const valid = await bcrypt.compare(data.password, ${orm === 'mongoose' ? 'user.password as string' : 'user.password as string'});
+    if (!valid) throw new Error('Invalid credentials');
+    const token = jwt.sign({ id: ${orm === 'mongoose' ? 'user._id' : 'user.id'} }, process.env.JWT_SECRET as string, {
+      expiresIn: (process.env.JWT_EXPIRES_IN ?? '7d') as string,
+    });
+    return { token, user: { id: ${orm === 'mongoose' ? 'user._id' : 'user.id'}, name: user.name, email: user.email } };
+  }
+
+  async getById(id: any) {
+    ${findById}
+  }
+}
+`);
+
+    zip.file('src/controllers/auth.controller.ts', `import { Request, Response } from 'express';
+import { AuthService } from '../services/auth.service';
+
+const authService = new AuthService();
+
+export const register = async (req: Request, res: Response) => {
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET || 'secret');
-    next();
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
+    const user = await authService.register(req.body);
+    res.status(201).json({ message: 'Account created', user });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
   }
 };
+
+export const login = async (req: Request, res: Response) => {
+  try {
+    const result = await authService.login(req.body);
+    res.json(result);
+  } catch (error: any) {
+    res.status(401).json({ error: error.message });
+  }
+};
+
+export const me = async (req: Request & { user?: any }, res: Response) => {
+  try {
+    const user = await authService.getById(req.user?.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+`);
+
+    zip.file('src/middleware/auth.middleware.ts', `import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+
+export interface AuthRequest extends Request {
+  user?: { id: any };
+}
+
+export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
+  const header = req.headers.authorization;
+  if (!header?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+  }
+  const token = header.slice(7);
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET as string) as { id: any };
+    req.user = { id: payload.id };
+    next();
+  } catch {
+    res.status(401).json({ error: 'Token invalid or expired' });
+  }
+};
+`);
+
+    zip.file('src/routes/auth.routes.ts', `import { Router } from 'express';
+import { register, login, me } from '../controllers/auth.controller';
+import { authenticate } from '../middleware/auth.middleware';
+
+const router = Router();
+
+router.post('/register', register);
+router.post('/login',    login);
+router.get('/me',        authenticate, me);
+
+export default router;
 `);
   }
 

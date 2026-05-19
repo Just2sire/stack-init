@@ -1,31 +1,111 @@
 "use client";
 
 import { useState } from "react";
-import { X, Check } from "lucide-react";
+import { X, Check, AlertTriangle, Link } from "lucide-react";
 import { useWizardStore } from "@/stores/useWizardStore";
-import { MODULE_LIBRARY } from "@/lib/modules";
+import { MODULE_LIBRARY, type LibraryModule } from "@/lib/modules";
 import type { Model } from "@stack-init/schema";
 
 interface ModulesModalProps {
   onClose: () => void;
 }
 
+type UserLink = { model: string; field: string; references: string };
+
 export function ModulesModal({ onClose }: ModulesModalProps) {
-  const { models, addModel } = useWizardStore();
+  const { models, addModel, addEnabledServices, addField, addRelation } = useWizardStore();
   const [imported, setImported] = useState<string | null>(null);
+  const [missingRequires, setMissingRequires] = useState<string[]>([]);
+  const [pendingLinks, setPendingLinks] = useState<UserLink[] | null>(null);
+  const [selectedLinks, setSelectedLinks] = useState<Set<string>>(new Set());
 
   const existingNames = new Set(models.map((m) => m.name));
 
-  const handleImport = (moduleId: string, moduleModels: Model[]) => {
-    let added = 0;
-    for (const m of moduleModels) {
-      if (!existingNames.has(m.name)) {
-        addModel(m);
-        added++;
+  const handleImport = (mod: LibraryModule) => {
+    // Add new models (skip duplicates)
+    for (const m of mod.models) {
+      if (!existingNames.has(m.name)) addModel(m as Model);
+    }
+
+    // Activate services
+    if (mod.services && mod.services.length > 0) addEnabledServices(mod.services);
+
+    // Optimistic set of all model names after this import
+    const afterNames = new Set([...existingNames, ...mod.models.map(m => m.name)]);
+
+    // Check missing requires (e.g. Blog needs Auth)
+    if (mod.requires && mod.requires.length > 0) {
+      const missing = mod.requires.filter(reqId => {
+        const req = MODULE_LIBRARY.find(lib => lib.id === reqId);
+        return req ? !req.models.some(m => afterNames.has(m.name)) : false;
+      });
+      setMissingRequires(missing);
+    } else {
+      setMissingRequires([]);
+    }
+
+    // Propose User FK links if User model exists
+    if (mod.userLinks && afterNames.has('User')) {
+      const applicable = mod.userLinks.filter(l => afterNames.has(l.model));
+      if (applicable.length > 0) {
+        setPendingLinks(applicable);
+        setSelectedLinks(new Set(applicable.map(l => l.model)));
       }
     }
-    setImported(moduleId);
+
+    setImported(mod.id);
     setTimeout(() => setImported(null), 1800);
+  };
+
+  // Called when user clicks "+ Import Auth" in the missing-requires banner
+  const handleImportRequirement = (reqId: string) => {
+    const reqModule = MODULE_LIBRARY.find(m => m.id === reqId);
+    if (!reqModule) return;
+
+    for (const m of reqModule.models) {
+      if (!existingNames.has(m.name)) addModel(m as Model);
+    }
+    if (reqModule.services) addEnabledServices(reqModule.services);
+
+    // After importing Auth, check if any previously imported module has pending userLinks
+    const afterNames = new Set([...existingNames, ...reqModule.models.map(m => m.name)]);
+    const allLinks: UserLink[] = [];
+    for (const lib of MODULE_LIBRARY) {
+      if (!lib.userLinks) continue;
+      if (!lib.models.some(m => afterNames.has(m.name))) continue;
+      const applicable = lib.userLinks.filter(l => afterNames.has(l.model));
+      allLinks.push(...applicable);
+    }
+    if (allLinks.length > 0) {
+      setPendingLinks(allLinks);
+      setSelectedLinks(new Set(allLinks.map(l => l.model)));
+    }
+
+    setMissingRequires([]);
+  };
+
+  const handleApplyLinks = () => {
+    pendingLinks?.forEach(link => {
+      if (!selectedLinks.has(link.model)) return;
+      addField(link.model, {
+        name: link.field,
+        type: 'foreignId',
+        nullable: false,
+        references: link.references,
+      } as any);
+      // addField auto-adds belongsTo via the FK detection in useWizardStore
+      // Add hasMany on the User side
+      addRelation('User', { type: 'hasMany', model: link.model });
+    });
+    setPendingLinks(null);
+  };
+
+  const toggleLink = (modelName: string) => {
+    setSelectedLinks(prev => {
+      const next = new Set(prev);
+      if (next.has(modelName)) next.delete(modelName); else next.add(modelName);
+      return next;
+    });
   };
 
   return (
@@ -70,6 +150,98 @@ export function ModulesModal({ onClose }: ModulesModalProps) {
 
         {/* Body */}
         <div style={{ flex: 1, overflowY: "auto", padding: 24 }}>
+
+          {/* Missing requires banner */}
+          {missingRequires.length > 0 && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "9px 12px", marginBottom: 16,
+              background: "rgba(245,200,66,0.07)",
+              border: "1px solid var(--gold-border)",
+              borderRadius: 10, fontSize: 12,
+            }}>
+              <AlertTriangle size={13} style={{ color: "var(--gold)", flexShrink: 0 }} />
+              <span style={{ color: "var(--text2)", flex: 1 }}>
+                This module works best with <strong style={{ color: "var(--text)" }}>Auth</strong> (user management).
+              </span>
+              <button
+                onClick={() => handleImportRequirement(missingRequires[0])}
+                style={{
+                  fontSize: 11, fontWeight: 700, color: "var(--gold)",
+                  padding: "3px 10px", borderRadius: 6,
+                  border: "1px solid var(--gold-border)",
+                  background: "var(--gold-subtle)", cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                + Import Auth
+              </button>
+              <button
+                onClick={() => setMissingRequires([])}
+                style={{ fontSize: 11, color: "var(--text3)", cursor: "pointer", textDecoration: "underline", flexShrink: 0 }}
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
+          {/* User links panel */}
+          {pendingLinks && (
+            <div style={{
+              padding: "14px 16px", marginBottom: 16,
+              background: "var(--bg4)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: 10,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                <Link size={13} style={{ color: "var(--gold)" }} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text)" }}>
+                  Link imported models to User?
+                </span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+                {pendingLinks.map(link => (
+                  <label
+                    key={link.model}
+                    style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedLinks.has(link.model)}
+                      onChange={() => toggleLink(link.model)}
+                      style={{ accentColor: "var(--gold)", width: 14, height: 14 }}
+                    />
+                    <span style={{
+                      fontFamily: "var(--font-jetbrains-mono)", fontSize: 11,
+                      color: selectedLinks.has(link.model) ? "var(--gold)" : "var(--text2)",
+                    }}>
+                      {link.model}.{link.field}
+                    </span>
+                    <span style={{ fontSize: 10, color: "var(--text3)" }}>→ users</span>
+                  </label>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={handleApplyLinks}
+                  disabled={selectedLinks.size === 0}
+                  className="si-btn-primary"
+                  style={{ fontSize: 11, padding: "5px 14px" }}
+                >
+                  Add links
+                </button>
+                <button
+                  onClick={() => setPendingLinks(null)}
+                  className="si-btn-secondary"
+                  style={{ fontSize: 11, padding: "5px 14px" }}
+                >
+                  Later
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Module grid */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             {MODULE_LIBRARY.map((mod) => {
               const skipped = mod.models.filter((m) => existingNames.has(m.name)).length;
@@ -131,7 +303,7 @@ export function ModulesModal({ onClose }: ModulesModalProps) {
                   )}
 
                   <button
-                    onClick={() => handleImport(mod.id, mod.models as Model[])}
+                    onClick={() => handleImport(mod)}
                     disabled={willAdd === 0}
                     style={{
                       width: "100%",

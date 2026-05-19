@@ -19,7 +19,9 @@ const FIELD_TYPES = [
 
 type FieldType = typeof FIELD_TYPES[number];
 
-const SUGGESTED_FIELDS: Record<string, { name: string; type: string; nullable?: boolean; values?: string[]; references?: string[] }[]> = {
+type SuggestedField = { name: string; type: string; nullable?: boolean; values?: string[]; references?: string[] };
+
+const SUGGESTED_FIELDS: Record<string, SuggestedField[]> = {
   User: [
     { name: "name", type: "string" },
     { name: "email", type: "string" },
@@ -36,6 +38,14 @@ const SUGGESTED_FIELDS: Record<string, { name: string; type: string; nullable?: 
     { name: "published_at", type: "timestamp", nullable: true },
     { name: "image_url", type: "string", nullable: true },
   ],
+  Article: [
+    { name: "title", type: "string" },
+    { name: "slug", type: "string" },
+    { name: "excerpt", type: "text", nullable: true },
+    { name: "content", type: "longText" },
+    { name: "status", type: "enum", values: ["draft", "published", "archived"] },
+    { name: "published_at", type: "timestamp", nullable: true },
+  ],
   Product: [
     { name: "name", type: "string" },
     { name: "slug", type: "string" },
@@ -48,8 +58,25 @@ const SUGGESTED_FIELDS: Record<string, { name: string; type: string; nullable?: 
   Order: [
     { name: "order_number", type: "string" },
     { name: "total_amount", type: "decimal" },
-    { name: "status", type: "enum", values: ["pending", "paid", "shipped", "cancelled"] },
+    { name: "status", type: "enum", values: ["pending", "paid", "shipped", "delivered", "cancelled"] },
     { name: "notes", type: "text", nullable: true },
+    { name: "shipped_at", type: "timestamp", nullable: true },
+  ],
+  Invoice: [
+    { name: "number", type: "string" },
+    { name: "amount", type: "decimal" },
+    { name: "tax", type: "decimal", nullable: true },
+    { name: "status", type: "enum", values: ["draft", "sent", "paid", "overdue", "cancelled"] },
+    { name: "due_date", type: "date" },
+    { name: "paid_at", type: "timestamp", nullable: true },
+  ],
+  Payment: [
+    { name: "amount", type: "decimal" },
+    { name: "currency", type: "string" },
+    { name: "method", type: "enum", values: ["card", "bank", "paypal", "crypto"] },
+    { name: "status", type: "enum", values: ["pending", "completed", "failed", "refunded"] },
+    { name: "reference", type: "string", nullable: true },
+    { name: "paid_at", type: "timestamp", nullable: true },
   ],
   Category: [
     { name: "name", type: "string" },
@@ -57,22 +84,110 @@ const SUGGESTED_FIELDS: Record<string, { name: string; type: string; nullable?: 
     { name: "description", type: "text", nullable: true },
     { name: "parent_id", type: "foreignId", references: ["categories"] },
   ],
+  Tag: [
+    { name: "name", type: "string" },
+    { name: "slug", type: "string" },
+    { name: "color", type: "string", nullable: true },
+  ],
   Comment: [
     { name: "content", type: "text" },
     { name: "is_approved", type: "boolean" },
     { name: "user_id", type: "foreignId", references: ["users"] },
     { name: "post_id", type: "foreignId", references: ["posts"] },
   ],
+  Review: [
+    { name: "rating", type: "integer" },
+    { name: "title", type: "string", nullable: true },
+    { name: "content", type: "text", nullable: true },
+    { name: "is_verified", type: "boolean" },
+  ],
+  Address: [
+    { name: "street", type: "string" },
+    { name: "city", type: "string" },
+    { name: "state", type: "string", nullable: true },
+    { name: "country", type: "string" },
+    { name: "postal_code", type: "string" },
+    { name: "is_default", type: "boolean" },
+  ],
+  Profile: [
+    { name: "bio", type: "text", nullable: true },
+    { name: "avatar", type: "string", nullable: true },
+    { name: "website", type: "string", nullable: true },
+    { name: "location", type: "string", nullable: true },
+    { name: "is_public", type: "boolean" },
+  ],
+  Notification: [
+    { name: "type", type: "string" },
+    { name: "title", type: "string" },
+    { name: "message", type: "text" },
+    { name: "is_read", type: "boolean" },
+    { name: "read_at", type: "timestamp", nullable: true },
+  ],
+  Message: [
+    { name: "content", type: "text" },
+    { name: "is_read", type: "boolean" },
+    { name: "read_at", type: "timestamp", nullable: true },
+    { name: "sender_id", type: "foreignId", references: ["users"] },
+  ],
+  Media: [
+    { name: "name", type: "string" },
+    { name: "path", type: "string" },
+    { name: "mime_type", type: "string" },
+    { name: "size", type: "integer" },
+    { name: "disk", type: "string" },
+  ],
+  Role: [
+    { name: "name", type: "string" },
+    { name: "slug", type: "string" },
+    { name: "description", type: "text", nullable: true },
+  ],
+  Permission: [
+    { name: "name", type: "string" },
+    { name: "slug", type: "string" },
+    { name: "description", type: "text", nullable: true },
+  ],
+  Subscription: [
+    { name: "plan", type: "string" },
+    { name: "status", type: "enum", values: ["trialing", "active", "past_due", "cancelled"] },
+    { name: "trial_ends_at", type: "timestamp", nullable: true },
+    { name: "current_period_end", type: "timestamp", nullable: true },
+    { name: "cancelled_at", type: "timestamp", nullable: true },
+  ],
 };
 
-const GLOBAL_FIELD_SUGGESTIONS = [
+const GLOBAL_FIELD_SUGGESTIONS: SuggestedField[] = [
   { name: "name", type: "string" },
   { name: "slug", type: "string" },
   { name: "description", type: "text", nullable: true },
   { name: "status", type: "string" },
-  { name: "active", type: "boolean" },
+  { name: "is_active", type: "boolean" },
   { name: "sort_order", type: "integer", nullable: true },
 ];
+
+const PATTERN_SUGGESTIONS: Array<{ pattern: RegExp; fields: SuggestedField[] }> = [
+  { pattern: /item|line/i,    fields: [{ name: "quantity", type: "integer" }, { name: "unit_price", type: "decimal" }, { name: "total", type: "decimal" }] },
+  { pattern: /log|history/i,  fields: [{ name: "action", type: "string" }, { name: "ip_address", type: "string", nullable: true }, { name: "user_agent", type: "string", nullable: true }] },
+  { pattern: /setting|config/i, fields: [{ name: "key", type: "string" }, { name: "value", type: "text" }, { name: "group", type: "string", nullable: true }] },
+  { pattern: /token/i,        fields: [{ name: "token", type: "string" }, { name: "type", type: "string" }, { name: "expires_at", type: "timestamp", nullable: true }, { name: "is_used", type: "boolean" }] },
+  { pattern: /report/i,       fields: [{ name: "title", type: "string" }, { name: "type", type: "string" }, { name: "status", type: "enum", values: ["pending", "processing", "done", "failed"] }, { name: "generated_at", type: "timestamp", nullable: true }] },
+];
+
+function getSuggestionsForModel(modelName: string): SuggestedField[] {
+  if (SUGGESTED_FIELDS[modelName]) return SUGGESTED_FIELDS[modelName];
+
+  // Partial match: does the name contain a known key?
+  const lowerName = modelName.toLowerCase();
+  for (const [key, suggestions] of Object.entries(SUGGESTED_FIELDS)) {
+    if (lowerName.includes(key.toLowerCase())) return suggestions;
+  }
+
+  // Pattern match
+  for (const { pattern, fields } of PATTERN_SUGGESTIONS) {
+    if (pattern.test(modelName)) return fields;
+  }
+
+  return GLOBAL_FIELD_SUGGESTIONS;
+}
 
 function typeColor(type: string): { bg: string; color: string } {
   const t = type.toLowerCase();
@@ -93,8 +208,8 @@ type ViewMode = "list" | "grid" | "canvas";
 export function ModelsStep() {
   const { models } = useWizardStore();
   const [view, setView]             = useState<ViewMode>(() => models.length > 0 ? "grid" : "list");
-  const [activeModel, setActiveModel]   = useState<string | null>(null);
-  const [showNewModel, setShowNewModel] = useState(false);
+  const [activeModel, setActiveModel]   = useState<string | null>(() => models.length > 0 ? models[models.length - 1].name : null);
+  const [showNewModel, setShowNewModel] = useState(() => models.length === 0);
   const [showImport, setShowImport]     = useState(false);
   const [showModules, setShowModules]   = useState(false);
   const [panelModel, setPanelModel]     = useState<string | null>(null);
@@ -897,6 +1012,22 @@ function ModelRow({
 }
 
 /* ── New model creation panel ─────────────────────────────────────── */
+const RESERVED_MODEL_NAMES = new Set(['Model', 'Schema', 'Database', 'Migration', 'Query', 'Builder', 'Collection', 'Repository', 'Service', 'Controller', 'Router', 'Middleware', 'Request', 'Response', 'Event', 'Job', 'Command', 'Exception']);
+
+function getNameHint(name: string, existingNames: Set<string>): { type: 'error' | 'warning' | 'success' | 'info'; msg: string } | null {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  if (existingNames.has(trimmed)) return { type: 'error', msg: 'A model with this name already exists' };
+  if (RESERVED_MODEL_NAMES.has(trimmed)) return { type: 'warning', msg: `"${trimmed}" is a common framework word — consider a more specific name` };
+  if (!/^[A-Z]/.test(trimmed)) return { type: 'error', msg: 'Must start with an uppercase letter (PascalCase)' };
+  if (!/^[A-Z][A-Za-z0-9]*$/.test(trimmed)) return { type: 'error', msg: 'Only letters and numbers allowed (PascalCase)' };
+  if (SUGGESTED_FIELDS[trimmed]) return { type: 'success', msg: `Field suggestions available for ${trimmed}` };
+  const lower = trimmed.toLowerCase();
+  const partialMatch = Object.keys(SUGGESTED_FIELDS).find(k => lower.includes(k.toLowerCase()));
+  if (partialMatch) return { type: 'info', msg: `Suggestions from "${partialMatch}" will be available` };
+  return null;
+}
+
 function NewModelPanel({
   onCreated,
   onCancel,
@@ -907,6 +1038,8 @@ function NewModelPanel({
   const { models, addModel } = useWizardStore();
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const existingNames = new Set(models.map(m => m.name));
+  const nameHint = getNameHint(name, existingNames);
 
   const handleCreate = () => {
     const n = name.trim();
@@ -977,6 +1110,15 @@ function NewModelPanel({
         {error && (
           <p style={{ fontSize: 12, color: "var(--red)", marginBottom: 8 }}>
             {error}
+          </p>
+        )}
+        {!error && nameHint && (
+          <p style={{
+            fontSize: 11,
+            marginBottom: 8,
+            color: nameHint.type === 'error' ? 'var(--red)' : nameHint.type === 'warning' ? '#f5a623' : nameHint.type === 'success' ? '#4dff91' : 'var(--text3)',
+          }}>
+            {nameHint.type === 'success' ? '✓' : nameHint.type === 'warning' ? '⚠' : nameHint.type === 'error' ? '✕' : 'ℹ'} {nameHint.msg}
           </p>
         )}
         <p style={{ fontSize: 11, color: "var(--text3)", marginBottom: 20 }}>
@@ -1170,7 +1312,7 @@ function ModelEditor({ model }: { model: Model }) {
     setEditingField(f.name);
   };
 
-  const suggestions = SUGGESTED_FIELDS[model.name] || GLOBAL_FIELD_SUGGESTIONS;
+  const suggestions = getSuggestionsForModel(model.name);
   const existingFieldNames = new Set(model.fields.map(f => f.name));
   const filteredSuggestions = suggestions.filter(s => !existingFieldNames.has(s.name));
 
