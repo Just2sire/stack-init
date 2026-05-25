@@ -29,8 +29,7 @@ const ALL_SERVICES: ServiceCard[] = [
     icon: <Upload size={24} />,
     description: 'Multer or S3 integration for file uploads with validation.',
     generates: ['upload.service', 'upload.routes', 'storage.config'],
-    badge: 'Coming soon',
-    available: false,
+    available: true,
   },
   {
     id: 'email',
@@ -38,8 +37,7 @@ const ALL_SERVICES: ServiceCard[] = [
     icon: <Mail size={24} />,
     description: 'Nodemailer / Sendgrid setup with templated transactional emails.',
     generates: ['mail.service', 'mail.templates/', '.env SMTP_*'],
-    badge: 'Coming soon',
-    available: false,
+    available: true,
   },
   {
     id: 'cache',
@@ -47,8 +45,7 @@ const ALL_SERVICES: ServiceCard[] = [
     icon: <Database size={24} />,
     description: 'Redis client setup with cache helpers for common patterns.',
     generates: ['cache.service', 'redis.config', '.env REDIS_URL'],
-    badge: 'Coming soon',
-    available: false,
+    available: true,
   },
   {
     id: 'websockets',
@@ -56,8 +53,7 @@ const ALL_SERVICES: ServiceCard[] = [
     icon: <Globe size={24} />,
     description: 'Socket.io or native WS server with event-based architecture.',
     generates: ['gateway', 'ws.server', 'events/'],
-    badge: 'Coming soon',
-    available: false,
+    available: true,
   },
   {
     id: 'queue',
@@ -65,8 +61,7 @@ const ALL_SERVICES: ServiceCard[] = [
     icon: <Layers size={24} />,
     description: 'Bull (Node) or Celery (Python) queue setup with worker boilerplate.',
     generates: ['queue.service', 'workers/', '.env REDIS_URL'],
-    badge: 'Coming soon',
-    available: false,
+    available: true,
   },
 ];
 

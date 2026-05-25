@@ -5,6 +5,7 @@ import {
   Sparkles, Table, GitBranch, Package, BookOpen, Download,
   Code2, Settings2, Check, Blocks,
 } from "lucide-react";
+import { NavAuthButton } from "@/components/auth/NavAuthButton";
 
 
 /* ─── Static data ─────────────────────────────────────────────────── */
@@ -199,6 +200,7 @@ export default function Home() {
             <BookOpen size={14} />
             Guides
           </Link>
+          <NavAuthButton />
           <div style={{
             display: "flex", alignItems: "center", gap: 6,
             padding: "5px 12px", borderRadius: 8,

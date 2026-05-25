@@ -1,12 +1,12 @@
-export type Stack = 
-  | 'laravel' 
-  | 'react' 
-  | 'laravel+react' 
-  | 'express' 
-  | 'nestjs' 
+export type Stack =
+  | 'laravel'
+  | 'react'
+  | 'laravel+react'
+  | 'express'
+  | 'nestjs'
   | 'nestjs+react'
-  | 'nextjs' 
-  | 'express+react' 
+  | 'nextjs'
+  | 'express+react'
   | 'laravel+nextjs'
   | 'fastapi'
   | 'fastapi+react'
@@ -16,6 +16,8 @@ export type Stack =
   | 't3'
   | 'mevn'
   | 'mean';
+
+export type ServiceId = 'auth' | 'file-upload' | 'email' | 'cache' | 'websockets' | 'queue';
 
 export interface NamedField {
   default?: any;
@@ -160,6 +162,7 @@ export interface ProjectConfig {
   name: string;
   stack: Stack;
   models: Model[];
+  services?: ServiceId[];
   backendUrl?: string;
   nextjsUsage?: 'frontend-only' | 'full-stack';
   laravel?: LaravelOptions;

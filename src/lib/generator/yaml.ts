@@ -69,6 +69,7 @@ export function buildYamlContent(config: ProjectConfig): string {
     }),
   };
 
+  if ((config as any).services?.length) output.services = (config as any).services;
   if (config.laravel) output.laravel = config.laravel;
   if (config.react)   output.react   = config.react;
   if (config.express) output.express = config.express;

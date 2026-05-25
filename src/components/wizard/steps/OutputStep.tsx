@@ -8,6 +8,7 @@ import { savePreset } from "@/lib/presets";
 import { buildYamlContent } from "@/lib/generator/yaml";
 import { generateDockerCompose } from "@/lib/generator/docker";
 import { Download, Loader2, Sparkles, FileCode, Check, ChevronDown, ChevronUp, Database, Box, Layers as LayersIcon, RefreshCw, Edit3, Share2, ClipboardCheck, BookmarkPlus, Copy, FileText, Container } from "lucide-react";
+import { SaveConfigButton } from "@/components/auth/SaveConfigButton";
 import type { ProjectConfig, ModelPages } from "@stack-init/schema";
 
 const DEFAULT_PAGES: ModelPages = { list: true, detail: true, create: true, edit: false };
@@ -484,6 +485,7 @@ export function OutputStep() {
             {savedToast ? <Check size={14} className="text-gold" /> : <BookmarkPlus size={14} />}
             {savedToast ? "Preset saved!" : "Save as Preset"}
           </button>
+          <SaveConfigButton />
         </div>
 
         <p className="text-[10px] text-text3 flex items-center gap-2">

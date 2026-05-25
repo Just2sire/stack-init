@@ -5,7 +5,7 @@ import type {
   LaravelOptions, ReactOptions, ModelPages,
   LaravelGenerateOptions, ProjectConfig,
   ExpressConfig, NestConfig, NextjsOptions,
-  FastAPIConfig
+  FastAPIConfig, ServiceId,
 } from '../types/schema';
 
 // Identifiants des étapes du wizard
@@ -26,7 +26,7 @@ export type StepId =
   | 'integration'    // Pour les combos
   | 'output';
 
-export type ServiceId = 'auth' | 'file-upload' | 'email' | 'cache' | 'websockets' | 'queue';
+export type { ServiceId };
 
 // Steps that have internal sub-steps; value = total sub-step count.
 export const SUB_STEP_COUNTS: Partial<Record<StepId, number>> = {
@@ -37,8 +37,8 @@ export const SUB_STEP_COUNTS: Partial<Record<StepId, number>> = {
 const DEFAULT_LARAVEL_OPTIONS: LaravelOptions = {
   pattern: 'api-only',
   auth: 'sanctum',
-  php_version: '8.2',
-  laravel_version: '11',
+  php_version: '8.4',
+  laravel_version: '12',
   db_engine: 'mysql',
 };
 
@@ -439,7 +439,7 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
   },
 
   getConfig: () => {
-    const { stack, projectName, models, nextjsUsage, laravelOptions, reactOptions, expressOptions, nestOptions, fastapiOptions, backendUrl } = get();
+    const { stack, projectName, models, nextjsUsage, laravelOptions, reactOptions, expressOptions, nestOptions, fastapiOptions, backendUrl, enabledServices } = get();
     const s = stack!;
 
     const hasFrontend = ['react', 'nextjs', 'express+react', 'nestjs+react', 'fastapi+react', 'fastapi+nextjs', 'laravel+react', 'laravel+nextjs', 'mern', 'pern', 'mevn', 'mean', 't3'].includes(s);
@@ -451,7 +451,8 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
       name: projectName,
       stack: s,
       models,
-      ...(backendUrl                     && { backendUrl }),
+      ...(enabledServices.length > 0   && { services: enabledServices }),
+      ...(backendUrl                   && { backendUrl }),
       ...(nextjsUsage                  && { nextjsUsage }),
       ...(s.includes('laravel')        && { laravel: laravelOptions }),
       ...(hasFrontend                  && { react: reactOptions }),
@@ -462,17 +463,18 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
   },
 
   importConfig: (config) => set((s) => ({
-    projectName:    config.name,
-    stack:          config.stack,
-    nextjsUsage:    config.nextjsUsage || s.nextjsUsage,
-    models:         config.models,
-    laravelOptions: config.laravel || s.laravelOptions,
-    reactOptions:   config.react || s.reactOptions,
-    expressOptions: config.express || s.expressOptions,
-    nestOptions:    config.nest || s.nestOptions,
-    fastapiOptions: config.fastapi || s.fastapiOptions,
-    backendUrl:     config.backendUrl || '',
-    steps:          computeSteps(config.stack, config.nextjsUsage || null),
+    projectName:      config.name,
+    stack:            config.stack,
+    nextjsUsage:      config.nextjsUsage || s.nextjsUsage,
+    models:           config.models,
+    enabledServices:  config.services ?? s.enabledServices,
+    laravelOptions:   config.laravel || s.laravelOptions,
+    reactOptions:     config.react || s.reactOptions,
+    expressOptions:   config.express || s.expressOptions,
+    nestOptions:      config.nest || s.nestOptions,
+    fastapiOptions:   config.fastapi || s.fastapiOptions,
+    backendUrl:       config.backendUrl || '',
+    steps:            computeSteps(config.stack, config.nextjsUsage || null),
   })),
 
   reset: () => set({
