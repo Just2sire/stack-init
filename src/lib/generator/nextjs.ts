@@ -110,20 +110,26 @@ body { font-family: system-ui, sans-serif; }
   }
 
   // src/app/layout.tsx
-  const muiLayout   = opts.ui_lib === 'mui';
-  const antdLayout  = opts.ui_lib === 'antd';
+  const muiLayout        = opts.ui_lib === 'mui';
+  const antdLayout       = opts.ui_lib === 'antd';
+  const useQueryProvider = opts.data_fetching === 'tanstack-query';
 
   const layoutImports = [
     opts.css === 'tailwind' ? "import './globals.css';" : '',
-    muiLayout  ? "import { ThemeProvider, createTheme } from '@mui/material/styles';\nimport CssBaseline from '@mui/material/CssBaseline';" : '',
-    antdLayout ? "import { ConfigProvider } from 'antd';" : '',
+    muiLayout        ? "import { ThemeProvider, createTheme } from '@mui/material/styles';\nimport CssBaseline from '@mui/material/CssBaseline';" : '',
+    antdLayout       ? "import { ConfigProvider } from 'antd';" : '',
+    useQueryProvider ? "import { Providers } from '@/providers/query-provider';" : '',
   ].filter(Boolean).join('\n');
 
-  const layoutInner = muiLayout
-    ? `      <ThemeProvider theme={createTheme()}><CssBaseline />{children}</ThemeProvider>`
+  const innerContent = muiLayout
+    ? `<ThemeProvider theme={createTheme()}><CssBaseline />{children}</ThemeProvider>`
     : antdLayout
-    ? `      <ConfigProvider>{children}</ConfigProvider>`
-    : `      {children}`;
+    ? `<ConfigProvider>{children}</ConfigProvider>`
+    : `{children}`;
+
+  const layoutInner = useQueryProvider
+    ? `      <Providers>${innerContent}</Providers>`
+    : `      ${innerContent}`;
 
   zip.file('src/app/layout.tsx', `import type { Metadata } from 'next';
 ${layoutImports}
@@ -211,6 +217,14 @@ export const loadingAtom = atom(false);
 `);
   }
 
+  // HTTP client factory
+  zip.file('src/lib/api.ts', generateApiLib(opts.http_lib ?? 'fetch'));
+
+  // Data fetching provider
+  if (opts.data_fetching === 'tanstack-query') {
+    zip.file('src/providers/query-provider.tsx', generateQueryProvider());
+  }
+
   // Per-model TypeScript interfaces + pages
   for (const model of models) {
     const slug = slugify(model.name);
@@ -247,6 +261,18 @@ ${fieldLines}
     }
     if (pages.edit) {
       zip.file(`src/app/${slug}/[id]/edit/page.tsx`, generateEditPage(model, apiBase, slug, opts));
+    }
+
+    // Zod validation schema
+    if (opts.form_lib === 'zod') {
+      zip.file(`src/schemas/${model.name}.schema.ts`, generateZodSchema(model));
+    }
+
+    // Data fetching hooks
+    if (opts.data_fetching === 'tanstack-query') {
+      zip.file(`src/hooks/use${model.name}.ts`, generateTanstackHook(model, slug));
+    } else if (opts.data_fetching === 'swr') {
+      zip.file(`src/hooks/use${model.name}.ts`, generateSWRHook(model, slug));
     }
   }
 }
@@ -586,12 +612,9 @@ function generateCreatePage(model: Model, apiBase: string, slug: string, opts?: 
   const formLib = opts?.form_lib ?? 'none';
   const uiLib = opts?.ui_lib ?? 'none';
 
-  if (formLib === 'react-hook-form') {
-    return generateCreatePageRHF(model, apiBase, slug, uiLib, fields);
-  }
-  if (formLib === 'formik') {
-    return generateCreatePageFormik(model, apiBase, slug, uiLib, fields);
-  }
+  if (formLib === 'react-hook-form') return generateCreatePageRHF(model, apiBase, slug, uiLib, fields);
+  if (formLib === 'formik')          return generateCreatePageFormik(model, apiBase, slug, uiLib, fields);
+  if (formLib === 'zod')             return generateCreatePageZod(model, apiBase, slug, uiLib, fields);
   return generateCreatePageVanilla(model, apiBase, slug, uiLib, fields);
 }
 
@@ -600,12 +623,9 @@ function generateEditPage(model: Model, apiBase: string, slug: string, opts?: Re
   const formLib = opts?.form_lib ?? 'none';
   const uiLib = opts?.ui_lib ?? 'none';
 
-  if (formLib === 'react-hook-form') {
-    return generateEditPageRHF(model, apiBase, slug, uiLib, fields);
-  }
-  if (formLib === 'formik') {
-    return generateEditPageFormik(model, apiBase, slug, uiLib, fields);
-  }
+  if (formLib === 'react-hook-form') return generateEditPageRHF(model, apiBase, slug, uiLib, fields);
+  if (formLib === 'formik')          return generateEditPageFormik(model, apiBase, slug, uiLib, fields);
+  if (formLib === 'zod')             return generateEditPageZod(model, apiBase, slug, uiLib, fields);
   return generateEditPageVanilla(model, apiBase, slug, uiLib, fields);
 }
 
@@ -934,6 +954,249 @@ ${items}
       </ul>
     </main>
   );
+}
+`;
+}
+
+// ─── HTTP client factory ──────────────────────────────────────────────────────
+
+function generateApiLib(httpLib: string): string {
+  if (httpLib === 'axios') {
+    return `import axios from 'axios';
+
+export function createApi<T>(resource: string) {
+  const base = \`/api/\${resource}\`;
+  return {
+    list:   ()                                       => axios.get<T[]>(base).then(r => r.data),
+    get:    (id: number | string)                    => axios.get<T>(\`\${base}/\${id}\`).then(r => r.data),
+    create: (data: Partial<T>)                       => axios.post<T>(base, data).then(r => r.data),
+    update: (id: number | string, data: Partial<T>) => axios.patch<T>(\`\${base}/\${id}\`, data).then(r => r.data),
+    remove: (id: number | string)                    => axios.delete(\`\${base}/\${id}\`),
+  };
+}
+`;
+  }
+  if (httpLib === 'ky') {
+    return `import ky from 'ky';
+
+export function createApi<T>(resource: string) {
+  const base = \`/api/\${resource}\`;
+  return {
+    list:   ()                                       => ky.get(base).json<T[]>(),
+    get:    (id: number | string)                    => ky.get(\`\${base}/\${id}\`).json<T>(),
+    create: (data: Partial<T>)                       => ky.post(base, { json: data }).json<T>(),
+    update: (id: number | string, data: Partial<T>) => ky.patch(\`\${base}/\${id}\`, { json: data }).json<T>(),
+    remove: (id: number | string)                    => ky.delete(\`\${base}/\${id}\`),
+  };
+}
+`;
+  }
+  return `export function createApi<T>(resource: string) {
+  const base = \`/api/\${resource}\`;
+  async function req<R>(url: string, init?: RequestInit): Promise<R> {
+    const res = await fetch(url, init);
+    if (!res.ok) throw new Error(\`API error \${res.status}\`);
+    if (res.status === 204) return undefined as R;
+    return res.json() as Promise<R>;
+  }
+  return {
+    list:   ()                                       => req<T[]>(base),
+    get:    (id: number | string)                    => req<T>(\`\${base}/\${id}\`),
+    create: (data: Partial<T>)                       => req<T>(base, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }),
+    update: (id: number | string, data: Partial<T>) => req<T>(\`\${base}/\${id}\`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }),
+    remove: (id: number | string)                    => req<void>(\`\${base}/\${id}\`, { method: 'DELETE' }),
+  };
+}
+`;
+}
+
+// ─── TanStack Query provider ─────────────────────────────────────────────────
+
+function generateQueryProvider(): string {
+  return `'use client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useState } from 'react';
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient());
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
+`;
+}
+
+// ─── Zod schema ──────────────────────────────────────────────────────────────
+
+function toZodType(f: { type: string; nullable?: boolean; values?: string[] }): string {
+  const optional = f.nullable ? '.optional()' : '';
+  let base: string;
+  switch (f.type) {
+    case 'integer': case 'bigInteger': case 'smallInteger': case 'mediumInteger':
+    case 'unsignedInteger': case 'unsignedBigInteger': case 'float': case 'double': case 'decimal':
+    case 'foreignId':
+      base = 'z.coerce.number()'; break;
+    case 'boolean':
+      base = 'z.boolean()'; break;
+    case 'enum':
+      base = f.values?.length ? `z.enum([${f.values.map(v => `'${v}'`).join(', ')}])` : 'z.string()'; break;
+    default:
+      base = f.nullable ? 'z.string()' : 'z.string().min(1)';
+  }
+  return `${base}${optional}`;
+}
+
+function generateZodSchema(model: Model): string {
+  const fields = model.fields.filter(f => f.type !== 'foreignId');
+  const lines = fields.map(f => `  ${f.name}: ${toZodType(f)},`);
+  return `import { z } from 'zod';
+
+export const ${model.name}Schema = z.object({
+${lines.join('\n')}
+});
+
+export type ${model.name}FormData = z.infer<typeof ${model.name}Schema>;
+`;
+}
+
+// ─── Zod create/edit pages ───────────────────────────────────────────────────
+
+function generateCreatePageZod(model: Model, apiBase: string, slug: string, uiLib: string, fields: AnyField[]): string {
+  return `'use client';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ${model.name}Schema, type ${model.name}FormData } from '@/schemas/${model.name}.schema';
+${uiImports(uiLib)}
+
+export default function ${model.name}CreatePage() {
+  const router = useRouter();
+  const { register, handleSubmit, formState: { errors } } = useForm<${model.name}FormData>({
+    resolver: zodResolver(${model.name}Schema),
+  });
+
+  const onSubmit = async (data: ${model.name}FormData) => {
+    await fetch('${apiBase}', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    router.push('/${slug}');
+  };
+
+  return (
+    <main style={{ padding: '2rem', maxWidth: 480 }}>
+      <h1>New ${model.name}</h1>
+      <form onSubmit={handleSubmit(onSubmit)} style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: 16 }}>
+${fields.map(f => `        <div>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>${f.name}</label>
+          <input {...register('${f.name}')} style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, width: '100%' }} />
+          {errors.${f.name} && <span style={{ color: 'red', fontSize: 12 }}>{errors.${f.name}?.message}</span>}
+        </div>`).join('\n')}
+        ${uiButton(uiLib, 'Create')}
+      </form>
+    </main>
+  );
+}
+`;
+}
+
+function generateEditPageZod(model: Model, apiBase: string, slug: string, uiLib: string, fields: AnyField[]): string {
+  return `'use client';
+import { useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ${model.name}Schema, type ${model.name}FormData } from '@/schemas/${model.name}.schema';
+${uiImports(uiLib)}
+
+export default function ${model.name}EditPage() {
+  const router = useRouter();
+  const { id } = useParams<{ id: string }>();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<${model.name}FormData>({
+    resolver: zodResolver(${model.name}Schema),
+  });
+
+  useEffect(() => {
+    fetch(\`${apiBase}/\${id}\`).then(r => r.json()).then(data => reset(data));
+  }, [id, reset]);
+
+  const onSubmit = async (data: ${model.name}FormData) => {
+    await fetch(\`${apiBase}/\${id}\`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    router.push(\`/${slug}/\${id}\`);
+  };
+
+  return (
+    <main style={{ padding: '2rem', maxWidth: 480 }}>
+      <h1>Edit ${model.name}</h1>
+      <form onSubmit={handleSubmit(onSubmit)} style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: 16 }}>
+${fields.map(f => `        <div>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>${f.name}</label>
+          <input {...register('${f.name}')} style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, width: '100%' }} />
+          {errors.${f.name} && <span style={{ color: 'red', fontSize: 12 }}>{errors.${f.name}?.message}</span>}
+        </div>`).join('\n')}
+        ${uiButton(uiLib, 'Save')}
+      </form>
+    </main>
+  );
+}
+`;
+}
+
+// ─── Data-fetching hooks ──────────────────────────────────────────────────────
+
+function generateTanstackHook(model: Model, slug: string): string {
+  const Name = model.name;
+  return `'use client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createApi } from '@/lib/api';
+import type { ${Name} } from '@/types/${Name}';
+
+const api = createApi<${Name}>('${slug}');
+
+export function use${Name}List() {
+  return useQuery({ queryKey: ['${slug}'], queryFn: () => api.list() });
+}
+
+export function use${Name}(id: number) {
+  return useQuery({ queryKey: ['${slug}', id], queryFn: () => api.get(id), enabled: !!id });
+}
+
+export function useCreate${Name}() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<${Name}>) => api.create(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['${slug}'] }),
+  });
+}
+
+export function useUpdate${Name}() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<${Name}> }) => api.update(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['${slug}'] }),
+  });
+}
+
+export function useDelete${Name}() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['${slug}'] }),
+  });
+}
+`;
+}
+
+function generateSWRHook(model: Model, slug: string): string {
+  const Name = model.name;
+  return `'use client';
+import useSWR from 'swr';
+import { createApi } from '@/lib/api';
+import type { ${Name} } from '@/types/${Name}';
+
+const api = createApi<${Name}>('${slug}');
+
+export function use${Name}List() {
+  return useSWR('${slug}', () => api.list());
+}
+
+export function use${Name}(id: number) {
+  return useSWR(id ? ['${slug}', id] : null, () => api.get(id));
 }
 `;
 }

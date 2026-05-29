@@ -8,6 +8,7 @@ import { savePreset } from "@/lib/presets";
 import { buildYamlContent } from "@/lib/generator/yaml";
 import { generateDockerCompose } from "@/lib/generator/docker";
 import { Download, Loader2, Sparkles, FileCode, Check, ChevronDown, ChevronUp, Database, Box, Layers as LayersIcon, RefreshCw, Edit3, Share2, ClipboardCheck, BookmarkPlus, Copy, FileText, Container } from "lucide-react";
+import { SaveConfigButton } from "@/components/auth/SaveConfigButton";
 import type { ProjectConfig, ModelPages } from "@stack-init/schema";
 
 const DEFAULT_PAGES: ModelPages = { list: true, detail: true, create: true, edit: false };
@@ -137,9 +138,9 @@ function computeEnvExample(config: ProjectConfig): string {
     lines.push(orm === 'mongoose' ? `MONGODB_URI="${dbUrl}"` : `DATABASE_URL="${dbUrl}"`);
     if (auth !== 'none') lines.push(``, `JWT_SECRET="change-me-in-production"`, `JWT_EXPIRES_IN="7d"`);
   } else if (isNest) {
-    const orm = config.nest?.orm ?? 'typeorm';
-    const db  = config.nest?.db_engine ?? 'postgresql';
-    const auth = config.nest?.auth ?? 'none';
+    const orm = config.nestjs?.orm ?? 'typeorm';
+    const db  = config.nestjs?.db_engine ?? 'postgresql';
+    const auth = config.nestjs?.auth ?? 'none';
     const dbUrl = orm === 'mongoose' ? `mongodb://localhost:27017/${config.name}` : db === 'mysql' ? `mysql://user:password@localhost:3306/${config.name}` : db === 'sqlite' ? `file:./dev.db` : `postgresql://user:password@localhost:5432/${config.name}`;
     lines.push(`NODE_ENV=development`, `PORT=3000`, ``);
     lines.push(orm === 'mongoose' ? `MONGODB_URI="${dbUrl}"` : `DATABASE_URL="${dbUrl}"`);
@@ -314,13 +315,13 @@ export function OutputStep() {
             <div>
               <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-1">Database</p>
               <p className="text-text">
-                {isLaravel ? config.laravel?.db_engine : (config.express?.db_engine || config.nest?.db_engine || config.fastapi?.db_engine || "SQLite")}
+                {isLaravel ? config.laravel?.db_engine : (config.express?.db_engine || config.nestjs?.db_engine || config.fastapi?.db_engine || "SQLite")}
               </p>
             </div>
             <div>
               <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-1">ORM / Driver</p>
               <p className="text-text">
-                {isLaravel ? "Eloquent" : (config.express?.database || config.nest?.database || config.fastapi?.orm || "None")}
+                {isLaravel ? "Eloquent" : (config.express?.orm || config.nestjs?.orm || config.fastapi?.orm || "None")}
               </p>
             </div>
           </div>
@@ -484,6 +485,7 @@ export function OutputStep() {
             {savedToast ? <Check size={14} className="text-gold" /> : <BookmarkPlus size={14} />}
             {savedToast ? "Preset saved!" : "Save as Preset"}
           </button>
+          <SaveConfigButton />
         </div>
 
         <p className="text-[10px] text-text3 flex items-center gap-2">

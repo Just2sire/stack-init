@@ -39,7 +39,9 @@ export async function generateFastAPIProject(zip: JSZip, config: ProjectConfig) 
   const useMigrations  = opts.migrations === true;
   const orm: string    = opts.orm || 'sqlmodel';
   const dbEngine: string = opts.db_engine || 'postgresql';
-  const runner: string = opts.runner || 'makefile';
+  const runner: string        = opts.runner        || 'makefile';
+  const architecture: string  = opts.architecture  || 'layered';
+  const pythonVersion: string = opts.python_version || '3.11';
 
   // ── requirements.txt ─────────────────────────────────────────────────────────
 
@@ -85,6 +87,12 @@ export async function generateFastAPIProject(zip: JSZip, config: ProjectConfig) 
   ];
   zip.file('.env.example', fapiEnvLines.join('\n') + '\n');
   zip.file('.env', `DATABASE_URL="${dbDefault}"\nSECRET_KEY="stack-init-dev-secret"\nACCESS_TOKEN_EXPIRE_MINUTES="30"\n`);
+
+  // ── pyproject.toml + .python-version ─────────────────────────────────────────
+
+  const projectSlug = projectName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  zip.file('pyproject.toml', `[project]\nname = "${projectSlug}"\nversion = "0.1.0"\ndescription = ""\nrequires-python = ">=${pythonVersion}"\n\n[build-system]\nrequires = ["setuptools>=68"]\nbuild-backend = "setuptools.backends.legacy:build"\n`);
+  zip.file('.python-version', `${pythonVersion}\n`);
 
   // ── auth.py ───────────────────────────────────────────────────────────────────
 
@@ -401,7 +409,28 @@ async def lifespan(app: FastAPI):
     yield
 `;
 
-  const routerImports = models.map(m => `from app.routers import ${m.name.toLowerCase()}`).join('\n');
+  // Architecture-aware router imports
+  const routableModels = models.filter(m => (m.generate?.routes !== false) && (m.generate?.controller !== false));
+  let routerImports: string;
+  let includeRouters: string;
+  switch (architecture) {
+    case 'flat':
+      routerImports  = routableModels.map(m => `from app.routers import ${m.name.toLowerCase()}_router`).join('\n');
+      includeRouters = routableModels.map(m => `app.include_router(${m.name.toLowerCase()}_router)`).join('\n');
+      break;
+    case 'feature-based':
+      routerImports  = routableModels.map(m => `from app.features.${m.name.toLowerCase()}.router import router as ${m.name.toLowerCase()}_router`).join('\n');
+      includeRouters = routableModels.map(m => `app.include_router(${m.name.toLowerCase()}_router)`).join('\n');
+      break;
+    case 'domain':
+      routerImports  = routableModels.map(m => `from app.api.${m.name.toLowerCase()}.router import router as ${m.name.toLowerCase()}_router`).join('\n');
+      includeRouters = routableModels.map(m => `app.include_router(${m.name.toLowerCase()}_router)`).join('\n');
+      break;
+    default: // layered
+      routerImports  = routableModels.map(m => `from app.routers import ${m.name.toLowerCase()}`).join('\n');
+      includeRouters = routableModels.map(m => `app.include_router(${m.name.toLowerCase()}.router)`).join('\n');
+  }
+
   const wsImport = useWebsockets ? `from app.websocket import ws_router\n` : '';
   const bgTasksImport = useBgTasks ? `from app.tasks import send_welcome_email  # noqa: F401\n` : '';
 
@@ -430,7 +459,7 @@ app = FastAPI(title="${projectName} API"${swaggerArgs}, lifespan=lifespan)
 ${corsMiddleware}
 ${rateLimitSetup}
 ${oauthTokenEndpoint}
-${models.map(m => `app.include_router(${m.name.toLowerCase()}.router)`).join('\n')}
+${includeRouters}
 ${useWebsockets ? 'app.include_router(ws_router)' : ''}
 
 @app.get("/")
@@ -523,11 +552,47 @@ else:
     zip.file('alembic/README', 'Generic single-database configuration.');
   }
 
+  // ── Architecture init files ───────────────────────────────────────────────────
+
+  if (architecture === 'feature-based') {
+    zip.file('app/features/__init__.py', '');
+  } else if (architecture === 'domain') {
+    zip.file('app/domain/__init__.py', '');
+    zip.file('app/api/__init__.py', '');
+  } else {
+    zip.file('app/models/__init__.py', '');
+    zip.file('app/routers/__init__.py', '');
+  }
+
   // ── Per-model files ───────────────────────────────────────────────────────────
 
   for (const model of models) {
     const mLow = model.name.toLowerCase();
     const gen  = model.generate ?? {};
+
+    // Paths based on architecture
+    const modelFilePath = architecture === 'feature-based'
+      ? `app/features/${mLow}/models.py`
+      : architecture === 'domain'
+      ? `app/domain/${mLow}/entity.py`
+      : `app/models/${mLow}.py`;
+    const routerFilePath = architecture === 'feature-based'
+      ? `app/features/${mLow}/router.py`
+      : architecture === 'domain'
+      ? `app/api/${mLow}/router.py`
+      : `app/routers/${mLow}.py`;
+    const modelImportPath = architecture === 'feature-based'
+      ? `app.features.${mLow}.models`
+      : architecture === 'domain'
+      ? `app.domain.${mLow}.entity`
+      : `app.models.${mLow}`;
+
+    if (architecture === 'feature-based') {
+      zip.file(`app/features/${mLow}/__init__.py`, '');
+    } else if (architecture === 'domain') {
+      zip.file(`app/domain/${mLow}/__init__.py`, '');
+      zip.file(`app/api/${mLow}/__init__.py`, '');
+    }
 
     // Model file
     if (orm === 'beanie') {
@@ -538,7 +603,7 @@ else:
           : `    ${f.name}: ${pyType}`;
       }).join('\n');
 
-      zip.file(`app/models/${mLow}.py`, `from typing import Optional
+      zip.file(modelFilePath, `from typing import Optional
 from beanie import Document
 
 class ${model.name}(Document):
@@ -566,7 +631,7 @@ ${beanieFields}
         return `    ${f.name} = ${fieldClass.replace('(', `(${nullable}`)}`;
       }).join('\n');
 
-      zip.file(`app/models/${mLow}.py`, `from tortoise import fields, models
+      zip.file(modelFilePath, `from tortoise import fields, models
 
 class ${model.name}(models.Model):
     id = fields.IntField(pk=True)
@@ -610,7 +675,7 @@ ${model.migration?.timestamps ? `    created_at = fields.DatetimeField(auto_now_
       }).join('\n');
       const pyFieldsOptional = model.fields.map(f => `    ${f.name}: Optional[${toPythonType(f.type)}] = None`).join('\n');
 
-      zip.file(`app/models/${mLow}.py`, `from typing import Optional
+      zip.file(modelFilePath, `from typing import Optional
 from sqlalchemy import ${saImports}${model.migration?.timestamps ? ', DateTime' : ''}
 from sqlalchemy.sql import func
 from pydantic import BaseModel
@@ -648,7 +713,7 @@ ${pyFieldsOptional || '    pass'}
         return `    ${f.name}: ${pyType}${fieldCall}`;
       }).join('\n');
 
-      zip.file(`app/models/${mLow}.py`, `from typing import Optional
+      zip.file(modelFilePath, `from typing import Optional
 from datetime import datetime, date
 from uuid import UUID
 from sqlmodel import Field, SQLModel
@@ -682,9 +747,9 @@ ${model.fields.map(f => `    ${f.name}: Optional[${toPythonType(f.type)}] = None
             : `from app.auth import get_current_user`
           : '';
 
-        zip.file(`app/routers/${mLow}.py`, `from fastapi import APIRouter, HTTPException, Depends
+        zip.file(routerFilePath, `from fastapi import APIRouter, HTTPException, Depends
 from typing import List
-from app.models.${mLow} import ${model.name}
+from ${modelImportPath} import ${model.name}
 ${authImport}
 
 router = APIRouter(prefix="/${slugify(model.name)}", tags=["${mLow}"])
@@ -728,9 +793,9 @@ async def delete_${mLow}(item_id: int${authDep}):
           ? useApiKey ? `from app.auth import get_api_key` : `from app.auth import get_current_user`
           : '';
 
-        zip.file(`app/routers/${mLow}.py`, `from fastapi import APIRouter, HTTPException, Depends
+        zip.file(routerFilePath, `from fastapi import APIRouter, HTTPException, Depends
 from typing import List
-from app.models.${mLow} import ${model.name}
+from ${modelImportPath} import ${model.name}
 ${authImport}
 
 router = APIRouter(prefix="/${slugify(model.name)}", tags=["${mLow}"])
@@ -816,7 +881,7 @@ async def delete_${mLow}(item_id: str${authDep}):
           `from typing import List`,
           sessionImport,
           `from app.database import get_session`,
-          `from app.models.${mLow} import ${model.name}, ${model.name}Create, ${model.name}Read, ${model.name}Update`,
+          `from ${modelImportPath} import ${model.name}, ${model.name}Create, ${model.name}Read, ${model.name}Update`,
           authImport,
           bgTasksServiceImport,
           ``,
@@ -856,7 +921,7 @@ async def delete_${mLow}(item_id: str${authDep}):
           `        raise HTTPException(status_code=404, detail="${model.name} not found")`,
           `    ${deleteFn}`,
         ];
-        zip.file(`app/routers/${mLow}.py`, routerLines.join('\n'));
+        zip.file(routerFilePath, routerLines.join('\n'));
       }
     }
   }

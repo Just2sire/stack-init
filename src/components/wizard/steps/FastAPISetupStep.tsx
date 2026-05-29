@@ -2,11 +2,12 @@
 
 import { useWizardStore } from "@/stores/useWizardStore";
 import { SubStepPills } from "../SubStepPills";
-import { Terminal, Settings, Shield, Box, Globe, Zap, Wifi, Activity } from "lucide-react";
+import { Terminal, Settings, Shield, Box, Globe, Zap, Wifi, Activity, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const SUB_STEPS = [
-  { label: "Configuration" },
-  { label: "Features" },
+  { label: "Core Layout & Tooling" },
+  { label: "Middlewares & Features" },
 ];
 
 export function FastAPISetupStep() {
@@ -15,128 +16,276 @@ export function FastAPISetupStep() {
   const toggleFeature = (key: keyof typeof fastapiOptions) =>
     setFastAPIOptions({ [key]: !fastapiOptions[key] } as any);
 
+  const isBeanie = fastapiOptions.orm === 'beanie';
+
   const features = [
-    { key: 'migrations',       label: 'Alembic Migrations',  desc: 'Generate alembic.ini + env.py for DB migrations.', icon: <Box size={18} /> },
+    ...(!isBeanie ? [{ key: 'migrations', label: 'Alembic Migrations', desc: 'Generate alembic.ini + env.py for DB migrations.', icon: <Box size={18} /> }] : []),
     { key: 'async_mode',       label: 'Async Mode',           desc: 'Use async/await for handlers and DB sessions.',     icon: <Terminal size={18} /> },
     { key: 'cors',             label: 'CORS Middleware',       desc: 'Enable Cross-Origin Resource Sharing.',            icon: <Globe size={18} /> },
     { key: 'swagger',          label: 'Swagger / OpenAPI',     desc: 'Auto-generate API docs at /docs.',                 icon: <Settings size={18} /> },
     { key: 'rate_limiting',    label: 'Rate Limiting',         desc: 'SlowAPI rate limiter on all endpoints.',           icon: <Shield size={18} /> },
     { key: 'background_tasks', label: 'Background Tasks',      desc: 'Generate tasks.py with example BackgroundTasks.',  icon: <Zap size={18} /> },
     { key: 'websockets',       label: 'WebSockets',            desc: 'Add a WebSocket connection manager endpoint.',     icon: <Wifi size={18} /> },
+  ];
+
+  const pythonVersions = [
+    { value: "3.12", label: "Python 3.12", desc: "Latest version" },
+    { value: "3.11", label: "Python 3.11", desc: "Recommended stable" },
+    { value: "3.10", label: "Python 3.10", desc: "Legacy LTS support" },
+  ] as const;
+
+  const ormOptions = [
+    { value: "sqlmodel", label: "SQLModel", desc: "Pydantic v2 + SQLAlchemy" },
+    { value: "sqlalchemy", label: "SQLAlchemy", desc: "Raw ORM + Alembic" },
+    { value: "tortoise-orm", label: "Tortoise-ORM", desc: "Django-style async ORM" },
+    { value: "beanie", label: "Beanie (MongoDB)", desc: "Async MongoDB ODM via Motor" },
+  ] as const;
+
+  const handleOrmChange = (value: string) => {
+    const patch: Record<string, unknown> = { orm: value };
+    if (value === 'beanie') {
+      patch.migrations = false;
+      patch.async_mode = true;
+    }
+    setFastAPIOptions(patch as any);
+  };
+
+  const authOptions = [
+    { value: "none", label: "No Auth", desc: "Public access only" },
+    { value: "jwt", label: "JWT Token", desc: "Jose + PyJWT tokens" },
+    { value: "oauth2", label: "OAuth2 Bearer", desc: "Password flow" },
+    { value: "api-key", label: "API Key Header", desc: "X-API-Key token check" },
+  ] as const;
+
+  const architectures = [
+    { value: "flat", label: "Flat (Single folder)", desc: "Simple one-file API" },
+    { value: "layered", label: "Layered (N-Tier)", desc: "Controllers, services, models" },
+    { value: "feature-based", label: "Feature-based", desc: "Grouped by business area" },
+    { value: "domain", label: "Domain-driven (DDD)", desc: "Highly modular context boundaries" },
+  ] as const;
+
+  const taskRunners = [
+    { value: "makefile", label: "GNU Makefile", desc: "Command shortcuts" },
+    { value: "bash", label: "Bash Scripts", desc: "Utility bash files" },
+    { value: "none", label: "None", desc: "No default runner" },
   ] as const;
 
   return (
-    <div className="space-y-6">
+    <div className="si-step-panel">
       <div>
-        <h2 className="si-title">FastAPI Configuration</h2>
-        <p className="si-subtitle mt-2">Fine-tune your Python backend settings.</p>
+        <span className="si-section-label">Backend</span>
+        <h2 className="si-title" style={{ marginBottom: 4 }}>FastAPI Configuration</h2>
+        <p className="si-subtitle">Fine-tune your high-performance Python ASGI backend settings.</p>
       </div>
 
-      <SubStepPills steps={SUB_STEPS} current={currentSubStep} onSelect={setCurrentSubStep} />
+      <div style={{ marginTop: 24, marginBottom: 12 }}>
+        <SubStepPills steps={SUB_STEPS} current={currentSubStep} onSelect={setCurrentSubStep} />
+      </div>
 
       {/* Sub-step 0 — Core configuration */}
       {currentSubStep === 0 && (
-        <div className="space-y-8">
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <div className="si-section-label">Python Version</div>
-              <select
-                value={fastapiOptions.python_version}
-                onChange={(e) => setFastAPIOptions({ python_version: e.target.value as any })}
-                className="si-select max-w-[200px]"
-              >
-                <option value="3.12">Python 3.12</option>
-                <option value="3.11">Python 3.11</option>
-                <option value="3.10">Python 3.10</option>
-              </select>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 24, maxWidth: 840 }}>
+          
+          {/* Python Version Selection */}
+          <div>
+            <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>Python Runtime Version</span>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+              {pythonVersions.map((v) => {
+                const isSelected = fastapiOptions.python_version === v.value;
+                return (
+                  <button
+                    key={v.value}
+                    onClick={() => setFastAPIOptions({ python_version: v.value as any })}
+                    className={cn("si-toggle-card text-left items-center w-full transition-all duration-200", isSelected && "on")}
+                    style={{
+                      background: isSelected ? "var(--gold-subtle)" : "var(--bg3)",
+                      borderColor: isSelected ? "var(--gold)" : "var(--border-subtle)",
+                      padding: "10px 14px",
+                    }}
+                  >
+                    <div className={cn("si-toggle shrink-0 mr-3", isSelected && "on")}>
+                      <div className="si-toggle-knob" />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: isSelected ? "var(--gold)" : "var(--text)" }}>{v.label}</div>
+                      <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 1 }}>{v.desc}</div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            <div>
-              <div className="si-section-label">Authentication</div>
-              <select
-                value={fastapiOptions.auth}
-                onChange={(e) => setFastAPIOptions({ auth: e.target.value as any })}
-                className="si-select max-w-[220px]"
-              >
-                <option value="none">None</option>
-                <option value="jwt">JWT (python-jose)</option>
-                <option value="oauth2">OAuth2 Password Bearer</option>
-                <option value="api-key">API Key (Header)</option>
-              </select>
+          {/* ORM / Database Driver Selection */}
+          <div>
+            <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>ORM & Database Driver</span>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+              {ormOptions.map((v) => {
+                const isSelected = fastapiOptions.orm === v.value;
+                return (
+                  <button
+                    key={v.value}
+                    onClick={() => handleOrmChange(v.value)}
+                    className={cn("si-toggle-card text-left items-center w-full transition-all duration-200", isSelected && "on")}
+                    style={{
+                      background: isSelected ? "var(--gold-subtle)" : "var(--bg3)",
+                      borderColor: isSelected ? "var(--gold)" : "var(--border-subtle)",
+                      padding: "12px 16px",
+                    }}
+                  >
+                    <div className={cn("si-toggle shrink-0 mr-3", isSelected && "on")}>
+                      <div className="si-toggle-knob" />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: isSelected ? "var(--gold)" : "var(--text)" }}>{v.label}</div>
+                      <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 1 }}>{v.desc}</div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-          </section>
+          </div>
 
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <div className="si-section-label">Architecture</div>
-              <select
-                value={fastapiOptions.architecture}
-                onChange={(e) => setFastAPIOptions({ architecture: e.target.value as any })}
-                className="si-select max-w-[200px]"
-              >
-                <option value="flat">Flat</option>
-                <option value="layered">Layered</option>
-                <option value="feature-based">Feature-based</option>
-                <option value="domain">Domain-driven</option>
-              </select>
+          {/* Authentication Selection */}
+          <div>
+            <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>Security & Authentication</span>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+              {authOptions.map((v) => {
+                const isSelected = fastapiOptions.auth === v.value;
+                return (
+                  <button
+                    key={v.value}
+                    onClick={() => setFastAPIOptions({ auth: v.value as any })}
+                    className={cn("si-toggle-card text-left items-center w-full transition-all duration-200", isSelected && "on")}
+                    style={{
+                      background: isSelected ? "var(--gold-subtle)" : "var(--bg3)",
+                      borderColor: isSelected ? "var(--gold)" : "var(--border-subtle)",
+                      padding: "12px 16px",
+                    }}
+                  >
+                    <div className={cn("si-toggle shrink-0 mr-3", isSelected && "on")}>
+                      <div className="si-toggle-knob" />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: isSelected ? "var(--gold)" : "var(--text)" }}>{v.label}</div>
+                      <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 1 }}>{v.desc}</div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            <div>
-              <div className="si-section-label">Task Runner</div>
-              <select
-                value={fastapiOptions.runner}
-                onChange={(e) => setFastAPIOptions({ runner: e.target.value as any })}
-                className="si-select max-w-[200px]"
-              >
-                <option value="makefile">Makefile</option>
-                <option value="bash">Bash scripts</option>
-                <option value="none">None</option>
-              </select>
+          {/* Architecture Layout Selection */}
+          <div>
+            <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>Architecture Layout</span>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+              {architectures.map((v) => {
+                const isSelected = fastapiOptions.architecture === v.value;
+                return (
+                  <button
+                    key={v.value}
+                    onClick={() => setFastAPIOptions({ architecture: v.value as any })}
+                    className={cn("si-toggle-card text-left items-center w-full transition-all duration-200", isSelected && "on")}
+                    style={{
+                      background: isSelected ? "var(--gold-subtle)" : "var(--bg3)",
+                      borderColor: isSelected ? "var(--gold)" : "var(--border-subtle)",
+                      padding: "12px 16px",
+                    }}
+                  >
+                    <div className={cn("si-toggle shrink-0 mr-3", isSelected && "on")}>
+                      <div className="si-toggle-knob" />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: isSelected ? "var(--gold)" : "var(--text)" }}>{v.label}</div>
+                      <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 1 }}>{v.desc}</div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-          </section>
+          </div>
+
+          {/* Task Runner Selection */}
+          <div>
+            <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>Task Runner Automation</span>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+              {taskRunners.map((v) => {
+                const isSelected = fastapiOptions.runner === v.value;
+                return (
+                  <button
+                    key={v.value}
+                    onClick={() => setFastAPIOptions({ runner: v.value as any })}
+                    className={cn("si-toggle-card text-left items-center w-full transition-all duration-200", isSelected && "on")}
+                    style={{
+                      background: isSelected ? "var(--gold-subtle)" : "var(--bg3)",
+                      borderColor: isSelected ? "var(--gold)" : "var(--border-subtle)",
+                      padding: "10px 14px",
+                    }}
+                  >
+                    <div className={cn("si-toggle shrink-0 mr-3", isSelected && "on")}>
+                      <div className="si-toggle-knob" />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: isSelected ? "var(--gold)" : "var(--text)" }}>{v.label}</div>
+                      <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 1 }}>{v.desc}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
         </div>
       )}
 
       {/* Sub-step 1 — Features & Tooling */}
       {currentSubStep === 1 && (
-        <div className="space-y-6">
-          <section>
-            <div className="si-section-label">Features & Tooling</div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {features.map(({ key, label, desc, icon }) => {
-                const isOn = !!(fastapiOptions as any)[key];
-                return (
-                  <div
-                    key={key}
-                    onClick={() => toggleFeature(key)}
-                    className={["si-toggle-card items-center", isOn ? "on" : ""].join(" ")}
-                  >
-                    <div className={["si-toggle", isOn ? "on" : ""].join(" ")}>
-                      <div className="si-toggle-knob" />
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className={isOn ? "text-gold" : "text-text3"}>{icon}</div>
-                      <div>
-                        <div className="font-bold text-sm">{label}</div>
-                        <p className="text-[11px] text-text3">{desc}</p>
-                      </div>
+        <div style={{ maxWidth: 840 }} className="space-y-6">
+          <span className="si-section-label" style={{ display: "block" }}>Middlewares & Middleware Services</span>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {features.map(({ key, label, desc, icon }) => {
+              const isOn = !!(fastapiOptions as any)[key];
+              return (
+                <button
+                  key={key}
+                  onClick={() => toggleFeature(key as keyof typeof fastapiOptions)}
+                  className={cn("si-toggle-card text-left w-full transition-all duration-200", isOn && "on")}
+                  style={{
+                    background: isOn ? "var(--gold-subtle)" : "var(--bg3)",
+                    borderColor: isOn ? "var(--gold)" : "var(--border-subtle)",
+                    display: "flex",
+                    alignItems: "center"
+                  }}
+                >
+                  <div className={cn("si-toggle shrink-0 mr-4", isOn && "on")}>
+                    <div className="si-toggle-knob" />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className={isOn ? "text-gold" : "text-text3"}>{icon}</div>
+                    <div>
+                      <div className="font-bold text-sm" style={{ color: isOn ? "var(--gold)" : "var(--text)" }}>{label}</div>
+                      <p className="text-[11px] text-text3 mt-0.5">{desc}</p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </section>
+                  {isOn && (
+                    <div className="w-4 h-4 rounded-full bg-gold flex items-center justify-center shrink-0 ml-auto">
+                      <Check size={10} strokeWidth={3} className="text-bg" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
           <div className="si-info-card">
             <div className="flex gap-3">
               <Activity className="text-gold shrink-0" size={20} />
               <div>
-                <p className="text-xs font-bold text-gold uppercase tracking-wider mb-1">Standard Structure</p>
-                <p className="text-sm text-text2">
-                  We follow official FastAPI recommendations for production-ready project layouts with{" "}
-                  <code className="text-gold">app/models/</code>,{" "}
-                  <code className="text-gold">app/routers/</code> and{" "}
-                  <code className="text-gold">app/database.py</code>.
+                <p className="text-xs font-bold text-gold uppercase tracking-wider mb-1">Production-Ready Python Boilerplate</p>
+                <p className="text-sm text-text2" style={{ lineHeight: 1.5 }}>
+                  We follow official FastAPI production standards. All modules, models, dependency injections, and async DB handlers are generated inside a standard <code className="text-gold">app/</code> structure.
                 </p>
               </div>
             </div>

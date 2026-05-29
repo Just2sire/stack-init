@@ -17,6 +17,7 @@ function toModelName(tableName: string): string {
   return singular.charAt(0).toUpperCase() + singular.slice(1);
 }
 
+// Legacy filename-only scanner (fallback if not logged in)
 async function scanGitBranchRepo(url: string): Promise<string[]> {
   const match = url.match(/github\.com\/([^/\s]+)\/([^/\s]+)/);
   if (!match) throw new Error('Invalid GitHub URL');
@@ -37,29 +38,17 @@ async function scanGitBranchRepo(url: string): Promise<string[]> {
   for (const file of tree) {
     const p = file.path;
 
-    // Laravel migrations: create_users_table.php
     const laravelMigration = p.match(/create_(\w+)_table\.php$/i);
-    if (laravelMigration) {
-      modelNames.add(toModelName(laravelMigration[1]));
-    }
+    if (laravelMigration) modelNames.add(toModelName(laravelMigration[1]));
 
-    // Django/Alembic migrations: similar pattern
     const alembicMigration = p.match(/create[_-](\w+)\.py$/i);
-    if (alembicMigration) {
-      modelNames.add(toModelName(alembicMigration[1]));
-    }
+    if (alembicMigration) modelNames.add(toModelName(alembicMigration[1]));
 
-    // Model files: app/Models/User.php, src/models/User.ts, src/entities/User.ts
     const modelFile = p.match(/(?:models?|entities?)\/([A-Z][A-Za-z]+)\.(php|ts|js|py)$/);
-    if (modelFile) {
-      modelNames.add(modelFile[1]);
-    }
+    if (modelFile) modelNames.add(modelFile[1]);
 
-    // TypeORM entities: src/entities/User.entity.ts
     const entityFile = p.match(/([A-Z][A-Za-z]+)\.entity\.(ts|js)$/);
-    if (entityFile) {
-      modelNames.add(entityFile[1]);
-    }
+    if (entityFile) modelNames.add(entityFile[1]);
   }
 
   return Array.from(modelNames).filter(n => n.length > 1);
@@ -161,20 +150,45 @@ export function ImportModal({ onClose }: ImportModalProps) {
     }
   };
 
+  const [githubFullConfig, setGithubFullConfig] = useState<ProjectConfig | null>(null);
+  const [githubFilesAnalyzed, setGithubFilesAnalyzed] = useState<number>(0);
+
   const handleScanGitBranch = async () => {
     if (!githubUrl.trim()) return;
     setIsProcessing(true);
     setError(null);
     setGitBranchDetected(null);
     setGitBranchSelected(new Set());
+    setGithubFullConfig(null);
 
     try {
-      const names = await scanGitBranchRepo(githubUrl.trim());
-      if (names.length === 0) {
-        setError('No model files or migration files found in this repository.');
-      } else {
-        setGitBranchDetected(names);
+      // Try AI-powered full analysis first
+      const aiRes = await fetch('/api/analyze-github', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: githubUrl.trim() }),
+      });
+
+      if (aiRes.ok) {
+        const data = await aiRes.json();
+        setGithubFullConfig(data.config as ProjectConfig);
+        setGithubFilesAnalyzed(data.filesAnalyzed ?? 0);
+        // Also set model names for display
+        const names = (data.config?.models ?? []).map((m: { name: string }) => m.name);
+        setGitBranchDetected(names.length > 0 ? names : ['(no models detected)']);
         setGitBranchSelected(new Set(names));
+      } else if (aiRes.status === 401) {
+        // Not logged in — fall back to filename scan
+        const names = await scanGitBranchRepo(githubUrl.trim());
+        if (names.length === 0) {
+          setError('No model files or migration files found in this repository.');
+        } else {
+          setGitBranchDetected(names);
+          setGitBranchSelected(new Set(names));
+        }
+      } else {
+        const data = await aiRes.json();
+        setError(data.error ?? 'Analysis failed. Try again.');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while scanning the repository.');
@@ -184,6 +198,12 @@ export function ImportModal({ onClose }: ImportModalProps) {
   };
 
   const handleGitBranchImport = () => {
+    if (githubFullConfig) {
+      // Full AI config — load everything into wizard
+      importConfig(githubFullConfig);
+      onClose();
+      return;
+    }
     if (!githubDetected || githubSelected.size === 0) return;
     const toImport = githubDetected.filter(n => githubSelected.has(n));
     toImport.forEach(name => addModel(makeDefaultModel(name)));
@@ -347,16 +367,24 @@ export function ImportModal({ onClose }: ImportModalProps) {
 
               {!githubDetected && !isProcessing && (
                 <div style={{ fontSize: 11, color: 'var(--text3)', padding: '8px 12px', background: 'var(--bg4)', borderRadius: 8 }}>
-                  <span style={{ color: 'var(--gold)', fontWeight: 700 }}>What gets detected: </span>
-                  Laravel migrations (create_*_table.php) · Django/Alembic migrations · model files (Models/, entities/) · TypeORM .entity.ts files
+                  <span style={{ color: 'var(--gold)', fontWeight: 700 }}>✨ AI-powered analysis: </span>
+                  reads your actual source files (migrations, models, prisma schema, package.json) and extracts the full configuration — stack, models with fields, and services.
+                  <span className="block mt-1">Login required for full analysis.</span>
                 </div>
               )}
 
               {githubDetected && githubDetected.length > 0 && (
                 <div className="space-y-3">
+                  {githubFullConfig && (
+                    <div style={{ fontSize: 11, color: 'var(--gold)', padding: '6px 12px', background: 'var(--gold-subtle)', borderRadius: 8, border: '1px solid var(--gold-border)' }}>
+                      ✨ Full AI analysis complete — {githubFilesAnalyzed} files read · stack: <strong>{githubFullConfig.stack}</strong>
+                      {(githubFullConfig.services ?? []).length > 0 && ` · services: ${(githubFullConfig.services ?? []).join(', ')}`}
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-text3">
-                      {githubDetected.length} model{githubDetected.length > 1 ? 's' : ''} detected — select which to import
+                      {githubDetected.length} model{githubDetected.length > 1 ? 's' : ''} detected
+                      {githubFullConfig ? ' — importing full configuration' : ' — select which to import'}
                     </span>
                     <div className="flex gap-3 text-[10px]">
                       <button
@@ -501,12 +529,15 @@ export function ImportModal({ onClose }: ImportModalProps) {
           <div className="p-6 border-t border-white/5 bg-bg2 flex justify-end gap-3">
             <button onClick={onClose} className="si-btn-secondary px-6">Cancel</button>
             <button
-              disabled={githubSelected.size === 0}
+              disabled={githubFullConfig ? false : githubSelected.size === 0}
               onClick={handleGitBranchImport}
               className="si-btn-primary px-8 gap-2"
             >
               <GitBranch size={16} />
-              Import {githubSelected.size > 0 ? githubSelected.size : ''} Model{githubSelected.size !== 1 ? 's' : ''}
+              {githubFullConfig
+                ? '✨ Load Full Config'
+                : `Import ${githubSelected.size > 0 ? githubSelected.size : ''} Model${githubSelected.size !== 1 ? 's' : ''}`
+              }
             </button>
           </div>
         )}

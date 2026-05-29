@@ -5,8 +5,10 @@ import type {
   LaravelOptions, ReactOptions, ModelPages,
   LaravelGenerateOptions, ProjectConfig,
   ExpressConfig, NestConfig, NextjsOptions,
-  FastAPIConfig
+  FastAPIConfig, ServiceId, LaravelPluginId,
 } from '../types/schema';
+
+export type { LaravelPluginId };
 
 // Identifiants des étapes du wizard
 export type StepId =
@@ -26,20 +28,28 @@ export type StepId =
   | 'integration'    // Pour les combos
   | 'output';
 
-export type ServiceId = 'auth' | 'file-upload' | 'email' | 'cache' | 'websockets' | 'queue';
+export type { ServiceId };
 
 // Steps that have internal sub-steps; value = total sub-step count.
 export const SUB_STEP_COUNTS: Partial<Record<StepId, number>> = {
   'react-setup':   2,
   'fastapi-setup': 2,
+  'nest-setup':    2,
+  'laravel-setup': 3,
 };
 
 const DEFAULT_LARAVEL_OPTIONS: LaravelOptions = {
   pattern: 'api-only',
   auth: 'sanctum',
-  php_version: '8.2',
-  laravel_version: '11',
+  php_version: '8.4',
+  laravel_version: '12',
   db_engine: 'mysql',
+  runner: 'makefile',
+  use_strict_types: true,
+  use_readonly: false,
+  use_enum_backed: true,
+  route_prefix: 'api',
+  use_redis: false,
 };
 
 const DEFAULT_REACT_OPTIONS: ReactOptions = {
@@ -47,22 +57,24 @@ const DEFAULT_REACT_OPTIONS: ReactOptions = {
   form_lib: 'react-hook-form',
   ui_lib: 'shadcn',
   http_lib: 'axios',
-  router: 'none',
+  router: 'react-router-v6',
   css: 'tailwind',
 };
 
 const DEFAULT_EXPRESS_OPTIONS: ExpressConfig = {
   architecture: 'layered',
-  database: 'prisma',
+  orm: 'prisma',
   db_engine: 'postgresql',
   middlewares: ['cors', 'morgan'] as any,
 };
 
 const DEFAULT_NEST_OPTIONS: NestConfig = {
   architecture: 'modular',
-  database: 'prisma',
+  orm: 'typeorm',
   db_engine: 'postgresql',
   swagger: true,
+  validation: true,
+  serialization: true,
 };
 
 const DEFAULT_FASTAPI_OPTIONS: FastAPIConfig = {
@@ -104,6 +116,7 @@ interface WizardStore {
   nextjsUsage: 'frontend-only' | 'full-stack' | null;
   models: Model[];
   enabledServices: ServiceId[];
+  laravelPlugins: LaravelPluginId[];
 
   // Options par stack
   laravelOptions: LaravelOptions;
@@ -132,6 +145,7 @@ interface WizardStore {
   setBackendUrl: (url: string) => void;
   toggleService: (id: ServiceId) => void;
   addEnabledServices: (services: string[]) => void;
+  toggleLaravelPlugin: (id: LaravelPluginId) => void;
 
   // Actions modèles
   addModel: (model: Model) => void;
@@ -179,7 +193,7 @@ function computeSteps(stack: Stack | null, nextjsUsage: string | null): StepId[]
       return [...base, 'usage', 'database', 'architecture', 'models', 'relations', 'react-setup', 'output'];
 
     case 'laravel':
-      return [...base, 'models', 'relations', 'laravel-setup', 'output'];
+      return [...base, 'models', 'relations', 'laravel-setup', 'services', 'output'];
 
     case 'express':
       return [...base, 'architecture', 'database', 'services', 'models', 'relations', 'routes', 'middlewares', 'output'];
@@ -195,7 +209,7 @@ function computeSteps(stack: Stack | null, nextjsUsage: string | null): StepId[]
 
     case 'laravel+react':
     case 'laravel+nextjs':
-      return [...base, 'models', 'relations', 'laravel-setup', 'react-setup', 'output'];
+      return [...base, 'models', 'relations', 'laravel-setup', 'services', 'react-setup', 'output'];
 
     case 'express+react':
       return [...base, 'architecture', 'database', 'services', 'models', 'relations', 'middlewares', 'react-setup', 'integration', 'output'];
@@ -213,6 +227,9 @@ function computeSteps(stack: Stack | null, nextjsUsage: string | null): StepId[]
     case 't3':
       return [...base, 'database', 'models', 'relations', 'output'];
 
+    case 'django':
+      return [...base, 'models', 'relations', 'output'];
+
     default:
       return [...base, 'output'];
   }
@@ -227,6 +244,7 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
   nextjsUsage: null,
   models: [],
   enabledServices: [],
+  laravelPlugins: [],
   laravelOptions: { ...DEFAULT_LARAVEL_OPTIONS },
   reactOptions: { ...DEFAULT_REACT_OPTIONS },
   expressOptions: { ...DEFAULT_EXPRESS_OPTIONS },
@@ -262,7 +280,9 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
     }
     const idx = steps.indexOf(currentStepId);
     if (idx > 0) {
-      set({ currentStepId: steps[idx - 1], currentSubStep: 0 });
+      const prevStepId = steps[idx - 1];
+      const prevTotal = SUB_STEP_COUNTS[prevStepId] ?? 1;
+      set({ currentStepId: prevStepId, currentSubStep: prevTotal - 1 });
     }
   },
 
@@ -310,6 +330,12 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
 
   addEnabledServices: (services) => set((s) => ({
     enabledServices: [...new Set([...s.enabledServices, ...services as ServiceId[]])] as ServiceId[],
+  })),
+
+  toggleLaravelPlugin: (id) => set((s) => ({
+    laravelPlugins: s.laravelPlugins.includes(id)
+      ? s.laravelPlugins.filter(p => p !== id)
+      : [...s.laravelPlugins, id],
   })),
 
   toggleService: (id) => set((s) => {
@@ -439,10 +465,11 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
   },
 
   getConfig: () => {
-    const { stack, projectName, models, nextjsUsage, laravelOptions, reactOptions, expressOptions, nestOptions, fastapiOptions, backendUrl } = get();
+    const { stack, projectName, models, nextjsUsage, laravelOptions, reactOptions, expressOptions, nestOptions, fastapiOptions, backendUrl, enabledServices, laravelPlugins } = get();
     const s = stack!;
 
-    const hasFrontend = ['react', 'nextjs', 'express+react', 'nestjs+react', 'fastapi+react', 'fastapi+nextjs', 'laravel+react', 'laravel+nextjs', 'mern', 'pern', 'mevn', 'mean', 't3'].includes(s);
+    const hasReact    = ['react', 'nextjs', 'express+react', 'nestjs+react', 'fastapi+react', 'fastapi+nextjs', 'laravel+react', 'laravel+nextjs', 'mern', 'pern', 't3'].includes(s);
+    const hasVue      = s === 'mevn';
     const hasExpress  = ['express', 'express+react', 'mern', 'pern', 'mevn', 'mean'].includes(s);
     const hasNest     = ['nestjs', 'nestjs+react'].includes(s);
     const hasFastAPI  = ['fastapi', 'fastapi+react', 'fastapi+nextjs'].includes(s);
@@ -451,28 +478,33 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
       name: projectName,
       stack: s,
       models,
-      ...(backendUrl                     && { backendUrl }),
+      ...(enabledServices.length > 0                    && { services: enabledServices }),
+      ...(laravelPlugins.length > 0 && s.includes('laravel') && { laravel_plugins: laravelPlugins }),
+      ...(backendUrl                                    && { backendUrl }),
       ...(nextjsUsage                  && { nextjsUsage }),
       ...(s.includes('laravel')        && { laravel: laravelOptions }),
-      ...(hasFrontend                  && { react: reactOptions }),
+      ...(hasReact                     && { react: reactOptions }),
+      ...(hasVue                       && { vue: { ui_lib: 'none', state_lib: 'pinia', router: 'vue-router', css: 'none' } }),
       ...(hasExpress                   && { express: expressOptions }),
-      ...(hasNest                      && { nest: nestOptions }),
+      ...(hasNest                      && { nestjs: nestOptions }),
       ...(hasFastAPI                   && { fastapi: fastapiOptions }),
     } as ProjectConfig;
   },
 
   importConfig: (config) => set((s) => ({
-    projectName:    config.name,
-    stack:          config.stack,
-    nextjsUsage:    config.nextjsUsage || s.nextjsUsage,
-    models:         config.models,
-    laravelOptions: config.laravel || s.laravelOptions,
-    reactOptions:   config.react || s.reactOptions,
-    expressOptions: config.express || s.expressOptions,
-    nestOptions:    config.nest || s.nestOptions,
-    fastapiOptions: config.fastapi || s.fastapiOptions,
-    backendUrl:     config.backendUrl || '',
-    steps:          computeSteps(config.stack, config.nextjsUsage || null),
+    projectName:      config.name,
+    stack:            config.stack,
+    nextjsUsage:      config.nextjsUsage || s.nextjsUsage,
+    models:           config.models,
+    enabledServices:  config.services ?? s.enabledServices,
+    laravelPlugins:   config.laravel_plugins ?? s.laravelPlugins,
+    laravelOptions:   config.laravel || s.laravelOptions,
+    reactOptions:     config.react || s.reactOptions,
+    expressOptions:   config.express || s.expressOptions,
+    nestOptions:      config.nestjs || s.nestOptions,
+    fastapiOptions:   config.fastapi || s.fastapiOptions,
+    backendUrl:       config.backendUrl || '',
+    steps:            computeSteps(config.stack, config.nextjsUsage || null),
   })),
 
   reset: () => set({
@@ -483,6 +515,7 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
     nextjsUsage: null,
     models: [],
     enabledServices: [],
+    laravelPlugins: [],
     laravelOptions: { ...DEFAULT_LARAVEL_OPTIONS },
     reactOptions: { ...DEFAULT_REACT_OPTIONS },
     expressOptions: { ...DEFAULT_EXPRESS_OPTIONS },

@@ -2,6 +2,7 @@
 
 import { useWizardStore } from "@/stores/useWizardStore";
 import { Database, Server, ShieldCheck } from "lucide-react";
+import { AIAssistant } from "@/components/wizard/AIAssistant";
 
 export function DatabaseStep() {
   const { stack, expressOptions, setExpressOptions, nestOptions, setNestOptions, fastapiOptions, setFastAPIOptions } = useWizardStore();
@@ -33,13 +34,13 @@ export function DatabaseStep() {
     { id: 'mongodb',    title: 'MongoDB',    icon: <img src="/icons/mongodb.svg"     alt="MongoDB"    className="w-6 h-6" /> },
   ];
 
-  const currentOrm    = isFastAPI ? fastapiOptions.orm       : (isExpress ? expressOptions.database : nestOptions.database);
+  const currentOrm    = isFastAPI ? fastapiOptions.orm       : (isExpress ? expressOptions.orm : nestOptions.orm);
   const currentEngine = isFastAPI ? fastapiOptions.db_engine : (isExpress ? expressOptions.db_engine : nestOptions.db_engine);
 
   const setOrm = (id: string) => {
     if (isFastAPI)      setFastAPIOptions({ orm: id as any });
-    else if (isExpress) setExpressOptions({ database: id as any });
-    else                setNestOptions({ database: id as any });
+    else if (isExpress) setExpressOptions({ orm: id as any });
+    else                setNestOptions({ orm: id as any });
   };
 
   const setEngine = (id: string) => {
@@ -122,6 +123,8 @@ export function DatabaseStep() {
           </div>
         </div>
       </div>
+
+      <AIAssistant step="database" placeholder='Which ORM should I use? E.g. "I need full type safety and want to avoid raw SQL"' />
     </div>
   );
 }

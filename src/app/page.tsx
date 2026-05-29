@@ -1,301 +1,504 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import React, { useState, useEffect, useRef } from "react";
 import {
-  ArrowRight, Layers, Database, Zap, FileCode, Globe,
+  Layers, Database, Zap, FileCode, Globe,
   Sparkles, Table, GitBranch, Package, BookOpen, Download,
-  Code2, Settings2, Check, Blocks,
+  Code2, Settings2, Check, Blocks, ChevronRight, Folder,
+  FolderOpen, Terminal, Play, Cpu, Eye, HelpCircle
 } from "lucide-react";
+import { NavAuthButton } from "@/components/auth/NavAuthButton";
+import { HeroIllustration } from "@/components/landing/HeroIllustration";
 
+/* ─── Static Mock Data for Interactive Stacks ───────────────────────── */
 
-/* ─── Static data ─────────────────────────────────────────────────── */
+interface FileNode {
+  name: string;
+  isFolder: boolean;
+  children?: FileNode[];
+  contentKey?: string;
+}
 
-const STATS = [
-  { value: "6+", label: "Frameworks" },
-  { value: "4", label: "Import modes" },
-  { value: "0", label: "Signup required" },
-  { value: "~2 min", label: "To a full project" },
-];
+const STACKS_DATA: Record<string, {
+  name: string;
+  badge: string;
+  color: string;
+  icon: string;
+  desc: string;
+  checklist: string[];
+  files: FileNode[];
+  codeSnippets: Record<string, string>;
+}> = {
+  nestjs: {
+    name: "NestJS",
+    badge: "Node.js",
+    color: "#ea2845",
+    icon: "/icons/nestjs.svg",
+    desc: "Modular, decorator-based server architecture for enterprise scalable backends.",
+    checklist: ["Decorator Controllers", "Service Injectables", "DTO Validations", "TypeORM Schema"],
+    files: [
+      {
+        name: "src",
+        isFolder: true,
+        children: [
+          {
+            name: "controllers",
+            isFolder: true,
+            children: [{ name: "user.controller.ts", isFolder: false, contentKey: "controller" }]
+          },
+          {
+            name: "services",
+            isFolder: true,
+            children: [{ name: "user.service.ts", isFolder: false, contentKey: "service" }]
+          },
+          { name: "app.module.ts", isFolder: false, contentKey: "module" }
+        ]
+      },
+      { name: "package.json", isFolder: false, contentKey: "pkg" }
+    ],
+    codeSnippets: {
+      controller: `import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';\nimport { UserService } from './user.service';\nimport { CreateUserDto } from './dto/create-user.dto';\nimport { JwtAuthGuard } from '../auth/jwt-auth.guard';\n\n@Controller('users')\nexport class UserController {\n  constructor(private readonly userService: UserService) {}\n\n  @Post()\n  create(@Body() createUserDto: CreateUserDto) {\n    return this.userService.create(createUserDto);\n  }\n\n  @Get()\n  @UseGuards(JwtAuthGuard)\n  findAll() {\n    return this.userService.findAll();\n  }\n}`,
+      service: `import { Injectable, NotFoundException } from '@nestjs/common';\nimport { InjectRepository } from '@nestjs/typeorm';\nimport { Repository } from 'typeorm';\nimport { User } from './entities/user.entity';\n\n@Injectable()\nexport class UserService {\n  constructor(\n    @InjectRepository(User)\n    private readonly userRepository: Repository<User>,\n  ) {}\n\n  async findAll(): Promise<User[]> {\n    return this.userRepository.find();\n  }\n}`,
+      module: `import { Module } from '@nestjs/common';\nimport { TypeOrmModule } from '@nestjs/typeorm';\nimport { UserController } from './controllers/user.controller';\nimport { UserService } from './services/user.service';\nimport { User } from './entities/user.entity';\n\n@Module({\n  imports: [TypeOrmModule.forFeature([User])],\n  controllers: [UserController],\n  providers: [UserService],\n})\nexport class UserModule {}`,
+      pkg: `{\n  "name": "nest-stack-init",\n  "version": "1.0.0",\n  "dependencies": {\n    "@nestjs/common": "^10.0.0",\n    "@nestjs/core": "^10.0.0",\n    "@nestjs/typeorm": "^10.0.0",\n    "typeorm": "^0.3.17",\n    "class-validator": "^0.14.0"\n  }\n}`
+    }
+  },
+  laravel: {
+    name: "Laravel",
+    badge: "PHP",
+    color: "#ff4d6d",
+    icon: "/icons/laravel.svg",
+    desc: "The PHP framework for Web Artisans. Elegant MVC scaffolding with migrations & Eloquent models.",
+    checklist: ["Eloquent Relationships", "API Resource Controllers", "Database Migrations", "Request Validations"],
+    files: [
+      {
+        name: "app",
+        isFolder: true,
+        children: [
+          {
+            name: "Http",
+            isFolder: true,
+            children: [
+              {
+                name: "Controllers",
+                isFolder: true,
+                children: [{ name: "UserController.php", isFolder: false, contentKey: "controller" }]
+              }
+            ]
+          },
+          {
+            name: "Models",
+            isFolder: true,
+            children: [{ name: "User.php", isFolder: false, contentKey: "model" }]
+          }
+        ]
+      },
+      {
+        name: "database",
+        isFolder: true,
+        children: [
+          {
+            name: "migrations",
+            isFolder: true,
+            children: [{ name: "2026_01_01_create_users_table.php", isFolder: false, contentKey: "migration" }]
+          }
+        ]
+      }
+    ],
+    codeSnippets: {
+      controller: `<?php\n\nnamespace App\\Http\\Controllers;\n\nuse App\\Models\\User;\nuse Illuminate\\Http\\Request;\n\nclass UserController extends Controller\n{\n    public function index()\n    {\n        return User::with('posts')->paginate(15);\n    }\n\n    public function store(Request $request)\n    {\n        $validated = $request->validate([\n            'name' => 'required|string|max:255',\n            'email' => 'required|email|unique:users',\n        ]);\n\n        return User::create($validated);\n    }\n}`,
+      model: `<?php\n\nnamespace App\\Models;\n\nuse Illuminate\\Database\\Eloquent\\Model;\nuse Illuminate\\Database\\Eloquent\\Relations\\HasMany;\n\nclass User extends Model\n{\n    protected $fillable = ['name', 'email'];\n\n    public function posts(): HasMany\n    {\n        return $this->hasMany(Post::class);\n    }\n}`,
+      migration: `<?php\n\nuse Illuminate\\Database\\Migrations\\Migration;\nuse Illuminate\\Database\\Schema\\Blueprint;\nuse Illuminate\\Support\\Facades\\Schema;\n\nreturn new class extends Migration {\n    public function up(): void\n    {\n        Schema::create('users', function (Blueprint $table) {\n            $table->id();\n            $table->string('name');\n            $table->string('email')->unique();\n            $table->timestamps();\n        });\n    }\n};`
+    }
+  },
+  express: {
+    name: "Express",
+    badge: "Node.js",
+    color: "#00c4cc",
+    icon: "/icons/expressjs.svg",
+    desc: "Lightweight, minimal web framework for flexible REST APIs built in TypeScript.",
+    checklist: ["Router Orchestration", "Controller Handlers", "CORS & Auth Middlewares", "Prisma Database Client"],
+    files: [
+      {
+        name: "src",
+        isFolder: true,
+        children: [
+          {
+            name: "controllers",
+            isFolder: true,
+            children: [{ name: "user.controller.ts", isFolder: false, contentKey: "controller" }]
+          },
+          {
+            name: "routes",
+            isFolder: true,
+            children: [{ name: "user.routes.ts", isFolder: false, contentKey: "routes" }]
+          },
+          { name: "app.ts", isFolder: false, contentKey: "app" }
+        ]
+      },
+      { name: "package.json", isFolder: false, contentKey: "pkg" }
+    ],
+    codeSnippets: {
+      controller: `import { Request, Response } from 'express';\nimport { PrismaClient } from '@prisma/client';\n\nconst prisma = new PrismaClient();\n\nexport class UserController {\n  async index(req: Request, res: Response) {\n    const users = await prisma.user.findMany();\n    return res.json(users);\n  }\n\n  async store(req: Request, res: Response) {\n    const { name, email } = req.body;\n    const user = await prisma.user.create({ data: { name, email } });\n    return res.status(201).json(user);\n  }\n}`,
+      routes: `import { Router } from 'express';\nimport { UserController } from '../controllers/user.controller';\n\nconst router = Router();\nconst controller = new UserController();\n\nrouter.get('/', (req, res) => controller.index(req, res));\nrouter.post('/', (req, res) => controller.store(req, res));\n\nexport default router;`,
+      app: `import express from 'express';\nimport cors from 'cors';\nimport userRouter from './routes/user.routes';\n\nconst app = express();\napp.use(cors());\napp.use(express.json());\n\napp.use('/api/users', userRouter);\n\napp.listen(3000, () => console.log('Ready on http://localhost:3000'));`,
+      pkg: `{\n  "name": "express-stack-init",\n  "version": "1.0.0",\n  "dependencies": {\n    "express": "^4.19.2",\n    "cors": "^2.8.5",\n    "@prisma/client": "^5.10.0"\n  }\n}`
+    }
+  },
+  fastapi: {
+    name: "FastAPI",
+    badge: "Python",
+    color: "#009688",
+    icon: "/icons/fastapi.svg",
+    desc: "Performant, type-safe Python API engine supporting auto Swagger UI and Pydantic validation.",
+    checklist: ["Pydantic Type Schemas", "Dependency Injection", "SQLAlchemy ORM Model", "Swagger Document Generation"],
+    files: [
+      {
+        name: "app",
+        isFolder: true,
+        children: [
+          {
+            name: "api",
+            isFolder: true,
+            children: [{ name: "users.py", isFolder: false, contentKey: "api" }]
+          },
+          {
+            name: "models",
+            isFolder: true,
+            children: [{ name: "user.py", isFolder: false, contentKey: "model" }]
+          },
+          { name: "main.py", isFolder: false, contentKey: "main" }
+        ]
+      },
+      { name: "requirements.txt", isFolder: false, contentKey: "reqs" }
+    ],
+    codeSnippets: {
+      api: `from fastapi import APIRouter, Depends, HTTPException\nfrom sqlalchemy.orm import Session\nfrom app.models.user import User\nfrom app.api.deps import get_db\n\nrouter = APIRouter()\n\n@router.get("/")\ndef read_users(db: Session = Depends(get_db)):\n    return db.query(User).all()`,
+      model: `from sqlalchemy import Column, Integer, String\nfrom app.database import Base\n\nclass User(Base):\n    __tablename__ = "users"\n\n    id = Column(Integer, primary_key=True, index=True)\n    name = Column(String)\n    email = Column(String, unique=True, index=True)`,
+      main: `from fastapi import FastAPI\nfrom app.api import users\n\napp = FastAPI(title="FastAPI Stack-Init")\n\napp.include_router(users.router, prefix="/users", tags=["Users"])`,
+      reqs: `fastapi>=0.110.0\nuvicorn>=0.28.0\nsqlalchemy>=2.0.0\npydantic[email]>=2.6.0`
+    }
+  },
+  react: {
+    name: "React",
+    badge: "Frontend",
+    color: "#61dafb",
+    icon: "/icons/react.svg",
+    desc: "Modern client dashboard equipped with fully-typed components, API clients, and State Stores.",
+    checklist: ["Vite & TS Setup", "Zustand State Stores", "Fully Typed Hooks", "Interactive UI Components"],
+    files: [
+      {
+        name: "src",
+        isFolder: true,
+        children: [
+          {
+            name: "components",
+            isFolder: true,
+            children: [{ name: "UserList.tsx", isFolder: false, contentKey: "component" }]
+          },
+          {
+            name: "store",
+            isFolder: true,
+            children: [{ name: "useUserStore.ts", isFolder: false, contentKey: "store" }]
+          },
+          { name: "App.tsx", isFolder: false, contentKey: "app" }
+        ]
+      },
+      { name: "vite.config.ts", isFolder: false, contentKey: "vite" }
+    ],
+    codeSnippets: {
+      component: `import React, { useEffect } from 'react';\nimport { useUserStore } from '../store/useUserStore';\n\nexport const UserList: React.FC = () => {\n  const { users, loading, fetchUsers } = useUserStore();\n\n  useEffect(() => {\n    fetchUsers();\n  }, []);\n\n  if (loading) return <div>Loading database entries...</div>;\n\n  return (\n    <ul>\n      {users.map(user => (\n        <li key={user.id}>{user.name} ({user.email})</li>\n      ))}\n    </ul>\n  );\n};`,
+      store: `import { create } from 'zustand';\n\nexport const useUserStore = create((set) => ({\n  users: [],\n  loading: false,\n  fetchUsers: async () => {\n    set({ loading: true });\n    const res = await fetch('/api/users');\n    set({ users: await res.json(), loading: false });\n  }\n}));`,
+      app: `import React from 'react';\nimport { UserList } from './components/UserList';\n\nfunction App() {\n  return (\n    <div className="container">\n      <h1>Stack-Init Client</h1>\n      <UserList />\n    </div>\n  );\n}\n\nexport default App;`,
+      vite: `import { defineConfig } from 'vite';\nimport react from '@vitejs/react-plugin';\n\nexport default defineConfig({\n  plugins: [react()],\n  server: {\n    port: 3000,\n  },\n});`
+    }
+  }
+};
 
-const FEATURES = [
-  {
-    icon: <Database size={22} />,
-    color: "#F5C842",
-    colorSubtle: "rgba(245,200,66,0.08)",
-    colorBorder: "rgba(245,200,66,0.2)",
-    title: "Visual data modeling",
-    desc: "Build your schema with a drag-and-drop canvas. Enums, nullable fields, unique constraints, foreign keys — all in one place.",
-    wide: true,
-  },
-  {
-    icon: <Sparkles size={22} />,
-    color: "#4d9fff",
-    colorSubtle: "rgba(77,159,255,0.08)",
-    colorBorder: "rgba(77,159,255,0.2)",
-    title: "AI natural language import",
-    desc: "Describe your schema in plain English. AI extracts models, fields and relations automatically.",
-    wide: false,
-  },
-  {
-    icon: <Table size={22} />,
-    color: "#4dff91",
-    colorSubtle: "rgba(77,255,145,0.08)",
-    colorBorder: "rgba(77,255,145,0.2)",
-    title: "SQL DDL import",
-    desc: "Paste or upload a .sql file — tables, columns, types and foreign keys extracted in one click.",
-    wide: false,
-  },
-  {
-    icon: <GitBranch size={22} />,
-    color: "#9d6fff",
-    colorSubtle: "rgba(157,111,255,0.08)",
-    colorBorder: "rgba(157,111,255,0.2)",
-    title: "ERD canvas with relations",
-    desc: "See your full entity-relationship diagram in real time as you build. hasOne · hasMany · belongsToMany with visual edge styles.",
-    wide: false,
-  },
-  {
-    icon: <Package size={22} />,
-    color: "#ff9d4d",
-    colorSubtle: "rgba(255,157,77,0.08)",
-    colorBorder: "rgba(255,157,77,0.2)",
-    title: "Module library",
-    desc: "One-click import of pre-built model sets: Auth, Blog, E-commerce, SaaS, Media. Skip the repetitive setup.",
-    wide: false,
-  },
-  {
-    icon: <BookOpen size={22} />,
-    color: "#F5C842",
-    colorSubtle: "rgba(245,200,66,0.08)",
-    colorBorder: "rgba(245,200,66,0.2)",
-    title: "Saveable presets",
-    desc: "Save any config as a named preset. Load it instantly on your next project, or share the JSON file with your team.",
-    wide: true,
-  },
-];
-
-const HOW_IT_WORKS = [
-  {
-    n: "01",
-    icon: <Layers size={18} />,
-    title: "Pick your stack",
-    desc: "Laravel, Express, NestJS, FastAPI, React, Next.js — or a combo like MERN or FastAPI + React.",
-  },
-  {
-    n: "02",
-    icon: <Database size={18} />,
-    title: "Model your data",
-    desc: "Add models visually or import from SQL / AI. Define fields, types, constraints and relations.",
-  },
-  {
-    n: "03",
-    icon: <Settings2 size={18} />,
-    title: "Configure everything",
-    desc: "Toggle controllers, routes, services, repositories. Choose auth middleware and architecture patterns.",
-  },
-  {
-    n: "04",
-    icon: <Download size={18} />,
-    title: "Generate & download",
-    desc: "Get a production-ready ZIP — or a stack-init.yaml for the CLI. No login, 100% in your browser.",
-  },
-];
-
-const STACKS = [
-  { name: "Laravel", badge: "PHP", color: "#ff4d6d", icon: "/icons/laravel.svg" },
-  { name: "Express", badge: "Node", color: "#ffffff", icon: "/icons/expressjs.svg" },
-  { name: "NestJS", badge: "Node", color: "#ea2845", icon: "/icons/nestjs.svg" },
-  { name: "FastAPI", badge: "Python", color: "#009688", icon: "/icons/fastapi.svg" },
-  { name: "Next.js", badge: "Full-stack", color: "#e0e0e0", icon: "/icons/nextdotjs.svg" },
-  { name: "React", badge: "Frontend", color: "#61dafb", icon: "/icons/react.svg" },
-];
-
-const OUTPUT_LINES = [
-  { text: "📦  my-saas-app.zip", dim: false },
-  { text: "", dim: false },
-  { text: "├── src/controllers/", dim: false },
-  { text: "│   ├── UserController.ts      # CRUD + auth middleware", dim: true },
-  { text: "│   ├── PostController.ts      # REST endpoints", dim: true },
-  { text: "│   └── CommentController.ts", dim: true },
-  { text: "├── src/services/", dim: false },
-  { text: "│   └── UserService.ts         # Business logic layer", dim: true },
-  { text: "├── src/models/", dim: false },
-  { text: "│   └── User.ts                # Typed interfaces", dim: true },
-  { text: "├── prisma/schema.prisma       # Auto-generated", dim: true },
-  { text: "├── package.json               # All your deps, exact versions", dim: true },
-  { text: "└── tsconfig.json", dim: false },
-];
-
-const CHECKLIST = [
-  "Full CRUD controllers",
-  "Prisma schema from your models",
-  "RESTful routes registered",
-  "Service & repository layers",
-  "Jest test stubs",
-  "All dependencies in package.json",
-  "TypeScript interfaces",
-  "Swagger / OpenAPI (optional)",
-];
-
-/* ─── Page ──────────────────────────────────────────────────────────── */
+/* ─── Main Component ────────────────────────────────────────────────── */
 
 export default function Home() {
+  // Features Console Active Tab
+  const [activeTab, setActiveTab] = useState<string>("visual");
+  const tabListRef = useRef<HTMLDivElement>(null);
+
+  // Stack Inspector Active Stack
+  const [activeStackKey, setActiveStackKey] = useState<string>("nestjs");
+  const activeStack = STACKS_DATA[activeStackKey];
+
+  // Directory File Tree State
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({
+    "src": true, "app": true, "Http": true, "Controllers": true
+  });
+  const [activeFileKey, setActiveFileKey] = useState<string>("controller");
+
+  // Visual Modeler Sandbox State
+  const [modelerFields, setModelerFields] = useState<Array<{ name: string; type: string; isNull: boolean }>>([
+    { name: "id", type: "integer", isNull: false },
+    { name: "name", type: "string", isNull: false },
+    { name: "email", type: "string", isNull: false }
+  ]);
+  const [newFieldName, setNewFieldName] = useState<string>("");
+  const [newFieldType, setNewFieldType] = useState<string>("string");
+
+  // AI Prompt Simulated Typewriter State
+  const [aiPromptText, setAiPromptText] = useState<string>("");
+  const [isAiTyping, setIsAiTyping] = useState<boolean>(false);
+  const [aiGeneratedOutput, setAiGeneratedOutput] = useState<boolean>(false);
+  const promptToSimulate = "Scaffold a complete e-commerce microservice. Models: User, Store, Product, Order. Relations: Store hasMany Products, User hasMany Orders. Connect via PostgreSQL database client.";
+
+  // SQL Schema Parse State
+  const [sqlParsed, setSqlParsed] = useState<boolean>(false);
+  const [isSqlParsing, setIsSqlParsing] = useState<boolean>(false);
+  const rawSqlSample = `CREATE TABLE stores (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  slug VARCHAR(255) UNIQUE,
+  owner_id INT REFERENCES users(id)
+);`;
+
+  // Presets State
+  const [activePreset, setActivePreset] = useState<string>("saas");
+  const presetsData: Record<string, Array<{ name: string; type: string }>> = {
+    saas: [
+      { name: "User", type: "Auth Profile" },
+      { name: "Tenant", type: "Organization" },
+      { name: "Subscription", type: "Billing Tier" },
+      { name: "Plan", type: "Product Pricing" }
+    ],
+    ecommerce: [
+      { name: "Customer", type: "Buyer Profile" },
+      { name: "Product", type: "Stock Item" },
+      { name: "Order", type: "Checkout Log" },
+      { name: "Category", type: "Group taxonomy" }
+    ],
+    blog: [
+      { name: "Author", type: "Editor Identity" },
+      { name: "Post", type: "Markdown Article" },
+      { name: "Comment", type: "Visitor Feedback" },
+      { name: "Tag", type: "Classifier" }
+    ]
+  };
+
+  // Stack Config Switches Simulation
+  const [stackConfig, setStackConfig] = useState<Record<string, boolean>>({
+    auth: true,
+    tests: false,
+    swagger: true,
+    docker: false
+  });
+
+  // Handle directory tree folder toggle
+  const toggleFolder = (folderName: string) => {
+    setExpandedFolders(prev => ({ ...prev, [folderName]: !prev[folderName] }));
+  };
+
+  // Handle visual modeler field addition
+  const handleAddField = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFieldName.trim()) return;
+    setModelerFields(prev => [...prev, {
+      name: newFieldName.trim().toLowerCase(),
+      type: newFieldType,
+      isNull: false
+    }]);
+    setNewFieldName("");
+  };
+
+  // Handle AI Typewriter trigger
+  const runAiSimulation = () => {
+    if (isAiTyping) return;
+    setAiPromptText("");
+    setAiGeneratedOutput(false);
+    setIsAiTyping(true);
+
+    let charIndex = 0;
+    const interval = setInterval(() => {
+      setAiPromptText(prev => prev + promptToSimulate.charAt(charIndex));
+      charIndex++;
+      if (charIndex >= promptToSimulate.length) {
+        clearInterval(interval);
+        setTimeout(() => {
+          setIsAiTyping(false);
+          setAiGeneratedOutput(true);
+        }, 600);
+      }
+    }, 15);
+  };
+
+  // Handle SQL Parser trigger
+  const runSqlParserSimulation = () => {
+    if (isSqlParsing) return;
+    setIsSqlParsing(true);
+    setSqlParsed(false);
+    setTimeout(() => {
+      setIsSqlParsing(false);
+      setSqlParsed(true);
+    }, 1200);
+  };
+
+  // Synchronize dynamic code key when stack switches
+  useEffect(() => {
+    const defaultKeys = Object.keys(activeStack.codeSnippets);
+    if (defaultKeys.length > 0) {
+      setActiveFileKey(defaultKeys[0]);
+    }
+  }, [activeStackKey, activeStack]);
+
+  // Tab Accessibility Keyboard Navigation
+  const handleTabKeyDown = (e: React.KeyboardEvent, index: number) => {
+    const tabKeys = ["visual", "ai", "sql", "presets"];
+    let nextIndex = index;
+    if (e.key === "ArrowRight") {
+      nextIndex = (index + 1) % tabKeys.length;
+    } else if (e.key === "ArrowLeft") {
+      nextIndex = (index - 1 + tabKeys.length) % tabKeys.length;
+    } else {
+      return;
+    }
+    setActiveTab(tabKeys[nextIndex]);
+    const tabElement = tabListRef.current?.children[nextIndex] as HTMLButtonElement;
+    tabElement?.focus();
+  };
+
   return (
     <main style={{
       minHeight: "100vh",
       background: "var(--bg)",
       color: "var(--text)",
       fontFamily: "var(--font-space-grotesk), 'Space Grotesk', sans-serif",
-      overflowX: "hidden",
       position: "relative",
     }}>
 
-      {/* ── Background mesh ────────────────────────────────────────── */}
+      {/* ── Background Cyber-Overlay Grid ─────────────────────────── */}
       <div aria-hidden style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
+        {/* Radial glowing meshes */}
         <div style={{
-          position: "absolute", top: "-30%", right: "-15%",
-          width: "70%", height: "80%",
-          background: "radial-gradient(ellipse, rgba(245,200,66,0.055) 0%, transparent 65%)",
+          position: "absolute", top: "-10%", right: "-10%",
+          width: "60%", height: "60%",
+          background: "radial-gradient(ellipse, rgba(245,200,66,0.06) 0%, transparent 70%)",
         }} />
         <div style={{
-          position: "absolute", bottom: "-20%", left: "-10%",
-          width: "60%", height: "70%",
-          background: "radial-gradient(ellipse, rgba(77,159,255,0.04) 0%, transparent 65%)",
+          position: "absolute", bottom: "-10%", left: "-10%",
+          width: "50%", height: "60%",
+          background: "radial-gradient(ellipse, rgba(77,159,255,0.04) 0%, transparent 70%)",
         }} />
         <div style={{
-          position: "absolute", top: "40%", left: "40%",
-          width: "50%", height: "50%",
-          background: "radial-gradient(ellipse, rgba(157,111,255,0.03) 0%, transparent 65%)",
+          position: "absolute", top: "35%", left: "30%",
+          width: "40%", height: "45%",
+          background: "radial-gradient(ellipse, rgba(157,111,255,0.035) 0%, transparent 70%)",
         }} />
-        {/* Top line */}
+        {/* Glowing top barrier border */}
         <div style={{
           position: "absolute", top: 0, left: 0, right: 0, height: 1,
-          background: "linear-gradient(90deg, transparent 0%, rgba(245,200,66,0.4) 50%, transparent 100%)",
+          background: "linear-gradient(90deg, transparent, rgba(245,200,66,0.3) 30%, rgba(245,200,66,0.3) 70%, transparent)",
         }} />
       </div>
 
-      {/* ── Navbar ─────────────────────────────────────────────────── */}
+      {/* ── Navigation Menu ────────────────────────────────────────── */}
       <nav style={{
         display: "flex", justifyContent: "space-between", alignItems: "center",
-        padding: "0 clamp(20px, 4vw, 60px)", height: 64,
+        padding: "0 clamp(16px, 4vw, 48px)", height: 68,
         borderBottom: "1px solid var(--border-subtle)",
-        background: "rgba(8,8,9,0.80)",
-        backdropFilter: "blur(24px)",
+        background: "rgba(8,8,9,0.85)",
+        backdropFilter: "blur(20px)",
         position: "sticky", top: 0, zIndex: 100,
       }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-          <Image src="/favicon.svg" alt="StackInit" width={28} height={28} />
-          <span style={{ fontFamily: "var(--font-syne)", fontSize: 17, fontWeight: 800, letterSpacing: "-0.02em" }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }} aria-label="StackInit Home">
+          <Image src="/favicon.svg" alt="StackInit logo" width={26} height={26} />
+          <span style={{ fontFamily: "var(--font-syne)", fontSize: 18, fontWeight: 800, letterSpacing: "-0.02em" }}>
             Stack<span style={{ color: "var(--gold)" }}>Init</span>
           </span>
         </Link>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Link href="/guides" style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            padding: "7px 14px", borderRadius: 8,
-            fontSize: 13, color: "var(--text2)",
-            fontWeight: 500, textDecoration: "none",
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Link href="/guides" className="si-btn-secondary" style={{
+            padding: "6px 14px", borderRadius: 8, fontSize: 13, border: "none", background: "none"
           }}>
-            <BookOpen size={14} />
+            <BookOpen size={14} style={{ marginRight: 6 }} />
             Guides
           </Link>
           <div style={{
-            display: "flex", alignItems: "center", gap: 6,
+            alignItems: "center", gap: 6,
             padding: "5px 12px", borderRadius: 8,
             border: "1px solid var(--border-subtle)",
             background: "var(--bg3)",
             fontSize: 12, color: "var(--text3)",
-            marginRight: 8,
-          }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4dff91", display: "inline-block" }} />
-            No signup · 100% browser
+          }} className="hidden md:flex">
+            <span className="tech-dot-indicator green tech-pulse" />
+            Free · Open Source
           </div>
-          <Link href="/create" style={{
-            display: "inline-flex", alignItems: "center", gap: 7,
-            padding: "8px 20px", borderRadius: 10,
-            background: "var(--gold)", color: "var(--bg)",
-            fontSize: 13, fontWeight: 700, textDecoration: "none",
-            boxShadow: "0 0 24px rgba(245,200,66,0.25)",
-          }}>
-            Open wizard <ArrowRight size={14} />
-          </Link>
+          <NavAuthButton />
         </div>
       </nav>
 
-      {/* ── HERO ───────────────────────────────────────────────────── */}
-      <section style={{
+      {/* ── HERO BANNER ────────────────────────────────────────────── */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16" style={{
         position: "relative", zIndex: 10,
-        padding: "clamp(60px, 10vh, 120px) clamp(20px, 4vw, 60px) 80px",
+        padding: "clamp(48px, 8vh, 96px) clamp(16px, 4vw, 48px) 48px",
         maxWidth: 1280, margin: "0 auto",
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: "clamp(40px, 5vw, 80px)",
         alignItems: "center",
       }}>
-        {/* Left — text */}
+        {/* Left — Text & CTAs */}
         <div>
-          {/* Badge */}
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            padding: "5px 14px", borderRadius: 100,
-            border: "1px solid var(--gold-border)",
-            background: "var(--gold-subtle)",
-            color: "var(--gold)", fontSize: 11, fontWeight: 700,
-            letterSpacing: "0.05em", textTransform: "uppercase",
-            marginBottom: 28,
+          {/* Tagline Badge */}
+          <div className="si-badge si-badge-gold" style={{
+            padding: "6px 14px", borderRadius: 100, fontSize: 11, fontWeight: 700,
+            textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 24,
+            gap: 6
           }}>
-            <Zap size={11} fill="currentColor" />
-            Visual scaffolder · Open source
+            <Cpu size={12} className="tech-pulse" />
+            Visual Scaffolder · Open Source
           </div>
 
-          <h1 style={{
+          {/* Heading */}
+          <h1 className="tech-text-glow" style={{
             fontFamily: "var(--font-syne)",
-            fontSize: "clamp(32px, 4vw, 52px)",
+            fontSize: "clamp(34px, 4.5vw, 58px)",
             fontWeight: 800,
             letterSpacing: "-0.04em",
             lineHeight: 1.08,
-            marginBottom: 18,
+            marginBottom: 20,
+            color: "var(--text)"
           }}>
-            Schema in.{" "}
-            <span style={{
-              color: "var(--gold)",
-              position: "relative",
-              display: "inline-block",
-            }}>
-              Code out.
+            Schema In.{" "}
+            <span style={{ color: "var(--gold)", position: "relative", display: "inline-block" }}>
+              Code Out.
               <span style={{
-                position: "absolute", bottom: -3, left: 0, right: 0, height: 2,
+                position: "absolute", bottom: -2, left: 0, right: 0, height: 2,
                 background: "linear-gradient(90deg, var(--gold), transparent)",
                 borderRadius: 2,
               }} />
             </span>
           </h1>
 
+          {/* Description */}
           <p style={{
-            fontSize: "clamp(13px, 1.2vw, 15px)",
+            fontSize: "clamp(14px, 1.2vw, 16px)",
             color: "var(--text2)", lineHeight: 1.65,
-            maxWidth: 420, marginBottom: 32,
+            maxWidth: 460, marginBottom: 32,
           }}>
             StackInit is the fastest <strong>tech-stack boilerplate generator</strong>. Design your data models visually, pick your stack, and download a fully-wired codebase — no boilerplate, no copy-paste.
           </p>
 
-          {/* CTAs */}
-          <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 40 }}>
-            <Link href="/create" style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "13px 32px", borderRadius: 12,
-              background: "var(--gold)", color: "var(--bg)",
-              fontSize: 15, fontWeight: 700, textDecoration: "none",
-              boxShadow: "0 0 48px rgba(245,200,66,0.30), 0 4px 16px rgba(0,0,0,0.4)",
-              letterSpacing: "-0.01em",
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 36 }}>
+            <Link href="/create" className="si-btn-primary" style={{
+              padding: "14px 32px", borderRadius: 10, fontSize: 15,
+              boxShadow: "0 0 48px rgba(245,200,66,0.30), 0 4px 16px rgba(0,0,0,0.4)"
             }}>
               <Zap size={16} fill="currentColor" />
               Launch the wizard
             </Link>
-            <div style={{ fontSize: 13, color: "var(--text3)", display: "flex", flexDirection: "column", gap: 2 }}>
-              <span>Takes ~2 min</span>
-              <span>No account required</span>
-            </div>
+            <a href="#console" className="si-btn-secondary" style={{
+              padding: "14px 28px", borderRadius: 10, fontSize: 15,
+              background: "var(--bg3)", border: "1px solid var(--border-medium)"
+            }}>
+              <Eye size={16} style={{ marginRight: 6 }} />
+              Explore features
+            </a>
           </div>
 
           {/* Trust indicators */}
@@ -303,10 +506,9 @@ export default function Home() {
             {[
               { dot: "#FF2D20", label: "Laravel" },
               { dot: "#ea2845", label: "NestJS" },
-              { dot: "#ffffff", label: "Express" },
+              { dot: "#00c4cc", label: "Express" },
               { dot: "#009688", label: "FastAPI" },
               { dot: "#61dafb", label: "React" },
-              { dot: "#e0e0e0", label: "Next.js" },
             ].map(({ dot, label }) => (
               <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text3)" }}>
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: dot, flexShrink: 0 }} />
@@ -316,576 +518,779 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Right — wizard preview mockup */}
-        <div style={{ position: "relative" }}>
-          {/* Glow behind card */}
-          <div style={{
-            position: "absolute", top: "50%", left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "120%", height: "120%",
-            background: "radial-gradient(ellipse, rgba(245,200,66,0.10) 0%, transparent 65%)",
-            pointerEvents: "none",
-          }} />
+        {/* Right — Interactive Illustration */}
+        <HeroIllustration />
+      </section>
 
+      {/* ── CORE FEATURE WORKSPACE CONSOLE (Interactive Modular Section) ── */}
+      <section id="console" style={{
+        position: "relative", zIndex: 10,
+        padding: "40px clamp(16px, 4vw, 48px) 80px",
+        maxWidth: 1200, margin: "0 auto"
+      }}>
+        <div className="si-card tech-card-glow" style={{ borderRadius: 18, background: "var(--bg3)" }}>
+          
+          {/* Card Window Header */}
           <div style={{
-            borderRadius: 18,
-            border: "1px solid var(--border-medium)",
-            background: "var(--bg3)",
-            overflow: "hidden",
-            boxShadow: "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)",
-            position: "relative",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "14px 20px", borderBottom: "1px solid var(--border-subtle)",
+            background: "var(--bg2)"
           }}>
-            {/* Window chrome */}
-            <div style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "12px 16px",
-              borderBottom: "1px solid var(--border-subtle)",
-              background: "var(--bg2)",
-            }}>
-              {["#ff5f57", "#ffbd2e", "#28c840"].map((c) => (
-                <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {["#ff5f57", "#ffbd2e", "#28c840"].map((color) => (
+                <span key={color} style={{ width: 10, height: 10, borderRadius: "50%", background: color, display: "inline-block" }} />
               ))}
-              <span style={{ fontSize: 11, color: "var(--text3)", marginLeft: 8, fontFamily: "var(--font-jetbrains-mono)" }}>
-                stackinit.dev/create — Step 2: Models
+              <span style={{ fontSize: 12, color: "var(--text3)", marginLeft: 8, fontFamily: "var(--font-jetbrains-mono)" }}>
+                stackinit_interactive_workspace_console.sh
               </span>
             </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text3)" }}>
+              <span className="tech-dot-indicator green tech-pulse" />
+              <span>SYSTEM READY</span>
+            </div>
+          </div>
 
-            {/* Wizard sidebar */}
-            <div style={{ display: "flex", height: 340 }}>
-              {/* Steps sidebar */}
-              <div style={{
-                width: 160, borderRight: "1px solid var(--border-subtle)",
-                background: "var(--bg2)", padding: "16px 0", flexShrink: 0,
-              }}>
-                {[
-                  { n: 1, label: "Stack", done: true },
-                  { n: 2, label: "Models", active: true },
-                  { n: 3, label: "Relations", done: false },
-                  { n: 4, label: "Routes", done: false },
-                  { n: 5, label: "Output", done: false },
-                ].map((s) => (
-                  <div key={s.n} style={{
-                    display: "flex", alignItems: "center", gap: 10,
-                    padding: "8px 16px",
-                    background: s.active ? "rgba(245,200,66,0.07)" : "transparent",
-                    borderLeft: s.active ? "2px solid var(--gold)" : "2px solid transparent",
-                  }}>
+          {/* Card Sub-Navigation Tabs */}
+          <div ref={tabListRef} role="tablist" aria-label="App Features Console" style={{
+            display: "flex",
+            background: "rgba(14,14,16,0.5)",
+            borderBottom: "1px solid var(--border-subtle)"
+          }}>
+            {[
+              { id: "visual", label: "Visual Modeler", icon: <Database size={14} /> },
+              { id: "ai", label: "AI Prompt Import", icon: <Sparkles size={14} /> },
+              { id: "sql", label: "SQL Extractor", icon: <Table size={14} /> },
+              { id: "presets", label: "Prebuilt Templates", icon: <Package size={14} /> }
+            ].map((tab, idx) => {
+              const isSelected = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  id={`tab-${tab.id}`}
+                  aria-selected={isSelected}
+                  aria-controls={`panel-${tab.id}`}
+                  tabIndex={isSelected ? 0 : -1}
+                  onKeyDown={(e) => handleTabKeyDown(e, idx)}
+                  onClick={() => setActiveTab(tab.id)}
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    padding: "14px 10px",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: isSelected ? "var(--gold)" : "var(--text2)",
+                    background: isSelected ? "var(--bg3)" : "transparent",
+                    border: "none",
+                    borderBottom: isSelected ? "2px solid var(--gold)" : "2px solid transparent",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tab Panels Contents */}
+          <div style={{ padding: "clamp(20px, 4vw, 36px)", background: "var(--bg3)" }}>
+            
+            {/* PANEL 1: VISUAL CANVAS MODELER */}
+            {activeTab === "visual" && (
+              <div id="panel-visual" role="tabpanel" aria-labelledby="tab-visual" className="si-step-panel grid grid-cols-1 lg:grid-cols-2 gap-7">
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-5">
+                  
+                  {/* Table Definition Interactive Card */}
+                  <div className="si-card" style={{ border: "1px solid var(--gold-border)", background: "var(--bg2)" }}>
                     <div style={{
-                      width: 20, height: 20, borderRadius: "50%",
-                      background: s.done ? "var(--gold)" : s.active ? "var(--gold-subtle)" : "var(--bg4)",
-                      border: s.active ? "1.5px solid var(--gold)" : "1.5px solid var(--border-subtle)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 9, fontWeight: 800,
-                      color: s.done ? "var(--bg)" : s.active ? "var(--gold)" : "var(--text3)",
-                      flexShrink: 0,
+                      padding: "10px 14px", background: "rgba(245,200,66,0.06)",
+                      borderBottom: "1px solid var(--gold-border)", display: "flex", justifyContent: "space-between"
                     }}>
-                      {s.done ? "✓" : s.n}
+                      <span style={{ fontSize: 12, fontWeight: 700, fontFamily: "var(--font-jetbrains-mono)", color: "var(--gold)" }}>
+                        User
+                      </span>
+                      <span className="si-badge si-badge-gold" style={{ fontSize: 9 }}>Model</span>
                     </div>
-                    <span style={{
-                      fontSize: 12, fontWeight: s.active ? 700 : 500,
-                      color: s.active ? "var(--gold)" : s.done ? "var(--text2)" : "var(--text3)",
-                    }}>
-                      {s.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Main content area — model cards */}
-              <div style={{ flex: 1, padding: 16, overflowY: "hidden", background: "var(--bg3)" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>Data Models</span>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <div style={{
-                      padding: "4px 10px", borderRadius: 6, fontSize: 10, fontWeight: 700,
-                      background: "var(--gold)", color: "var(--bg)",
-                    }}>+ Add Model</div>
-                  </div>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  {[
-                    { name: "User", fields: ["id", "email", "name", "role"], color: "var(--gold)" },
-                    { name: "Post", fields: ["id", "title", "content", "userId"], color: "#4d9fff" },
-                    { name: "Comment", fields: ["id", "body", "postId"], color: "#9d6fff" },
-                    { name: "Category", fields: ["id", "name", "slug"], color: "#4dff91" },
-                  ].map((m) => (
-                    <div key={m.name} style={{
-                      padding: "10px 12px",
-                      borderRadius: 10,
-                      border: `1px solid ${m.color}30`,
-                      background: `${m.color}08`,
-                    }}>
-                      <div style={{ fontSize: 11, fontWeight: 800, color: m.color, marginBottom: 8, fontFamily: "var(--font-jetbrains-mono)" }}>
-                        {m.name}
-                      </div>
-                      {m.fields.map((f) => (
-                        <div key={f} style={{
-                          fontSize: 9, color: "var(--text3)",
-                          fontFamily: "var(--font-jetbrains-mono)",
-                          padding: "2px 0",
-                          borderBottom: "1px solid rgba(255,255,255,0.03)",
+                    <div style={{ padding: 10 }}>
+                      {modelerFields.map((field) => (
+                        <div key={field.name} style={{
+                          display: "flex", justifyContent: "space-between", alignItems: "center",
+                          padding: "6px 8px", borderBottom: "1px solid var(--border-subtle)",
+                          fontFamily: "var(--font-jetbrains-mono)", fontSize: 11
                         }}>
-                          {f}
+                          <span style={{ color: "var(--text)" }}>{field.name}</span>
+                          <span className={`si-type-chip si-type-${field.type}`}>{field.type}</span>
                         </div>
                       ))}
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Schema Controller panel */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    <div>
+                      <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Visual Schema Engine</h4>
+                      <p style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.5 }}>
+                        Define database schema parameters, columns and strict types visually. Hover relation points to establish links.
+                      </p>
+                    </div>
+                    
+                    <form onSubmit={handleAddField} style={{
+                      display: "flex", flexDirection: "column", gap: 8, padding: 12,
+                      background: "rgba(255,255,255,0.02)", borderRadius: 10, border: "1px solid var(--border-subtle)"
+                    }}>
+                      <label htmlFor="field-name" style={{ fontSize: 11, color: "var(--text3)", fontWeight: 600 }}>ADD NEW SCHEMA FIELD</label>
+                      <input
+                        id="field-name"
+                        type="text"
+                        placeholder="e.g. status, address"
+                        value={newFieldName}
+                        onChange={(e) => setNewFieldName(e.target.value)}
+                        className="si-input"
+                        style={{ padding: "6px 10px", fontSize: 12 }}
+                      />
+                      <select
+                        aria-label="Field type selection"
+                        value={newFieldType}
+                        onChange={(e) => setNewFieldType(e.target.value)}
+                        className="si-select"
+                        style={{ padding: "6px 10px", fontSize: 12, backgroundPosition: "right 8px center" }}
+                      >
+                        <option value="string">string (varchar)</option>
+                        <option value="integer">integer (int)</option>
+                        <option value="boolean">boolean (tinyint)</option>
+                        <option value="timestamp">timestamp (datetime)</option>
+                        <option value="uuid">uuid (uuid)</option>
+                      </select>
+                      <button type="submit" className="si-btn-primary" style={{ padding: "6px 14px", fontSize: 12, width: "100%", justifyContent: "center" }}>
+                        + Inject Field
+                      </button>
+                    </form>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: 16 }}>
+                  <SectionLabel>Visual Canvas Scaffolder</SectionLabel>
+                  <h3 style={{ fontSize: "clamp(20px, 2.5vw, 28px)", fontWeight: 800, fontFamily: "var(--font-syne)" }}>
+                    Dynamic relational canvas.
+                  </h3>
+                  <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>
+                    Build tables and schemas inside an interactive whiteboard ecosystem. Draw visual relations like <code style={{ color: "var(--gold)" }}>belongsTo</code>, <code style={{ color: "var(--gold)" }}>hasMany</code>, and constraints. Everything gets converted into framework entities, migrations, and schema configurations automatically.
+                  </p>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <span className="si-badge si-badge-teal">100% Client-side Rendering</span>
+                    <span className="si-badge si-badge-blue">Auto-Calculates FKs</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* PANEL 2: AI PROMPT IMPORT */}
+            {activeTab === "ai" && (
+              <div id="panel-ai" role="tabpanel" aria-labelledby="tab-ai" className="si-step-panel grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-7">
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div className="si-card" style={{ background: "var(--bg2)", border: "1px solid var(--border-subtle)" }}>
+                    
+                    {/* Chat Prompt Display */}
+                    <div style={{ padding: 14, borderBottom: "1px solid var(--border-subtle)", display: "flex", alignItems: "center", gap: 10 }}>
+                      <Sparkles size={14} style={{ color: "var(--gold)" }} />
+                      <span style={{ fontSize: 11, fontFamily: "var(--font-jetbrains-mono)", color: "var(--text2)", fontWeight: 700 }}>
+                        AI SCHEMA EXTRACTION ENGINE
+                      </span>
+                    </div>
+
+                    <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                        <div style={{
+                          width: 24, height: 24, borderRadius: "50%", background: "var(--bg4)",
+                          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700
+                        }}>U</div>
+                        <div style={{
+                          flex: 1, padding: "10px 14px", borderRadius: "0 10px 10px 10px",
+                          background: "var(--bg3)", fontSize: 12, border: "1px solid var(--border-subtle)",
+                          minHeight: 40, fontFamily: "var(--font-jetbrains-mono)"
+                        }}>
+                          {aiPromptText || <span style={{ color: "var(--text3)" }}>Press the button below to simulate typing...</span>}
+                          {isAiTyping && <span style={{ width: 2, height: 14, background: "var(--gold)", display: "inline-block", marginLeft: 2 }} className="tech-pulse" />}
+                        </div>
+                      </div>
+
+                      {aiGeneratedOutput && (
+                        <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }} className="si-step-panel">
+                          <div style={{
+                            width: 24, height: 24, borderRadius: "50%", background: "var(--gold)", color: "var(--bg)",
+                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800
+                          }}>AI</div>
+                          <div style={{
+                            flex: 1, padding: "12px 14px", borderRadius: "0 10px 10px 10px",
+                            background: "rgba(245,200,66,0.04)", fontSize: 12, border: "1px solid var(--gold-border)",
+                            display: "flex", flexDirection: "column", gap: 6
+                          }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--gold)" }}>Generated Models detected:</span>
+                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                              {["User", "Store", "Product", "Order"].map((model) => (
+                                <span key={model} className="si-badge si-badge-gold" style={{ fontSize: 10 }}>{model}</span>
+                              ))}
+                            </div>
+                            <span style={{ fontSize: 10, color: "var(--text3)" }}>Relationships established: Store hasMany Products, User hasMany Orders.</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={runAiSimulation}
+                    disabled={isAiTyping}
+                    className="si-btn-primary"
+                    style={{ alignSelf: "flex-start", fontSize: 13 }}
+                  >
+                    <Play size={14} fill="currentColor" />
+                    {isAiTyping ? "AI Engine Extracting..." : "Simulate AI Query Parsing"}
+                  </button>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: 16 }}>
+                  <SectionLabel>Natural Language AI Import</SectionLabel>
+                  <h3 style={{ fontSize: "clamp(20px, 2.5vw, 28px)", fontWeight: 800, fontFamily: "var(--font-syne)" }}>
+                    Talk to your codebase.
+                  </h3>
+                  <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>
+                    Describe your schema requirements in standard English or French text. The integrated LLM pipeline extracts entities, assigns accurate data type bounds, defines keys, and instantly compiles your relational models.
+                  </p>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <span className="si-badge si-badge-purple">Generative Schema Engine</span>
+                    <span className="si-badge si-badge-teal">Multi-Language Parsing</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* PANEL 3: SQL SCHEMA EXTRACTOR */}
+            {activeTab === "sql" && (
+              <div id="panel-sql" role="tabpanel" aria-labelledby="tab-sql" className="si-step-panel grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-7">
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-3">
+                    
+                    {/* Raw SQL Snippet Input Mock */}
+                    <div className="si-card" style={{ background: "var(--bg2)", border: "1px solid var(--border-subtle)" }}>
+                      <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--border-subtle)", fontSize: 11, color: "var(--text2)", fontFamily: "var(--font-jetbrains-mono)" }}>
+                        import_schema.sql
+                      </div>
+                      <pre style={{
+                        padding: 12, fontSize: 11, fontFamily: "var(--font-jetbrains-mono)",
+                        color: "var(--text2)", overflowX: "auto", margin: 0
+                      }}>
+                        {rawSqlSample}
+                      </pre>
+                    </div>
+
+                    {/* Parser Result output */}
+                    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                      {isSqlParsing ? (
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: 20 }}>
+                          <span className="tech-dot-indicator green tech-pulse" style={{ width: 12, height: 12 }} />
+                          <span style={{ fontSize: 12, fontFamily: "var(--font-jetbrains-mono)" }}>Compiling DDL Schema...</span>
+                        </div>
+                      ) : sqlParsed ? (
+                        <div className="si-card si-step-panel" style={{ border: "1px solid var(--green)", background: "rgba(77,255,145,0.03)", padding: 14 }}>
+                          <h5 style={{ fontSize: 12, fontWeight: 700, color: "var(--green)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                            <Check size={14} strokeWidth={3} />
+                            Success: 1 Model Compiled
+                          </h5>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 4, fontFamily: "var(--font-jetbrains-mono)", fontSize: 11 }}>
+                            <div style={{ color: "var(--text)" }}>Table: <span style={{ color: "var(--gold)" }}>stores</span></div>
+                            <div style={{ color: "var(--text3)" }}>· id: integer (PK)</div>
+                            <div style={{ color: "var(--text3)" }}>· name: string (NOT NULL)</div>
+                            <div style={{ color: "var(--text3)" }}>· owner_id: foreignId (FK)</div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="si-card" style={{ padding: 14, textAlign: "center", color: "var(--text3)" }}>
+                          <Table size={20} style={{ margin: "0 auto 8px", opacity: 0.4 }} />
+                          <span style={{ fontSize: 12 }}>Waiting for compilation execution.</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={runSqlParserSimulation}
+                    disabled={isSqlParsing}
+                    className="si-btn-primary"
+                    style={{ alignSelf: "flex-start", fontSize: 13 }}
+                  >
+                    <Play size={14} fill="currentColor" />
+                    {isSqlParsing ? "Extracting Data structures..." : "Compile SQL Table Schema"}
+                  </button>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: 16 }}>
+                  <SectionLabel>SQL Schema DDL Import</SectionLabel>
+                  <h3 style={{ fontSize: "clamp(20px, 2.5vw, 28px)", fontWeight: 800, fontFamily: "var(--font-syne)" }}>
+                    Reverse-engineer instantly.
+                  </h3>
+                  <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>
+                    Already have a database dump or schema statement? Simply copy/paste your custom `.sql` DDL statements directly. Our compiler reverse-engineers the SQL constraints, unique indexes, and foreign references to reconstruct the schema models inside the builder.
+                  </p>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <span className="si-badge si-badge-teal">SQL Dialect-Agnostic</span>
+                    <span className="si-badge si-badge-blue">Automatic Relation Links</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* PANEL 4: PREBUILT MODULES */}
+            {activeTab === "presets" && (
+              <div id="panel-presets" role="tabpanel" aria-labelledby="tab-presets" className="si-step-panel grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-7">
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {/* Preset Selector */}
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {[
+                      { id: "saas", label: "SaaS Starter Kit" },
+                      { id: "ecommerce", label: "E-Commerce Core" },
+                      { id: "blog", label: "Markdown Blog" }
+                    ].map((preset) => {
+                      const isSelected = activePreset === preset.id;
+                      return (
+                        <button
+                          key={preset.id}
+                          onClick={() => setActivePreset(preset.id)}
+                          className={isSelected ? "si-opt-chip selected" : "si-opt-chip"}
+                          style={{ flex: 1, fontSize: 12, padding: "8px 10px" }}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Preset Model Output Map */}
+                  <div className="si-card" style={{ background: "var(--bg2)", border: "1px solid var(--border-subtle)", padding: 16 }}>
+                    <span style={{ fontSize: 11, color: "var(--text3)", fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: 12 }}>
+                      INCLUDED PRESETS SCHEMAS
+                    </span>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      {presetsData[activePreset].map((model) => (
+                        <div key={model.name} className="si-step-panel" style={{
+                          padding: 10, borderRadius: 8, background: "rgba(255,255,255,0.02)",
+                          border: "1px solid var(--border-subtle)"
+                        }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--gold)", fontFamily: "var(--font-jetbrains-mono)" }}>
+                            {model.name}
+                          </div>
+                          <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 2 }}>{model.type}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: 16 }}>
+                  <SectionLabel>One-Click Libraries</SectionLabel>
+                  <h3 style={{ fontSize: "clamp(20px, 2.5vw, 28px)", fontWeight: 800, fontFamily: "var(--font-syne)" }}>
+                    Ready-made blueprints.
+                  </h3>
+                  <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>
+                    Avoid repetitive standard configuration setups. Click to inject fully-formed module blocks like User Authentication, Stripe billing, Multi-Tenant workspaces, Blog directories, and inventory managers. Customize individual parameters afterwards inside the builder.
+                  </p>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <span className="si-badge si-badge-gold">JSON Presets Map</span>
+                    <span className="si-badge si-badge-purple">Editable After Inject</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
+
         </div>
       </section>
 
-      {/* ── Stats bar ──────────────────────────────────────────────── */}
-      <div style={{ position: "relative", zIndex: 10, padding: "0 clamp(20px, 4vw, 60px) 80px" }}>
+      {/* ── THE INTERACTIVE STACK INSPECTOR (Tactile Tech Section) ── */}
+      <section style={{
+        position: "relative", zIndex: 10,
+        padding: "60px clamp(16px, 4vw, 48px) 80px",
+        background: "rgba(10,10,12,0.3)",
+        borderTop: "1px solid var(--border-subtle)",
+        borderBottom: "1px solid var(--border-subtle)"
+      }}>
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <div style={{
-            display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
-            borderRadius: 16,
-            border: "1px solid var(--border-subtle)",
-            background: "var(--bg3)",
-            overflow: "hidden",
-          }}>
-            {STATS.map((s, i) => (
-              <div key={s.label} style={{
-                padding: "28px 24px",
-                textAlign: "center",
-                borderRight: i < STATS.length - 1 ? "1px solid var(--border-subtle)" : "none",
-              }}>
-                <div style={{
-                  fontFamily: "var(--font-syne)",
-                  fontSize: "clamp(28px, 3vw, 40px)", fontWeight: 800,
-                  color: "var(--gold)", letterSpacing: "-0.03em",
-                  lineHeight: 1.1, marginBottom: 6,
-                }}>
-                  {s.value}
-                </div>
-                <div style={{ fontSize: 12, color: "var(--text3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  {s.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Features bento grid ────────────────────────────────────── */}
-      <section style={{ position: "relative", zIndex: 10, padding: "80px clamp(20px, 4vw, 60px)" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <GoldDivider />
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, marginBottom: 48, flexWrap: "wrap" }}>
-            <div>
-              <SectionLabel>Features</SectionLabel>
-              <h2 style={{
-                fontFamily: "var(--font-syne)",
-                fontSize: "clamp(26px, 3.5vw, 44px)", fontWeight: 800,
-                letterSpacing: "-0.03em", color: "var(--text)", marginTop: 8,
-              }}>
-                Everything you need,<br />nothing you don&apos;t.
-              </h2>
-            </div>
-            <p style={{ fontSize: 14, color: "var(--text3)", maxWidth: 320, lineHeight: 1.65, textAlign: "right" }}>
-              From empty canvas to downloadable project in minutes. Covers the full workflow, not just the schema.
+          
+          {/* Section Headers */}
+          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 48px" }}>
+            <SectionLabel>Framework Engine Capabilities</SectionLabel>
+            <h2 style={{
+              fontFamily: "var(--font-syne)",
+              fontSize: "clamp(28px, 3.5vw, 44px)", fontWeight: 800,
+              letterSpacing: "-0.03em", color: "var(--text)", marginTop: 8
+            }}>
+              Your stack, your standards.
+            </h2>
+            <p style={{ fontSize: 14, color: "var(--text3)", marginTop: 12 }}>
+              Generate complete, standard-compliant boilerplate architectures containing your specific schemas and files. Inspect their output live.
             </p>
           </div>
 
-          {/* Bento grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
-            {FEATURES.map((f) => (
-              <div
-                key={f.title}
-                style={{
-                  gridColumn: f.wide ? "span 2" : "span 1",
-                  padding: "28px 28px",
-                  borderRadius: 16,
-                  border: `1px solid ${f.colorBorder}`,
-                  background: f.colorSubtle,
-                  display: "flex",
-                  flexDirection: f.wide ? "row" : "column",
-                  gap: f.wide ? 24 : 0,
-                  alignItems: f.wide ? "flex-start" : undefined,
-                }}
-              >
+          <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1.8fr] gap-7">
+            
+            {/* Inspector Left - Dynamic Stack Toggles & Controls */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              
+              {/* Stack Selection Cards Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-3 gap-2.5">
+                {Object.entries(STACKS_DATA).map(([key, item]) => {
+                  const isSelected = activeStackKey === key;
+                  return (
+                    <div
+                      key={key}
+                      onClick={() => setActiveStackKey(key)}
+                      role="button"
+                      aria-label={`Inspect ${item.name} output`}
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setActiveStackKey(key); }}
+                      className={`si-stack-card ${isSelected ? "selected" : ""}`}
+                      style={{
+                        padding: "16px 14px", display: "flex", flexDirection: "column",
+                        alignItems: "center", gap: 8, borderRadius: 12, textAlign: "center"
+                      }}
+                    >
+                      <img src={item.icon} alt={`${item.name} icon`} style={{ width: 28, height: 28, position: "relative", zIndex: 10 }} />
+                      <div style={{ position: "relative", zIndex: 10 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>{item.name}</div>
+                        <div style={{ fontSize: 9, color: isSelected ? "var(--gold)" : "var(--text3)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>
+                          {item.badge}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Stack Summary Card */}
+              <div className="si-card" style={{ padding: 20, background: "var(--bg3)", display: "flex", flexDirection: "column", gap: 14 }}>
                 <div>
-                  <div style={{
-                    width: 44, height: 44, borderRadius: 12,
-                    background: `${f.color}18`,
-                    border: `1px solid ${f.color}30`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: f.color,
-                    marginBottom: f.wide ? 0 : 20,
-                    flexShrink: 0,
-                  }}>
-                    {f.icon}
-                  </div>
-                </div>
-                <div>
-                  <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 10 }}>
-                    {f.title}
-                  </h3>
-                  <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.65 }}>
-                    {f.desc}
+                  <h4 style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", display: "flex", alignItems: "center", gap: 8 }}>
+                    <span className="tech-dot-indicator" style={{ backgroundColor: activeStack.color, boxShadow: `0 0 10px ${activeStack.color}` }} />
+                    {activeStack.name} Scaffold System
+                  </h4>
+                  <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.5, marginTop: 8 }}>
+                    {activeStack.desc}
                   </p>
                 </div>
-              </div>
-            ))}
 
-            {/* Extra feature cards */}
-            <div style={{
-              gridColumn: "span 1",
-              padding: "28px",
-              borderRadius: 16,
-              border: "1px solid var(--border-subtle)",
-              background: "var(--bg3)",
-            }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 12,
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid var(--border-subtle)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: "var(--text3)",
-                marginBottom: 20,
-              }}>
-                <FileCode size={22} />
+                {/* Simulated Config Controls */}
+                <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: 14 }}>
+                  <span style={{ fontSize: 10, color: "var(--text3)", fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: 12 }}>
+                    SIMULATE BOILERPLATE PARAMS
+                  </span>
+                  
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    {[
+                      { key: "auth", label: "Include Auth Guard" },
+                      { key: "tests", label: "Unit Test Stubs" },
+                      { key: "swagger", label: "OpenAPI Documentation" },
+                      { key: "docker", label: "Docker Multi-stage" }
+                    ].map((opt) => {
+                      const isEnabled = stackConfig[opt.key];
+                      return (
+                        <div
+                          key={opt.key}
+                          onClick={() => setStackConfig(prev => ({ ...prev, [opt.key]: !prev[opt.key] }))}
+                          role="checkbox"
+                          aria-checked={isEnabled}
+                          tabIndex={0}
+                          onKeyDown={(e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); setStackConfig(prev => ({ ...prev, [opt.key]: !prev[opt.key] })); } }}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 8, padding: "8px 12px",
+                            borderRadius: 8, border: "1px solid var(--border-subtle)", background: "var(--bg2)",
+                            cursor: "pointer", transition: "all 0.15s"
+                          }}
+                        >
+                          <div className={`si-toggle ${isEnabled ? "on" : ""}`} style={{ width: 28, height: 16 }}>
+                            <div className="si-toggle-knob" style={{ width: 10, height: 10, top: 2, left: isEnabled ? 15 : 2 }} />
+                          </div>
+                          <span style={{ fontSize: 11, fontWeight: 500, color: isEnabled ? "var(--text)" : "var(--text2)" }}>{opt.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 10 }}>
-                YAML config re-import
-              </h3>
-              <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.65 }}>
-                Already generated a <code style={{ fontFamily: "var(--font-jetbrains-mono)", fontSize: 11, color: "var(--text)" }}>stack-init.yaml</code>? Import it back into the wizard to resume or tweak any part of your config.
-              </p>
+
             </div>
 
-            <div style={{
-              gridColumn: "span 2",
-              padding: "28px",
-              borderRadius: 16,
-              border: "1px solid var(--border-subtle)",
-              background: "var(--bg3)",
-              display: "flex", gap: 24,
-            }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 12,
-                background: "rgba(77,159,255,0.10)",
-                border: "1px solid rgba(77,159,255,0.2)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: "#4d9fff",
-                flexShrink: 0,
-              }}>
-                <Globe size={22} />
+            {/* Inspector Right - Split folder tree explorer & code syntax display */}
+            <div className="si-card grid grid-cols-1 sm:grid-cols-[170px_1fr] h-[380px] overflow-hidden border border-[var(--border-medium)]">
+              
+              {/* Directory File Explorer Tree Side */}
+              <div style={{ background: "var(--bg2)", borderRight: "1px solid var(--border-subtle)", padding: "16px 12px", overflowY: "auto" }}>
+                <span style={{ fontSize: 9, color: "var(--text3)", fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: 12 }}>
+                  FILE DIRECTORY
+                </span>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  {activeStack.files.map((node, i) => {
+                    const renderNode = (n: FileNode, depth = 0) => {
+                      const isFolder = n.isFolder;
+                      const isOpen = expandedFolders[n.name];
+                      const isSelected = activeFileKey === n.contentKey;
+
+                      return (
+                        <div key={n.name} style={{ display: "flex", flexDirection: "column" }}>
+                          <button
+                            onClick={() => isFolder ? toggleFolder(n.name) : n.contentKey && setActiveFileKey(n.contentKey)}
+                            style={{
+                              display: "flex", alignItems: "center", gap: 6, padding: "4px 6px",
+                              borderRadius: 4, background: isSelected ? "rgba(255,255,255,0.04)" : "transparent",
+                              border: "none", color: isSelected ? "var(--gold)" : isFolder ? "var(--text)" : "var(--text2)",
+                              fontSize: 11, fontFamily: "var(--font-jetbrains-mono)", textAlign: "left",
+                              cursor: "pointer", paddingLeft: `${depth * 10 + 6}px`, transition: "all 0.15s"
+                            }}
+                          >
+                            {isFolder ? (
+                              isOpen ? <FolderOpen size={12} style={{ color: "var(--gold)" }} /> : <Folder size={12} style={{ color: "var(--text3)" }} />
+                            ) : (
+                              <FileCode size={12} style={{ color: "var(--text3)" }} />
+                            )}
+                            <span style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{n.name}</span>
+                          </button>
+
+                          {isFolder && isOpen && n.children && (
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                              {n.children.map(child => renderNode(child, depth + 1))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    };
+
+                    return renderNode(node);
+                  })}
+                </div>
               </div>
-              <div>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 10 }}>
-                  100% browser-side — no server, no account
-                </h3>
-                <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.65 }}>
-                  Every file is generated client-side using JSZip and your selections. Nothing leaves your machine. The CLI is optional — the wizard works standalone.
-                </p>
+
+              {/* Code Viewer Display Side */}
+              <div style={{ background: "var(--bg3)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                
+                {/* Code Viewer Tab Header */}
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "10px 16px", background: "var(--bg4)", borderBottom: "1px solid var(--border-subtle)"
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontFamily: "var(--font-jetbrains-mono)", color: "var(--text2)" }}>
+                    <Terminal size={12} style={{ color: activeStack.color }} />
+                    <span>CODE STACK PREVIEW</span>
+                  </div>
+                  <span className="si-badge si-badge-gray" style={{ fontSize: 9, fontFamily: "var(--font-jetbrains-mono)" }}>
+                    {activeStackKey === "laravel" ? "PHP" : "TypeScript"}
+                  </span>
+                </div>
+
+                {/* Code Lines Panel */}
+                <div style={{ flex: 1, padding: 16, overflow: "auto", fontFamily: "var(--font-jetbrains-mono)", fontSize: 11, lineHeight: 1.6 }}>
+                  <pre style={{ margin: 0, color: "var(--text2)" }}>
+                    <code>
+                      {/* Simple regex-based syntax highlight replacement */}
+                      {activeStack.codeSnippets[activeFileKey] ? (
+                        activeStack.codeSnippets[activeFileKey]
+                          .split('\n')
+                          .map((line, idx) => {
+                            // Inject auth controller guards based on state parameters
+                            if (line.includes("@UseGuards") || line.includes("requireAuth")) {
+                              if (!stackConfig.auth) return null;
+                            }
+                            return (
+                              <div key={idx} style={{ display: "flex" }}>
+                                <span style={{ color: "var(--text3)", width: 24, userSelect: "none", flexShrink: 0 }}>{idx + 1}</span>
+                                <span style={{ whiteSpace: "pre-wrap" }}>
+                                  {line.split(' ').map((word, wordIdx) => {
+                                    if (word.startsWith('@') || word === 'export' || word === 'class' || word === 'import' || word === 'from' || word === 'extends') {
+                                      return <span key={wordIdx} style={{ color: "var(--gold)" }}>{word} </span>;
+                                    }
+                                    if (word === 'public' || word === 'private' || word === 'async' || word === 'await' || word === 'return' || word === 'function') {
+                                      return <span key={wordIdx} style={{ color: "#9d6fff" }}>{word} </span>;
+                                    }
+                                    if (word.includes("'") || word.includes('"')) {
+                                      return <span key={wordIdx} style={{ color: "#4dff91" }}>{word} </span>;
+                                    }
+                                    return word + ' ';
+                                  })}
+                                </span>
+                              </div>
+                            );
+                          })
+                      ) : (
+                        <div style={{ color: "var(--text3)", textAlign: "center", paddingTop: 40 }}>Click a file in directory to inspect code.</div>
+                      )}
+                    </code>
+                  </pre>
+                </div>
+
               </div>
+
             </div>
+
           </div>
+
         </div>
       </section>
 
-      {/* ── How it works ───────────────────────────────────────────── */}
-      <section style={{ position: "relative", zIndex: 10, padding: "80px clamp(20px, 4vw, 60px)" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <GoldDivider />
-          <SectionLabel>How it works</SectionLabel>
+      {/* ── MODULAR ROADMAP SETUP (Non-Scroll heavy step diagram) ── */}
+      <section style={{
+        position: "relative", zIndex: 10,
+        padding: "80px clamp(16px, 4vw, 48px) 100px",
+        maxWidth: 1100, margin: "0 auto"
+      }}>
+        <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <SectionLabel>Setup Pipeline</SectionLabel>
           <h2 style={{
             fontFamily: "var(--font-syne)",
-            fontSize: "clamp(26px, 3.5vw, 44px)", fontWeight: 800,
-            letterSpacing: "-0.03em", color: "var(--text)",
-            marginBottom: 52, marginTop: 8,
+            fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 800,
+            letterSpacing: "-0.03em", color: "var(--text)"
           }}>
-            Four steps from idea to files.
+            From architecture plan to deployment.
           </h2>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2, position: "relative" }}>
-            {/* Connector line */}
-            <div style={{
-              position: "absolute",
-              top: 35, left: "12.5%", right: "12.5%",
-              height: 1,
-              background: "linear-gradient(90deg, transparent, var(--gold-border), var(--gold-border), transparent)",
-              pointerEvents: "none",
-            }} />
-            {HOW_IT_WORKS.map((step, i) => (
-              <div key={step.n} style={{ padding: "0 12px", position: "relative" }}>
-                <div style={{
-                  width: 48, height: 48, borderRadius: "50%",
-                  background: i === 0 ? "var(--gold)" : "var(--bg3)",
-                  border: `1.5px solid ${i === 0 ? "var(--gold)" : "var(--border-subtle)"}`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  color: i === 0 ? "var(--bg)" : "var(--text3)",
-                  marginBottom: 24, position: "relative", zIndex: 2,
-                }}>
-                  {step.icon}
-                </div>
-                <div style={{
-                  fontSize: 10, fontWeight: 800, color: "var(--text3)",
-                  letterSpacing: "0.1em", textTransform: "uppercase",
-                  fontFamily: "var(--font-jetbrains-mono)",
-                  marginBottom: 8,
-                }}>
-                  {step.n}
-                </div>
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 10 }}>
-                  {step.title}
-                </h3>
-                <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>
-                  {step.desc}
-                </p>
-              </div>
-            ))}
-          </div>
         </div>
-      </section>
 
-      {/* ── Output preview split ─────────────────────────────────── */}
-      <section style={{ position: "relative", zIndex: 10, padding: "80px clamp(20px, 4vw, 60px)" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <GoldDivider />
-          <div style={{
-            display: "grid", gridTemplateColumns: "1fr 1fr",
-            gap: "clamp(32px, 4vw, 60px)", alignItems: "start",
-          }}>
-            {/* Left — copy */}
-            <div style={{ paddingTop: 8 }}>
-              <SectionLabel>What you get</SectionLabel>
-              <h2 style={{
-                fontFamily: "var(--font-syne)",
-                fontSize: "clamp(26px, 3vw, 40px)", fontWeight: 800,
-                letterSpacing: "-0.03em", color: "var(--text)",
-                marginBottom: 20, marginTop: 8,
-              }}>
-                Real files,<br />not stubs.
-              </h2>
-              <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.7, marginBottom: 36, maxWidth: 440 }}>
-                Every generated file contains your actual model names, your field types, and your library choices. Not Lorem Ipsum. Not placeholders.
-              </p>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 40 }}>
-                {CHECKLIST.map((item) => (
-                  <div key={item} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text2)" }}>
-                    <div style={{
-                      width: 18, height: 18, borderRadius: "50%",
-                      background: "rgba(77,255,145,0.12)",
-                      border: "1px solid rgba(77,255,145,0.25)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      flexShrink: 0,
-                    }}>
-                      <Check size={10} color="#4dff91" strokeWidth={3} />
-                    </div>
-                    {item}
-                  </div>
-                ))}
-              </div>
-
-              <Link href="/create" style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                padding: "11px 24px", borderRadius: 10,
-                background: "var(--gold)", color: "var(--bg)",
-                fontSize: 14, fontWeight: 700, textDecoration: "none",
-                boxShadow: "0 0 32px rgba(245,200,66,0.25)",
-              }}>
-                Generate my project <ArrowRight size={14} />
-              </Link>
-            </div>
-
-            {/* Right — file tree terminal */}
-            <div style={{
-              borderRadius: 16,
-              border: "1px solid rgba(245,200,66,0.15)",
-              background: "var(--bg2)",
-              overflow: "hidden",
-              boxShadow: "0 24px 60px rgba(0,0,0,0.5)",
-            }}>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+          {[
+            { step: "01", title: "Select Framework", desc: "Select matching front-end & back-end options and choose MVC, Domain or service configurations." },
+            { step: "02", title: "Visual Modeling", desc: "Inject entity models, define constraints and draw relationship flows instantly." },
+            { step: "03", title: "Custom Parameters", desc: "Toggle API resources, validations, testing stubs, and Docker virtualization setups." },
+            { step: "04", title: "Generate Codebase", desc: "Process and bundle your complete code library client-side inside a single ZIP file." }
+          ].map((item, index) => (
+            <div key={item.step} className="si-card" style={{ padding: 24, position: "relative", border: "1px solid var(--border-subtle)" }}>
+              {/* Step Connection Bar */}
+              {index < 3 && (
+                <div style={{
+                  position: "absolute", top: "50%", right: "-12px",
+                  width: 24, height: 1, borderTop: "1px dashed var(--border-medium)", zIndex: 10
+                }} className="hidden md:block" />
+              )}
               <div style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "12px 16px",
-                borderBottom: "1px solid var(--border-subtle)",
-                background: "var(--bg3)",
+                fontFamily: "var(--font-jetbrains-mono)", fontSize: 13, fontWeight: 700,
+                color: "var(--gold)", marginBottom: 12
               }}>
-                {["#ff5f57", "#ffbd2e", "#28c840"].map((c) => (
-                  <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />
-                ))}
-                <span style={{ fontSize: 11, color: "var(--text3)", marginLeft: 8, fontFamily: "var(--font-jetbrains-mono)" }}>
-                  output
-                </span>
-                <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--gold)", fontWeight: 700, fontFamily: "var(--font-jetbrains-mono)" }}>
-                  ZIP · ready to run
-                </span>
+                STEP {item.step}
               </div>
-              <div style={{ padding: "20px 24px", fontFamily: "var(--font-jetbrains-mono)", fontSize: 12, lineHeight: 2 }}>
-                {OUTPUT_LINES.map((line, i) => (
-                  <div key={i} style={{ color: line.dim ? "var(--text3)" : "var(--text2)" }}>
-                    {line.text || <>&nbsp;</>}
-                  </div>
-                ))}
-              </div>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>
+                {item.title}
+              </h3>
+              <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.5 }}>
+                {item.desc}
+              </p>
             </div>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* ── Stacks grid ────────────────────────────────────────────── */}
-      <section style={{ position: "relative", zIndex: 10, padding: "80px clamp(20px, 4vw, 60px)" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <GoldDivider />
-          <div style={{ textAlign: "center", maxWidth: 600, margin: "0 auto 40px" }}>
-            <SectionLabel>Supported stacks</SectionLabel>
-            <h2 style={{
-              fontFamily: "var(--font-syne)",
-              fontSize: "clamp(26px, 3.5vw, 44px)", fontWeight: 800,
-              letterSpacing: "-0.03em", color: "var(--text)",
-              marginBottom: 12, marginTop: 8,
-            }}>
-              Your language, your rules.
-            </h2>
-            <p style={{ fontSize: 14, color: "var(--text3)" }}>
-              Each stack generates framework-specific patterns — not generic templates.
-            </p>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, maxWidth: 780, margin: "0 auto" }}>
-            {STACKS.map((s) => (
-              <div key={s.name} style={{
-                padding: "20px 22px",
-                borderRadius: 14,
-                border: "1px solid var(--border-subtle)",
-                background: "var(--bg3)",
-                display: "flex", alignItems: "center", gap: 14,
-              }}>
-                <img src={s.icon} alt={s.name} style={{ width: 28, height: 28, flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", marginBottom: 2 }}>{s.name}</div>
-                  <div style={{ fontSize: 10, color: s.color, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                    {s.badge}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <p style={{ fontSize: 12, color: "var(--text3)", marginTop: 16, maxWidth: 780, margin: "16px auto 0" }}>
-            Plus combo stacks: MERN · PERN · FastAPI + React · Laravel + React
-          </p>
-        </div>
-      </section>
+      {/* ── FINAL LAUNCH BANNER ───────────────────────────────────── */}
+      <section style={{
+        position: "relative", zIndex: 10,
+        padding: "0 clamp(16px, 4vw, 48px) 120px",
+        maxWidth: 960, margin: "0 auto"
+      }}>
+        <div className="si-card" style={{
+          borderRadius: 24,
+          border: "1px solid var(--gold-border)",
+          background: "linear-gradient(135deg, rgba(245,200,66,0.04) 0%, rgba(8,8,9,0) 100%)",
+          padding: "clamp(40px, 6vw, 68px) 24px",
+          textAlign: "center",
+          position: "relative",
+          overflow: "hidden"
+        }}>
+          {/* Internal Glow Mesh */}
+          <div aria-hidden style={{
+            position: "absolute", top: "-50%", left: "50%", transform: "translateX(-50%)",
+            width: "80%", height: "150%", pointerEvents: "none",
+            background: "radial-gradient(ellipse, rgba(245,200,66,0.06), transparent 70%)"
+          }} />
 
-      {/* ── Final CTA ──────────────────────────────────────────────── */}
-      <section style={{ position: "relative", zIndex: 10, padding: "80px clamp(20px, 4vw, 60px) 120px" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <div style={{
-            borderRadius: 24,
-            border: "1px solid var(--gold-border)",
-            background: "linear-gradient(135deg, rgba(245,200,66,0.05) 0%, rgba(245,200,66,0.02) 100%)",
-            padding: "clamp(48px, 6vw, 80px) clamp(32px, 5vw, 80px)",
-            textAlign: "center",
-            position: "relative",
-            overflow: "hidden",
-          }}>
-            {/* Inner glow */}
-            <div style={{
-              position: "absolute", top: "-30%", left: "50%", transform: "translateX(-50%)",
-              width: 400, height: 250,
-              background: "radial-gradient(ellipse, rgba(245,200,66,0.12), transparent 70%)",
-              pointerEvents: "none",
-            }} />
-
+          <div style={{ position: "relative", zIndex: 10 }}>
             <div style={{
               display: "inline-flex", alignItems: "center", justifyContent: "center",
-              width: 60, height: 60, borderRadius: 16,
+              width: 56, height: 56, borderRadius: 16,
               background: "var(--gold)", color: "var(--bg)",
-              fontSize: 28, marginBottom: 28, position: "relative",
+              fontSize: 24, marginBottom: 20
             }}>
-              <Blocks size={28} />
+              <Blocks size={24} />
             </div>
 
             <h2 style={{
               fontFamily: "var(--font-syne)",
-              fontSize: "clamp(26px, 4vw, 44px)", fontWeight: 800,
-              letterSpacing: "-0.03em", color: "var(--text)",
-              marginBottom: 14, position: "relative",
+              fontSize: "clamp(26px, 4vw, 40px)", fontWeight: 800,
+              letterSpacing: "-0.03em", color: "var(--text)", marginBottom: 12
             }}>
-              Ready to stop writing boilerplate?
+              Stop writing structural boilerplate.
             </h2>
             <p style={{
-              fontSize: 15, color: "var(--text2)", lineHeight: 1.65,
-              marginBottom: 36, maxWidth: 520, margin: "0 auto 36px",
-              position: "relative",
+              fontSize: 14, color: "var(--text2)", lineHeight: 1.6,
+              marginBottom: 32, maxWidth: 500, margin: "0 auto 32px"
             }}>
-              Open the wizard, pick your stack, define your schema, download your project. Your next side-project starts now.
+              Launch the visual builder to structure your database models and download optimized, framework-compliant scaffolding configurations instantly.
             </p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", position: "relative" }}>
-              <Link href="/create" style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                padding: "14px 36px", borderRadius: 12,
-                background: "var(--gold)", color: "var(--bg)",
-                fontSize: 15, fontWeight: 700, textDecoration: "none",
-                boxShadow: "0 0 48px rgba(245,200,66,0.30)",
-                letterSpacing: "-0.01em",
+
+            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+              <Link href="/create" className="si-btn-primary" style={{
+                padding: "13px 32px", borderRadius: 10, fontSize: 14,
+                boxShadow: "0 0 32px rgba(245,200,66,0.25)"
               }}>
-                <Zap size={16} fill="currentColor" />
-                Launch the wizard for free
+                <Zap size={15} fill="currentColor" />
+                Launch Visual Scaffolder
               </Link>
               <div style={{
-                padding: "14px 24px", borderRadius: 12, fontSize: 13,
+                padding: "13px 20px", borderRadius: 10, fontSize: 13,
                 color: "var(--text3)", border: "1px solid var(--border-subtle)",
-                display: "flex", alignItems: "center", gap: 8,
-                background: "var(--bg3)",
+                display: "flex", alignItems: "center", gap: 8, background: "var(--bg3)"
               }}>
-                <Code2 size={14} />
-                No signup · No server · No limits
+                <Code2 size={13} />
+                No registration required · MIT License
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Footer ─────────────────────────────────────────────────── */}
+      {/* ── FOOTER ─────────────────────────────────────────────────── */}
       <footer style={{
         borderTop: "1px solid var(--border-subtle)",
-        padding: "28px clamp(20px, 4vw, 60px)",
+        padding: "24px clamp(16px, 4vw, 48px)",
         display: "flex", alignItems: "center", justifyContent: "space-between",
         fontSize: 12, color: "var(--text3)",
         position: "relative", zIndex: 10,
-        flexWrap: "wrap", gap: 12,
+        flexWrap: "wrap", gap: 12
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Image src="/favicon.svg" alt="StackInit" width={14} height={14} />
-          <span>StackInit — scaffold faster, ship sooner</span>
+          <Image src="/favicon.svg" alt="StackInit footer logo" width={14} height={14} />
+          <span>StackInit — Scaffold faster, deploy sooner.</span>
         </div>
         <div style={{ display: "flex", gap: 20 }}>
-          {["Open source", "No tracking", "MIT License"].map((t) => (
-            <span key={t}>{t}</span>
+          {["Open Source", "Client-Side Processing", "MIT License"].map((label) => (
+            <span key={label}>{label}</span>
           ))}
         </div>
       </footer>
+
     </main>
   );
 }
 
-/* ─── Sub-components ────────────────────────────────────────────────── */
-
-function GoldDivider() {
-  return (
-    <div style={{
-      height: 1, marginBottom: 56,
-      background: "linear-gradient(90deg, transparent, var(--gold-border) 30%, var(--gold-border) 70%, transparent)",
-    }} />
-  );
-}
+/* ─── Sub-Components ────────────────────────────────────────────────── */
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{
+    <div style={{
       fontSize: 11, fontWeight: 700, textTransform: "uppercase",
       letterSpacing: "0.12em", color: "var(--gold)",
-      display: "flex", alignItems: "center", gap: 8,
+      display: "inline-flex", alignItems: "center", gap: 8,
     }}>
-      <span style={{ display: "inline-block", width: 20, height: 1.5, background: "var(--gold)", borderRadius: 1 }} />
+      <span style={{ display: "inline-block", width: 16, height: 1, background: "var(--gold)", borderRadius: 1 }} />
       {children}
-    </p>
+    </div>
   );
 }
