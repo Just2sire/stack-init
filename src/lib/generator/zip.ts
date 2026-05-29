@@ -196,9 +196,10 @@ export async function generateZip(config: ProjectConfig): Promise<void> {
     }
   }
 
-  // Embed YAML config and common README inside the ZIP
+  // Embed YAML config, common README, and getting-started guide inside the ZIP
   zip.file('stack-init.yaml', buildYamlContent(config));
   zip.file('README.md', generateCommonReadme(config));
+  zip.file('GETTING_STARTED.md', buildGettingStarted(config, true));
 
   // DevOps files — pure frontend stacks (no server) don't get docker-compose
   if (stack !== 'nextjs' && stack !== 'react') {
@@ -261,17 +262,4 @@ export async function generateZip(config: ProjectConfig): Promise<void> {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  // Download GETTING_STARTED.md separately after the ZIP
-  setTimeout(() => {
-    const md = buildGettingStarted(config, true);
-    const mdBlob = new Blob([md], { type: 'text/markdown' });
-    const mdUrl = URL.createObjectURL(mdBlob);
-    const mdLink = document.createElement('a');
-    mdLink.href = mdUrl;
-    mdLink.download = 'GETTING_STARTED.md';
-    document.body.appendChild(mdLink);
-    mdLink.click();
-    document.body.removeChild(mdLink);
-    URL.revokeObjectURL(mdUrl);
-  }, 500);
 }

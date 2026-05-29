@@ -1,6 +1,6 @@
 import yaml from 'js-yaml';
 import type { ProjectConfig } from '@stack-init/schema';
-import { isCliStack } from '@stack-init/schema';
+import { isCliStack, isMixedStack } from '@stack-init/schema';
 
 export function buildYamlContent(config: ProjectConfig): string {
   const output: Record<string, unknown> = {
@@ -90,35 +90,8 @@ export function buildGettingStarted(config: ProjectConfig, isZip: boolean): stri
     .map((m) => `- \`${m.name}\` — ${m.fields.length} field(s)`)
     .join('\n');
 
-  if (isZip) {
+  if (!isZip) {
     return `# ${config.name} — Getting Started
-
-> Generated with Stack-Init on ${today}
-
-## What was generated
-- \`${config.name}.zip\` — the complete project (includes \`stack-init.yaml\`)
-
-## Next steps
-
-### 1. Use the generated project
-Unzip \`${config.name}.zip\` and follow the \`README.md\` instructions inside.
-
-### 2. Regenerate with the CLI
-The \`stack-init.yaml\` file inside the ZIP lets you regenerate or share the project config.
-
-\`\`\`bash
-npx @stack-init/cli generate stack-init.yaml
-\`\`\`
-
-## Configured models
-${modelLines}
-
----
-Scaffold faster, ship sooner with [Stack-Init](https://stackinit.dev)
-`;
-  }
-
-  return `# ${config.name} — Getting Started
 
 > Generated with Stack-Init on ${today}
 
@@ -131,7 +104,7 @@ Scaffold faster, ship sooner with [Stack-Init](https://stackinit.dev)
 The CLI transforms this YAML file into a full project (Laravel, NestJS, Express, etc.) with all selected options.
 
 \`\`\`bash
-npx @stack-init/cli generate ${config.name}.stack-init.yaml
+npx stack-init-cli generate --config ${config.name}.stack-init.yaml
 \`\`\`
 
 ## Configured models
@@ -140,6 +113,189 @@ ${modelLines}
 ---
 Scaffold faster, ship sooner with [Stack-Init](https://stackinit.dev)
 `;
+  }
+
+  // ── isZip=true — comprehensive guide included inside the ZIP ──────────────
+  const stack = config.stack as string;
+  const mixed = isMixedStack(config.stack);
+  const lines: string[] = [];
+
+  lines.push(`# Getting Started — ${config.name}`);
+  lines.push('');
+  lines.push(`> Generated with Stack-Init on ${today}`);
+  lines.push('');
+
+  // Prerequisites
+  lines.push('## Prerequisites');
+  lines.push('');
+  if (stack.includes('laravel')) {
+    lines.push('- **PHP** 8.4+  →  `php -v`');
+    lines.push('- **Composer** 2+  →  `composer --version`');
+    lines.push('- **MySQL / PostgreSQL / SQLite** (per your `.env`)');
+  }
+  if (stack.includes('fastapi')) {
+    lines.push('- **Python** 3.12+  →  `python --version`');
+    lines.push('- **pip** or **Poetry**');
+  }
+  if (stack.includes('express') || stack.includes('nestjs') || stack.includes('nextjs') || stack.includes('react')) {
+    lines.push('- **Node.js** 22 LTS  →  `node -v`');
+    lines.push('- **npm** 10+  →  `npm -v`');
+  }
+  lines.push('');
+
+  // Installation
+  lines.push('## Installation');
+  lines.push('');
+  lines.push('### Option A — script (recommended)');
+  lines.push('');
+  lines.push('```bash');
+  lines.push('bash setup.sh        # Linux / macOS / WSL');
+  lines.push('.\\setup.ps1         # Windows PowerShell');
+  lines.push('setup.bat            # Windows CMD');
+  lines.push('```');
+  lines.push('');
+  lines.push('### Option B — step by step');
+  lines.push('');
+
+  if (stack.includes('laravel')) {
+    lines.push('```bash');
+    lines.push('composer install --no-interaction');
+    lines.push('cp .env.example .env');
+    lines.push('# Edit .env: DB_DATABASE, DB_USERNAME, DB_PASSWORD, APP_URL');
+    lines.push('php artisan key:generate');
+    lines.push('php artisan migrate --force');
+    lines.push('php artisan db:seed');
+    lines.push('```');
+    lines.push('');
+  }
+  if (stack.includes('fastapi')) {
+    const dir = mixed ? 'backend/' : '';
+    lines.push('```bash');
+    if (dir) lines.push(`cd ${dir}`);
+    lines.push('pip install -r requirements.txt');
+    lines.push('# Copy .env.example → .env and set DATABASE_URL');
+    if (dir) lines.push('cd ..');
+    lines.push('```');
+    lines.push('');
+  }
+  if (stack.includes('express') || stack.includes('nestjs')) {
+    const dir = mixed ? 'backend/' : '';
+    lines.push('```bash');
+    if (dir) lines.push(`cd ${dir}`);
+    lines.push('npm install');
+    lines.push('# Copy .env.example → .env and set DATABASE_URL / PORT');
+    if (dir) lines.push('cd ..');
+    lines.push('```');
+    lines.push('');
+  }
+  if (mixed && (stack.includes('react') || stack.includes('nextjs'))) {
+    lines.push('```bash');
+    lines.push('cd frontend');
+    lines.push('npm install');
+    lines.push('# Copy .env.example → .env.local and set NEXT_PUBLIC_API_URL if needed');
+    lines.push('cd ..');
+    lines.push('```');
+    lines.push('');
+  }
+  if (!mixed && (stack === 'nextjs' || stack === 'react')) {
+    lines.push('```bash');
+    lines.push('npm install');
+    lines.push('# Copy .env.example → .env.local');
+    lines.push('```');
+    lines.push('');
+  }
+
+  // Run
+  lines.push('## Run the project');
+  lines.push('');
+  if (mixed) {
+    lines.push('```bash');
+    lines.push('bash dev.sh        # Linux / macOS / WSL — starts backend + frontend');
+    lines.push('.\\dev.ps1         # Windows PowerShell');
+    lines.push('```');
+    lines.push('');
+    lines.push('Or manually:');
+    lines.push('');
+    lines.push('```bash');
+    if (stack.includes('laravel')) {
+      lines.push('php artisan serve         # → http://localhost:8000');
+    } else if (stack.includes('fastapi')) {
+      lines.push('cd backend && uvicorn main:app --reload   # → http://localhost:8000');
+    } else {
+      lines.push('cd backend && npm run dev  # → http://localhost:3000');
+    }
+    lines.push('cd frontend && npm run dev  # → http://localhost:5173');
+    lines.push('```');
+  } else if (stack.includes('laravel')) {
+    lines.push('```bash');
+    lines.push('php artisan serve');
+    lines.push('```');
+    lines.push('');
+    lines.push('→ http://localhost:8000/api');
+  } else if (stack.includes('fastapi')) {
+    lines.push('```bash');
+    lines.push('uvicorn main:app --reload');
+    lines.push('```');
+    lines.push('');
+    lines.push('→ http://localhost:8000/docs (Swagger UI)');
+  } else if (stack.includes('express') || stack.includes('nestjs')) {
+    lines.push('```bash');
+    lines.push('npm run dev');
+    lines.push('```');
+    lines.push('');
+    lines.push('→ http://localhost:3000');
+  } else if (stack.includes('nextjs') || stack.includes('react')) {
+    lines.push('```bash');
+    lines.push('npm run dev');
+    lines.push('```');
+    lines.push('');
+    lines.push('→ http://localhost:3000');
+  }
+  lines.push('');
+
+  // Env vars
+  lines.push('## Key environment variables');
+  lines.push('');
+  lines.push('| Variable | Description |');
+  lines.push('|---|---|');
+  if (stack.includes('laravel')) {
+    lines.push('| `DB_CONNECTION` | mysql / pgsql / sqlite |');
+    lines.push('| `DB_HOST` | Database host |');
+    lines.push('| `DB_DATABASE` | Database name |');
+    lines.push('| `DB_USERNAME` | Database user |');
+    lines.push('| `DB_PASSWORD` | Database password |');
+    lines.push('| `APP_URL` | Application URL |');
+  }
+  if (stack.includes('fastapi') || stack.includes('express') || stack.includes('nestjs')) {
+    lines.push('| `DATABASE_URL` | Database connection URL |');
+    lines.push('| `PORT` | Listening port (default: 3000 / 8000) |');
+    lines.push('| `JWT_SECRET` | JWT secret key (if auth enabled) |');
+  }
+  if (mixed && (stack.includes('react') || stack.includes('nextjs'))) {
+    lines.push('| `NEXT_PUBLIC_API_URL` | Backend API URL |');
+  }
+  lines.push('');
+
+  // Models
+  lines.push('## Configured models');
+  lines.push('');
+  lines.push(modelLines);
+  lines.push('');
+
+  // Regenerate
+  lines.push('## Regenerate with the CLI');
+  lines.push('');
+  lines.push('The `stack-init.yaml` included in the ZIP lets you regenerate or share the config:');
+  lines.push('');
+  lines.push('```bash');
+  lines.push('npx stack-init-cli generate');
+  lines.push('```');
+  lines.push('');
+  lines.push('---');
+  lines.push('Scaffold faster, ship sooner with [Stack-Init](https://stackinit.dev)');
+  lines.push('');
+
+  return lines.join('\n');
 }
 
 function downloadBlob(content: string, mimeType: string, filename: string): void {
