@@ -7,6 +7,7 @@ import { Zap, X, List, LayoutGrid, Network, Library } from "lucide-react";
 import { ImportModal } from "../ImportModal";
 import { ModulesModal } from "../ModulesModal";
 import { CanvasView } from "../canvas/CanvasView";
+import { AIAssistant } from "@/components/wizard/AIAssistant";
 
 const FIELD_TYPES = [
   "string","char","text","longText","mediumText","tinyText",
@@ -424,6 +425,10 @@ export function ModelsStep() {
 
         <GridView onSelectModel={handleSelectModelForPanel} />
 
+        <div style={{ marginTop: 24 }}>
+          <AIAssistant step="models" placeholder='Suggest models — e.g. "Add a subscription system with plans and invoices"' />
+        </div>
+
         {panelModel && (
           <ModelEditorSlidePanel
             modelName={panelModel}
@@ -514,6 +519,11 @@ export function ModelsStep() {
           </button>
           {viewToggle}
         </div>
+      </div>
+
+      {/* AI Assistant */}
+      <div style={{ marginBottom: 20 }}>
+        <AIAssistant step="models" placeholder='Suggest models — e.g. "Add a subscription system with plans and invoices"' />
       </div>
 
       {/* Two-column content */}

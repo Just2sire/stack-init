@@ -3,149 +3,468 @@
 import { useWizardStore } from "@/stores/useWizardStore";
 import { SubStepPills } from "../SubStepPills";
 import { cn } from "@/lib/utils";
-import { Monitor, FileCode, Layout, Pencil } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Monitor, FileCode, Layout, Pencil, Check, Terminal, Search, FolderOpen, Globe, Sliders } from "lucide-react";
 
 const PAGE_TYPES = [
-  { key: "list"   as const, label: "List page",   desc: "Index with data table",    icon: Layout,   defaultEnabled: true  },
-  { key: "detail" as const, label: "Detail page",  desc: "Show individual resource", icon: FileCode, defaultEnabled: true  },
-  { key: "create" as const, label: "Create page",  desc: "Form to create resource",  icon: Pencil,   defaultEnabled: true  },
-  { key: "edit"   as const, label: "Edit page",    desc: "Form to edit resource",    icon: Monitor,  defaultEnabled: false },
+  { key: "list"   as const, label: "List page",   desc: "Data table index view",    icon: Layout,   defaultEnabled: true  },
+  { key: "detail" as const, label: "Detail page",  desc: "Individual resource show", icon: FileCode, defaultEnabled: true  },
+  { key: "create" as const, label: "Create page",  desc: "Interactive create form",  icon: Pencil,   defaultEnabled: true  },
+  { key: "edit"   as const, label: "Edit page",    desc: "Update resource form",     icon: Monitor,  defaultEnabled: false },
 ];
 
-const LIBRARY_CONFIG = [
+const LIBRARIES_MATRIX = [
   {
     category: "State Management",
     key: "state_lib" as const,
     options: [
-      { value: "zustand",       label: "Zustand" },
-      { value: "redux-toolkit", label: "Redux Toolkit" },
-      { value: "jotai",         label: "Jotai" },
-      { value: "none",          label: "None" },
+      { value: "zustand",       label: "Zustand",       desc: "Stores", package: "zustand" },
+      { value: "redux-toolkit", label: "Redux",         desc: "Global", package: "@reduxjs/toolkit" },
+      { value: "jotai",         label: "Jotai",         desc: "Atomic", package: "jotai" },
+      { value: "none",          label: "None",          desc: "React",  package: null },
     ],
   },
   {
-    category: "Forms",
+    category: "Form & Validation",
     key: "form_lib" as const,
     options: [
-      { value: "react-hook-form", label: "React Hook Form" },
-      { value: "formik",          label: "Formik" },
-      { value: "none",            label: "None" },
+      { value: "react-hook-form", label: "Hook Form", desc: "Performant", package: "react-hook-form" },
+      { value: "formik",          label: "Formik",    desc: "Classic",    package: "formik" },
+      { value: "zod",             label: "Zod",       desc: "Schema",     package: "zod" },
+      { value: "none",            label: "None",      desc: "Native",     package: null },
     ],
   },
   {
-    category: "HTTP Client",
+    category: "HTTP Fetch Client",
     key: "http_lib" as const,
     options: [
-      { value: "axios", label: "Axios" },
-      { value: "ky",    label: "ky" },
-      { value: "fetch", label: "Fetch API" },
+      { value: "axios", label: "Axios",     desc: "Promises", package: "axios" },
+      { value: "ky",    label: "Ky",        desc: "Hooks",    package: "ky" },
+      { value: "fetch", label: "Fetch API", desc: "Browser",  package: null },
     ],
   },
   {
-    category: "UI Framework",
+    category: "Data Fetching",
+    key: "data_fetching" as const,
+    options: [
+      { value: "tanstack-query", label: "TanStack Query", desc: "Caching",  package: "@tanstack/react-query" },
+      { value: "swr",            label: "SWR",            desc: "Hooks",    package: "swr" },
+      { value: "none",           label: "None",           desc: "Vanilla",  package: null },
+    ],
+  },
+  {
+    category: "Router",
+    key: "router" as const,
+    options: [
+      { value: "react-router-v6", label: "React Router", desc: "v7 / file-based", package: "react-router-dom" },
+      { value: "tanstack-router", label: "TanStack Router", desc: "Type-safe",    package: "@tanstack/react-router" },
+      { value: "none",            label: "None",            desc: "SPA no routing", package: null },
+    ],
+  },
+  {
+    category: "UI Component Library",
     key: "ui_lib" as const,
     options: [
-      { value: "shadcn", label: "shadcn/ui" },
-      { value: "mui",    label: "MUI" },
-      { value: "antd",   label: "Ant Design" },
-      { value: "none",   label: "None" },
+      { value: "shadcn", label: "shadcn/ui",   desc: "Tailwind", package: "lucide-react" },
+      { value: "mui",    label: "Material UI", desc: "Google",   package: "@mui/material" },
+      { value: "antd",   label: "Ant Design",  desc: "AntD",     package: "antd" },
+      { value: "none",   label: "None",        desc: "Custom",   package: null },
     ],
   },
 ];
 
 const SUB_STEPS = [
-  { label: "Libraries" },
-  { label: "Pages per model" },
+  { label: "Libraries Console" },
+  { label: "Pages Explorer" },
 ];
 
 export function ReactStep() {
   const { models, reactOptions, setReactOptions, setModelPages, currentSubStep, setCurrentSubStep } = useWizardStore();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeModelName, setActiveModelName] = useState<string | null>(null);
+
+  // Compute active model or default to first filtered model
+  const activeModel = useMemo(() => {
+    if (!models.length) return null;
+    if (activeModelName) return models.find(m => m.name === activeModelName) || null;
+    return models[0];
+  }, [models, activeModelName]);
+
+  // Filter models based on search bar input
+  const filteredModels = useMemo(() => {
+    return models.filter(m => m.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [models, searchTerm]);
+
+  // Compute live package.json contents based on active selections
+  const computedDependencies = useMemo(() => {
+    const deps: Record<string, string> = {
+      "react": "^19.1.0",
+      "react-dom": "^19.1.0",
+    };
+    const devDeps: Record<string, string> = {
+      "vite": "^6.3.5",
+      "@vitejs/plugin-react": "^4.5.1",
+      "typescript": "^5.8.3",
+    };
+
+    LIBRARIES_MATRIX.forEach(category => {
+      const selectedValue = reactOptions[category.key];
+      const selectedOption = category.options.find(opt => opt.value === selectedValue);
+      if (selectedOption && selectedOption.package) {
+        deps[selectedOption.package] = "^" + getMockVersion(selectedOption.value);
+        if (selectedOption.value === "shadcn") {
+          deps["tailwind-merge"] = "^2.3.0";
+          deps["clsx"] = "^2.1.1";
+        } else if (selectedOption.value === "redux-toolkit") {
+          deps["react-redux"] = "^9.1.2";
+        } else if (selectedOption.value === "zod") {
+          deps["react-hook-form"] = "^" + getMockVersion("react-hook-form");
+          deps["@hookform/resolvers"] = "^3.9.0";
+        }
+      }
+    });
+
+    return { deps, devDeps };
+  }, [reactOptions]);
+
+  // Bulk action: toggle pages for all models
+  const togglePageForAllModels = (pageKey: typeof PAGE_TYPES[number]["key"], enable: boolean) => {
+    models.forEach(m => {
+      setModelPages(m.name, { [pageKey]: enable });
+    });
+  };
+
+  // Determine if a page key is globally active on ALL models
+  const getGlobalPageState = (pageKey: typeof PAGE_TYPES[number]["key"]) => {
+    if (!models.length) return false;
+    return models.every(m => m.pages?.[pageKey] ?? (pageKey === "edit" ? false : true));
+  };
 
   return (
-    <div className="si-step-panel">
-      <div className="si-section-label">Frontend</div>
-      <h1 className="si-title" style={{ marginBottom: 8 }}>React setup</h1>
-      <p className="si-subtitle" style={{ marginBottom: 28 }}>
-        Configure your React front-end — libraries and pages to generate.
-      </p>
+    <div className="si-step-panel" style={{ height: "calc(100vh - 160px)", display: "flex", flexDirection: "column", minHeight: 0 }}>
+      {/* Title */}
+      <div style={{ flexShrink: 0, marginBottom: 16 }}>
+        <span className="si-section-label">Frontend Setup</span>
+        <h2 className="si-title" style={{ marginBottom: 4 }}>React SPA Setup</h2>
+        <p className="si-subtitle">Fine-tune library architectures and model views for your client application.</p>
+      </div>
 
-      <SubStepPills steps={SUB_STEPS} current={currentSubStep} onSelect={setCurrentSubStep} />
+      <div style={{ flexShrink: 0, marginBottom: 20 }}>
+        <SubStepPills steps={SUB_STEPS} current={currentSubStep} onSelect={setCurrentSubStep} />
+      </div>
 
-      {/* Sub-step 0 — Libraries */}
+      {/* Sub-step 0 — Tactile Library Matrix & Terminal Preview */}
       {currentSubStep === 0 && (
-        <div>
-          <div className="si-section-label">Libraries</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16, maxWidth: 720 }}>
-            {LIBRARY_CONFIG.map((lib) => (
-              <div key={lib.category} className="si-card" style={{ padding: 20 }}>
-                <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text3)", marginBottom: 12 }}>
-                  {lib.category}
-                </p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {lib.options.map((opt) => {
-                    const selected = reactOptions[lib.key] === opt.value;
-                    return (
-                      <button
-                        key={opt.value}
-                        onClick={() => setReactOptions({ [lib.key]: opt.value })}
-                        className="si-opt-chip"
-                        style={selected ? { background: "var(--gold-subtle)", borderColor: "var(--gold)", color: "var(--gold)" } : {}}
-                      >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: 32, flex: 1, minHeight: 0, overflow: "hidden" }}>
+          
+          {/* Left panel: Tactical matrices */}
+          <div style={{ overflowY: "auto", paddingRight: 8 }} className="space-y-6">
+            {LIBRARIES_MATRIX.map((track) => {
+              const currentValue = reactOptions[track.key];
 
-      {/* Sub-step 1 — Pages per model */}
-      {currentSubStep === 1 && (
-        <div>
-          <div className="si-section-label">Pages per model</div>
-
-          {models.length === 0 ? (
-            <p style={{ fontSize: 13, color: "var(--text3)", fontStyle: "italic", padding: "16px 0" }}>
-              Add models in the previous step to configure their pages.
-            </p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-              {models.map((model) => (
-                <div key={model.name}>
-                  <p style={{ fontSize: 12, fontFamily: "var(--font-jetbrains-mono)", color: "var(--gold)", marginBottom: 12, fontWeight: 700 }}>
-                    {model.name}
-                  </p>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-                    {PAGE_TYPES.map((p) => {
-                      const Icon = p.icon;
-                      const enabled = model.pages?.[p.key] ?? p.defaultEnabled;
+              return (
+                <div key={track.category}>
+                  <span className="si-section-label" style={{ display: "block", marginBottom: 8 }}>{track.category}</span>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+                    {track.options.map((opt) => {
+                      const isSelected = currentValue === opt.value;
                       return (
                         <button
-                          key={p.key}
-                          onClick={() => setModelPages(model.name, { [p.key]: !enabled })}
-                          className={cn("si-toggle-card", enabled && "on")}
-                          style={{ flexDirection: "column", alignItems: "flex-start", gap: 10, padding: 16 }}
+                          key={opt.value}
+                          onClick={() => setReactOptions({ [track.key]: opt.value })}
+                          className={cn(
+                            "w-full text-left transition-all duration-200",
+                            "flex items-center gap-3"
+                          )}
+                          style={{
+                            background: isSelected ? "var(--gold-subtle)" : "var(--bg3)",
+                            border: `1.5px solid ${isSelected ? "var(--gold)" : "var(--border-subtle)"}`,
+                            padding: "10px 14px",
+                            borderRadius: 12,
+                            cursor: "pointer",
+                            outline: "none"
+                          }}
+                          role="radio"
+                          aria-checked={isSelected}
                         >
-                          <div style={{ width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: enabled ? "var(--gold-subtle)" : "var(--bg4)", color: enabled ? "var(--gold)" : "var(--text3)" }}>
-                            <Icon style={{ width: 16, height: 16 }} />
+                          <div className={cn("si-led-dot", isSelected ? "active" : "inactive")} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: isSelected ? "var(--gold)" : "var(--text)" }}>
+                              {opt.label}
+                            </div>
+                            <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 1 }}>
+                              {opt.desc}
+                            </div>
                           </div>
-                          <div>
-                            <span style={{ display: "block", fontSize: 12, fontWeight: 600, color: enabled ? "var(--gold)" : "var(--text)" }}>{p.label}</span>
-                            <span style={{ display: "block", fontSize: 11, color: "var(--text3)", marginTop: 2 }}>{p.desc}</span>
-                          </div>
+                          {isSelected && (
+                            <div className="w-4 h-4 rounded-full bg-gold flex items-center justify-center shrink-0">
+                              <Check size={10} strokeWidth={3} className="text-bg" />
+                            </div>
+                          )}
                         </button>
                       );
                     })}
                   </div>
                 </div>
-              ))}
+              );
+            })}
+          </div>
+
+          {/* Right panel: Terminal dependencies viewer */}
+          <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+            <span className="si-section-label" style={{ display: "block", marginBottom: 8 }}>Dependencies Preview</span>
+            <div 
+              className="si-terminal-window flex-1"
+              style={{
+                boxShadow: "inset 0 4px 12px rgba(0,0,0,0.60)",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden"
+              }}
+            >
+              <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 12, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 8, flexShrink: 0 }}>
+                <Terminal size={13} className="text-gold" />
+                <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--text3)", letterSpacing: "0.08em" }}>package.json</span>
+              </div>
+              <div style={{ overflowY: "auto", flex: 1, fontFamily: "var(--font-jetbrains-mono), monospace" }}>
+                <span style={{ color: "#fca5a5" }}>{`{`}</span>
+                <div style={{ paddingLeft: 16 }}>
+                  <span style={{ color: "#93c5fd" }}>"dependencies"</span>: <span style={{ color: "#fca5a5" }}>{`{`}</span>
+                  <div style={{ paddingLeft: 16 }}>
+                    {Object.entries(computedDependencies.deps).map(([depName, ver], i, arr) => (
+                      <div key={depName} className="tech-pulse" style={{ animationDelay: `${i * 100}ms` }}>
+                        <span style={{ color: "#fed7aa" }}>"{depName}"</span>: <span style={{ color: "#a7f3d0" }}>"{ver}"</span>
+                        {i < arr.length - 1 ? "," : ""}
+                      </div>
+                    ))}
+                  </div>
+                  <span style={{ color: "#fca5a5" }}>{`},`}</span>
+                  <br />
+                  <span style={{ color: "#93c5fd" }}>"devDependencies"</span>: <span style={{ color: "#fca5a5" }}>{`{`}</span>
+                  <div style={{ paddingLeft: 16 }}>
+                    {Object.entries(computedDependencies.devDeps).map(([depName, ver], i, arr) => (
+                      <div key={depName}>
+                        <span style={{ color: "#fed7aa" }}>"{depName}"</span>: <span style={{ color: "#a7f3d0" }}>"{ver}"</span>
+                        {i < arr.length - 1 ? "," : ""}
+                      </div>
+                    ))}
+                  </div>
+                  <span style={{ color: "#fca5a5" }}>{`}`}</span>
+                </div>
+                <span style={{ color: "#fca5a5" }}>{`}`}</span>
+              </div>
             </div>
-          )}
+          </div>
+
+        </div>
+      )}
+
+      {/* Sub-step 1 — Pages per Model (Scalability Fix) */}
+      {currentSubStep === 1 && (
+        <div style={{ display: "grid", gridTemplateColumns: "250px 1fr", gap: 24, flex: 1, minHeight: 0, overflow: "hidden" }}>
+          
+          {/* Column 1: Model Navigator List */}
+          <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "var(--bg2)", border: "1px solid var(--border-subtle)", borderRadius: 16, overflow: "hidden" }}>
+            {/* Search Box */}
+            <div style={{ padding: 12, borderBottom: "1px solid var(--border-subtle)", position: "relative" }}>
+              <Search size={14} className="text-text3" style={{ position: "absolute", left: 22, top: "50%", transform: "translateY(-50%)" }} />
+              <input
+                type="text"
+                placeholder="Search models..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  width: "100%",
+                  background: "var(--bg)",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: 8,
+                  padding: "6px 12px 6px 30px",
+                  fontSize: 12,
+                  color: "var(--text)",
+                  outline: "none"
+                }}
+              />
+            </div>
+
+            {/* Model Tree List */}
+            <div style={{ flex: 1, overflowY: "auto", padding: 8 }} className="space-y-1">
+              {filteredModels.length === 0 ? (
+                <div style={{ padding: 24, textAlign: "center", color: "var(--text3)", fontSize: 11, fontStyle: "italic" }}>
+                  No models found.
+                </div>
+              ) : (
+                filteredModels.map((m) => {
+                  const isActive = activeModel?.name === m.name;
+                  
+                  // Compute number of pages enabled
+                  const pageCount = PAGE_TYPES.reduce((acc, pt) => {
+                    const active = m.pages?.[pt.key] ?? (pt.key === "edit" ? false : true);
+                    return active ? acc + 1 : acc;
+                  }, 0);
+
+                  return (
+                    <button
+                      key={m.name}
+                      onClick={() => setActiveModelName(m.name)}
+                      className="w-full text-left flex items-center justify-between"
+                      style={{
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        background: isActive ? "var(--gold-subtle)" : "transparent",
+                        border: `1.5px solid ${isActive ? "var(--gold)" : "transparent"}`,
+                        cursor: "pointer",
+                        outline: "none"
+                      }}
+                    >
+                      <span style={{ fontSize: 12, fontWeight: 700, fontFamily: "var(--font-jetbrains-mono)", color: isActive ? "var(--gold)" : "var(--text)" }}>
+                        {m.name}
+                      </span>
+                      <span className="si-badge" style={{ fontSize: 10, background: isActive ? "var(--gold-border)" : "var(--bg4)", color: isActive ? "var(--gold)" : "var(--text3)" }}>
+                        {pageCount} / 4
+                      </span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Column 2: Focused Workspace Pane */}
+          <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto", paddingRight: 4 }} className="space-y-6">
+            
+            {/* Global Master Preset Switcher */}
+            <div>
+              <span className="si-section-label" style={{ display: "block", marginBottom: 8 }}>Global Master Presets</span>
+              <div 
+                style={{
+                  background: "var(--bg3)",
+                  border: "1px dashed var(--border-medium)",
+                  borderRadius: 16,
+                  padding: "16px 20px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 16
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <Sliders size={16} className="text-gold" />
+                  <div>
+                    <span style={{ fontSize: 13, fontWeight: 700, display: "block" }}>Master Page Controls</span>
+                    <span style={{ fontSize: 10, color: "var(--text3)", display: "block", marginTop: 2 }}>Globally toggle page templates for every database model simultaneously.</span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {PAGE_TYPES.map((pt) => {
+                    const isAllEnabled = getGlobalPageState(pt.key);
+                    return (
+                      <button
+                        key={pt.key}
+                        onClick={() => togglePageForAllModels(pt.key, !isAllEnabled)}
+                        className="si-btn-secondary"
+                        style={{
+                          fontSize: 11,
+                          padding: "6px 12px",
+                          borderRadius: 8,
+                          borderColor: isAllEnabled ? "var(--gold)" : "var(--border-medium)",
+                          color: isAllEnabled ? "var(--gold)" : "var(--text2)",
+                          background: isAllEnabled ? "var(--gold-subtle)" : "transparent"
+                        }}
+                      >
+                        {pt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Focused Model Overrides */}
+            {activeModel ? (
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                  <FolderOpen size={15} className="text-gold" />
+                  <span className="si-section-label" style={{ marginBottom: 0 }}>Model Overrides: {activeModel.name}</span>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+                  {PAGE_TYPES.map((pt) => {
+                    const isEnabled = activeModel.pages?.[pt.key] ?? (pt.key === "edit" ? false : true);
+                    const Icon = pt.icon;
+
+                    return (
+                      <button
+                        key={pt.key}
+                        onClick={() => setModelPages(activeModel.name, { [pt.key]: !isEnabled })}
+                        className={cn("si-toggle-card text-left w-full transition-all duration-200", isEnabled && "on")}
+                        style={{
+                          background: isEnabled ? "var(--gold-subtle)" : "var(--bg3)",
+                          borderColor: isEnabled ? "var(--gold)" : "var(--border-subtle)",
+                          padding: "16px 20px"
+                        }}
+                      >
+                        <div className={cn("si-toggle shrink-0 mr-4", isEnabled && "on")}>
+                          <div className="si-toggle-knob" />
+                        </div>
+                        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 12 }}>
+                          <div style={{ 
+                            width: 32, 
+                            height: 32, 
+                            borderRadius: 8, 
+                            display: "flex", 
+                            alignItems: "center", 
+                            justifyContent: "center", 
+                            background: isEnabled ? "var(--gold-border)" : "var(--bg4)", 
+                            color: isEnabled ? "var(--gold)" : "var(--text3)",
+                            flexShrink: 0
+                          }}>
+                            <Icon style={{ width: 16, height: 16 }} />
+                          </div>
+                          <div>
+                            <span style={{ display: "block", fontSize: 13, fontWeight: 600, color: isEnabled ? "var(--gold)" : "var(--text)" }}>{pt.label}</span>
+                            <span style={{ display: "block", fontSize: 11, color: "var(--text3)", marginTop: 2 }}>{pt.desc}</span>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div style={{ padding: 48, border: "1px dashed var(--border-subtle)", borderRadius: 16, textAlign: "center", color: "var(--text3)" }}>
+                No active model override.
+              </div>
+            )}
+
+          </div>
+
         </div>
       )}
     </div>
   );
+}
+
+// Mock version mappings for package display
+function getMockVersion(lib: string): string {
+  switch (lib) {
+    case "zustand": return "4.5.2";
+    case "redux-toolkit": return "2.2.3";
+    case "jotai": return "2.8.0";
+    case "react-hook-form": return "7.51.3";
+    case "formik": return "2.4.5";
+    case "zod": return "3.23.4";
+    case "axios": return "1.6.8";
+    case "ky": return "1.2.4";
+    case "shadcn": return "0.379.0";
+    case "mui": return "5.15.15";
+    case "antd": return "5.16.2";
+    case "tanstack-query":
+    case "@tanstack/react-query": return "5.76.1";
+    case "swr": return "2.3.3";
+    case "react-router-v6":
+    case "react-router-dom": return "7.6.0";
+    case "tanstack-router":
+    case "@tanstack/react-router": return "1.114.0";
+    default: return "1.0.0";
+  }
 }

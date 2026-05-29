@@ -20,6 +20,15 @@ export type Stack =
 
 export type ServiceId = 'auth' | 'file-upload' | 'email' | 'cache' | 'websockets' | 'queue';
 
+export type LaravelPluginId =
+  | 'notifications'
+  | 'socialite'
+  | 'spatie-permissions'
+  | 'spatie-media'
+  | 'spatie-activity'
+  | 'horizon'
+  | 'two-factor-auth';
+
 export interface NamedField {
   default?: any;
   name: string;
@@ -66,6 +75,10 @@ export interface LaravelGenerateOptions {
   service: boolean;
   tests: boolean;
   routes: boolean;
+  observer?: boolean;
+  events?: boolean;
+  actions?: boolean;
+  collection?: boolean;
 }
 
 export interface MigrationOptions {
@@ -103,6 +116,11 @@ export interface LaravelOptions {
   laravel_version: string;
   db_engine: string;
   runner?: 'makefile' | 'bash' | 'both' | 'none';
+  use_strict_types: boolean;
+  use_readonly: boolean;
+  use_enum_backed: boolean;
+  route_prefix: string;
+  use_redis: boolean;
 }
 
 export interface VueOptions {
@@ -171,6 +189,7 @@ export interface ProjectConfig {
   stack: Stack;
   models: Model[];
   services?: ServiceId[];
+  laravel_plugins?: LaravelPluginId[];
   backendUrl?: string;
   nextjsUsage?: 'frontend-only' | 'full-stack';
   laravel?: LaravelOptions;

@@ -34,7 +34,7 @@ const STEP_LABELS: Record<StepId, string> = {
 };
 
 export function WizardSidebar() {
-  const { steps, currentStepId, setStep, models, stack, enabledServices } = useWizardStore();
+  const { steps, currentStepId, setStep, models, stack, enabledServices, projectName } = useWizardStore();
   const currentIndex = steps.indexOf(currentStepId);
 
   const baseFiles = 8;
@@ -50,10 +50,10 @@ export function WizardSidebar() {
   };
 
   return (
-    <div className="si-wizard-sidebar">
+    <div className="si-wizard-sidebar" role="navigation" aria-label="Creation Wizard Steps">
       {/* Logo */}
       <Link href="/" className="si-wiz-logo" style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textDecoration: "none" }}>
-        <Image src="/favicon.svg" alt="StackInit" width={28} height={28} />
+        <Image src="/favicon.svg" alt="StackInit logo" width={28} height={28} />
         <span style={{
           fontFamily: "var(--font-syne), 'Syne', sans-serif",
           fontSize: 18, fontWeight: 800, color: "var(--text)", letterSpacing: "-0.02em",
@@ -63,7 +63,7 @@ export function WizardSidebar() {
       </Link>
 
       {/* Steps */}
-      <nav style={{ padding: "8px 0", flex: 1 }}>
+      <nav style={{ padding: "8px 0", flex: 1 }} aria-label="Main steps navigation">
         {steps.map((id, idx) => {
           const stepIndex = steps.indexOf(id);
           const isActive = currentStepId === id;
@@ -73,18 +73,23 @@ export function WizardSidebar() {
           const badge = getStepBadge(id);
 
           return (
-            <div
+            <button
               key={id}
               onClick={() => isClickable && setStep(id)}
+              disabled={!isClickable}
               className={cn(
-                "si-step-item",
+                "si-step-item w-full text-left",
                 isActive && "active",
-                isCompleted && "done",
-                isClickable && "cursor-pointer"
+                isCompleted && "done"
               )}
-              style={{ opacity: !isCompleted && !isActive && !!stack ? 0.55 : undefined }}
+              style={{ 
+                opacity: !isCompleted && !isActive && !!stack ? 0.55 : undefined,
+                background: isActive ? "var(--gold-subtle)" : "transparent",
+                border: "none"
+              }}
+              aria-current={isActive ? "step" : undefined}
             >
-              <div className="si-step-dot">
+              <div className="si-step-dot" aria-hidden="true">
                 {isCompleted ? <Check size={14} /> : idx + 1}
               </div>
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -97,7 +102,7 @@ export function WizardSidebar() {
                   </span>
                 )}
               </div>
-            </div>
+            </button>
           );
         })}
       </nav>
@@ -113,15 +118,17 @@ export function WizardSidebar() {
         }}
       >
         <div style={{ fontWeight: 600, color: "var(--text2)", marginBottom: 4, textTransform: "uppercase" }}>
-          Project
+          Project Name
         </div>
-        {useWizardStore.getState().projectName || "unnamed-project"}
+        <span style={{ color: "var(--text)", fontFamily: "var(--font-jetbrains-mono)", fontSize: 12 }}>
+          {projectName || "unnamed-project"}
+        </span>
         <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 4 }}>
           ~{estimatedFiles} files will be generated
         </div>
         {enabledServices.length > 0 && (
-          <div style={{ marginTop: 8, display: "flex", gap: 4, flexWrap: "wrap" }}>
-            {enabledServices.map(s => <span key={s} title={s}>{SERVICE_ICONS[s] ?? s}</span>)}
+          <div style={{ marginTop: 8, display: "flex", gap: 4, flexWrap: "wrap" }} aria-label="Enabled integrations">
+            {enabledServices.map(s => <span key={s} title={s} role="img" aria-label={s}>{SERVICE_ICONS[s] ?? s}</span>)}
           </div>
         )}
       </div>

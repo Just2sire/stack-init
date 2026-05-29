@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trash2, ExternalLink, Globe, Lock } from 'lucide-react'
+import { compressConfig } from '@/lib/sharing'
+import type { ProjectConfig } from '@/types/schema'
 
 interface Config {
   id: string
@@ -25,9 +27,8 @@ export function DashboardClient({ initialConfigs }: { initialConfigs: Config[] }
   }
 
   function loadConfig(config: Config) {
-    // Encode the config into the URL and redirect to the wizard
-    const encoded = btoa(JSON.stringify(config.stack_config))
-    router.push(`/create?config=${encoded}`)
+    const compressed = compressConfig(config.stack_config as unknown as ProjectConfig)
+    router.push(`/create?c=${compressed}`)
   }
 
   if (configs.length === 0) {
