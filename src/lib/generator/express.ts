@@ -4,8 +4,8 @@ import { slugify, generatePrismaSchema, toTs } from './common';
 
 export async function generateExpressProject(zip: JSZip, config: ProjectConfig) {
   const { models, name: projectName } = config;
-  const opts = config.express || { architecture: 'mvc', database: 'prisma', db_engine: 'postgresql' } as any;
-  const orm: string = opts.database || opts.orm || 'none';
+  const opts = config.express || { architecture: 'mvc', orm: 'prisma', db_engine: 'postgresql' } as any;
+  const orm: string = opts.orm || opts.database || 'none';
   const architecture: string = opts.architecture || 'mvc';
   const useAuth = opts.auth === 'jwt';
   const useValidation = opts.validation === 'zod';
@@ -41,6 +41,7 @@ export async function generateExpressProject(zip: JSZip, config: ProjectConfig) 
       start: 'node dist/index.js',
       ...(orm === 'prisma'    && { 'prisma:generate': 'prisma generate', 'prisma:push': 'prisma db push' }),
       ...(orm === 'typeorm'   && { 'typeorm:migration:generate': 'ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -n Migration', 'typeorm:migration:run': 'ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run' }),
+      ...(orm === 'drizzle'   && { 'db:generate': 'drizzle-kit generate', 'db:migrate': 'drizzle-kit migrate', 'db:push': 'drizzle-kit push' }),
     },
     dependencies: {
       express: '^5.1.0',
@@ -50,9 +51,10 @@ export async function generateExpressProject(zip: JSZip, config: ProjectConfig) 
       ...(orm === 'mongoose'  && { mongoose: '^8.14.0' }),
       ...(orm === 'sequelize' && { sequelize: '^6.37.0', 'sequelize-typescript': '^2.1.6', 'reflect-metadata': '^0.2.2' }),
       ...(orm === 'typeorm'   && { typeorm: '^0.3.21', 'reflect-metadata': '^0.2.2' }),
-      ...(opts.db_engine === 'postgresql' && (orm === 'sequelize' || orm === 'typeorm') && { pg: '^8.12.0', 'pg-hstore': '^2.3.4' }),
-      ...(opts.db_engine === 'mysql'      && (orm === 'sequelize' || orm === 'typeorm') && { mysql2: '^3.10.0' }),
-      ...(opts.db_engine === 'sqlite'     && (orm === 'sequelize' || orm === 'typeorm') && { 'better-sqlite3': '^11.0.0' }),
+      ...(orm === 'drizzle'   && { 'drizzle-orm': '^0.41.0' }),
+      ...(opts.db_engine === 'postgresql' && (orm === 'sequelize' || orm === 'typeorm' || orm === 'drizzle') && { pg: '^8.12.0', 'pg-hstore': '^2.3.4' }),
+      ...(opts.db_engine === 'mysql'      && (orm === 'sequelize' || orm === 'typeorm' || orm === 'drizzle') && { mysql2: '^3.10.0' }),
+      ...(opts.db_engine === 'sqlite'     && (orm === 'sequelize' || orm === 'typeorm' || orm === 'drizzle') && { 'better-sqlite3': '^11.0.0' }),
       ...(useAuth       && { jsonwebtoken: '^9.0.2', bcryptjs: '^2.4.3' }),
       ...(useValidation && { zod: '^3.24.0' }),
       ...(useSwagger    && { 'swagger-ui-express': '^5.0.0', 'swagger-jsdoc': '^6.2.8' }),
@@ -66,7 +68,8 @@ export async function generateExpressProject(zip: JSZip, config: ProjectConfig) 
       ...(orm === 'prisma'    && { prisma: '^6.8.0' }),
       ...(orm === 'sequelize' && { '@types/sequelize': '^4.28.20' }),
       ...(orm === 'typeorm'   && { 'tsconfig-paths': '^4.2.0' }),
-      ...(opts.db_engine === 'sqlite' && (orm === 'sequelize' || orm === 'typeorm') && { '@types/better-sqlite3': '^7.6.11' }),
+      ...(orm === 'drizzle'   && { 'drizzle-kit': '^0.30.0' }),
+      ...(opts.db_engine === 'sqlite' && (orm === 'sequelize' || orm === 'typeorm' || orm === 'drizzle') && { '@types/better-sqlite3': '^7.6.11' }),
       ...(useAuth       && { '@types/jsonwebtoken': '^9.0.0', '@types/bcryptjs': '^2.4.6' }),
       ...(useSwagger    && { '@types/swagger-ui-express': '^4.1.6', '@types/swagger-jsdoc': '^6.0.4' }),
     },
@@ -149,6 +152,36 @@ export const AppDataSource = new DataSource({
 `);
   }
 
+  if (orm === 'drizzle') {
+    const dbEngine = opts.db_engine ?? 'postgresql';
+    const isPg     = dbEngine === 'postgresql';
+    const isMysql  = dbEngine === 'mysql';
+    const dialect  = isPg ? 'postgresql' : isMysql ? 'mysql' : 'sqlite';
+    const coreModule = isPg ? 'drizzle-orm/pg-core' : isMysql ? 'drizzle-orm/mysql-core' : 'drizzle-orm/sqlite-core';
+    const tableFn  = isPg ? 'pgTable' : isMysql ? 'mysqlTable' : 'sqliteTable';
+    const dbImport = isPg
+      ? `import { drizzle } from 'drizzle-orm/node-postgres';\nimport { Pool } from 'pg';`
+      : isMysql
+      ? `import { drizzle } from 'drizzle-orm/mysql2';\nimport mysql from 'mysql2/promise';`
+      : `import { drizzle } from 'drizzle-orm/better-sqlite3';\nimport Database from 'better-sqlite3';`;
+    const dbInit = isPg
+      ? `const pool = new Pool({ connectionString: process.env.DATABASE_URL });\nexport const db = drizzle(pool, { schema });`
+      : isMysql
+      ? `const connection = mysql.createPool(process.env.DATABASE_URL!);\nexport const db = drizzle(connection, { schema, mode: 'default' });`
+      : `const sqlite = new Database(process.env.DATABASE_URL ?? './dev.db');\nexport const db = drizzle(sqlite, { schema });`;
+
+    const tableBlocks = models.map(m => {
+      const tableName = m.table || m.name.toLowerCase() + 's';
+      const varName   = m.name.toLowerCase() + 's';
+      const cols = m.fields.map(f => `  ${f.name}: ${tableFn === 'pgTable' ? mapToDrizzlePg(f) : tableFn === 'mysqlTable' ? mapToDrizzleMysql(f) : mapToDrizzleSqlite(f)},`).join('\n');
+      return `export const ${varName} = ${tableFn}('${tableName}', {\n${cols}\n});`;
+    }).join('\n\n');
+
+    zip.file('src/db/schema.ts', `import { ${tableFn} } from '${coreModule}';\n\n${tableBlocks}\n`);
+    zip.file('src/db/index.ts', `${dbImport}\nimport * as schema from './schema';\n\n${dbInit}\n`);
+    zip.file('drizzle.config.ts', `import type { Config } from 'drizzle-kit';\n\nexport default {\n  schema: './src/db/schema.ts',\n  out: './drizzle',\n  dialect: '${dialect}',\n  dbCredentials: { url: process.env.DATABASE_URL! },\n} satisfies Config;\n`);
+  }
+
   // ── Middleware setup ─────────────────────────────────────────────────────────
 
   const mwImports: string[] = [];
@@ -190,6 +223,8 @@ app.use((err: any, req: any, res: any, next: any) => {
     ? `import { sequelize } from './lib/sequelize';`
     : orm === 'typeorm'
     ? `import 'reflect-metadata';\nimport { AppDataSource } from './lib/dataSource';`
+    : orm === 'drizzle'
+    ? `import { db } from './db';`
     : '';
 
   // ── index.ts — architecture adapts import style ──────────────────────────────
@@ -573,26 +608,133 @@ ${model.migration?.timestamps ? `
   }
 }
 
+// ── Drizzle column helpers ────────────────────────────────────────────────────
+
+import type { NamedField } from '@stack-init/schema';
+
+function mapToDrizzlePg(f: NamedField): string {
+  const nn = f.nullable ? '' : '.notNull()';
+  const uq = f.unique ? '.unique()' : '';
+  switch (f.type) {
+    case 'id':      return `serial('${f.name}').primaryKey()`;
+    case 'uuid':    return `uuid('${f.name}').primaryKey().defaultRandom()`;
+    case 'integer': case 'tinyInteger': case 'smallInteger': case 'mediumInteger': case 'unsignedInteger':
+                    return `integer('${f.name}')${nn}`;
+    case 'bigInteger': return `bigint('${f.name}', { mode: 'number' })${nn}`;
+    case 'boolean': return `boolean('${f.name}')${nn}`;
+    case 'date': case 'dateTime': case 'timestamp': return `timestamp('${f.name}')${nn}`;
+    case 'float': case 'double': return `doublePrecision('${f.name}')${nn}`;
+    case 'decimal': return `decimal('${f.name}', { precision: 10, scale: 2 })${nn}`;
+    case 'text': case 'longText': case 'mediumText': return `text('${f.name}')${nn}`;
+    case 'json': case 'jsonb': return `json('${f.name}')${nn}`;
+    default:        return `varchar('${f.name}', { length: 255 })${nn}${uq}`;
+  }
+}
+
+function mapToDrizzleMysql(f: NamedField): string {
+  const nn = f.nullable ? '' : '.notNull()';
+  const uq = f.unique ? '.unique()' : '';
+  switch (f.type) {
+    case 'id':      return `int('${f.name}').autoincrement().primaryKey()`;
+    case 'uuid':    return `varchar('${f.name}', { length: 36 }).primaryKey()`;
+    case 'integer': case 'tinyInteger': case 'smallInteger': case 'mediumInteger': case 'unsignedInteger':
+                    return `int('${f.name}')${nn}`;
+    case 'bigInteger': return `bigint('${f.name}', { mode: 'number' })${nn}`;
+    case 'boolean': return `boolean('${f.name}')${nn}`;
+    case 'date': case 'dateTime': case 'timestamp': return `datetime('${f.name}')${nn}`;
+    case 'float': case 'double': return `double('${f.name}')${nn}`;
+    case 'decimal': return `decimal('${f.name}', { precision: 10, scale: 2 })${nn}`;
+    case 'text': case 'longText': return `text('${f.name}')${nn}`;
+    case 'json':    return `json('${f.name}')${nn}`;
+    default:        return `varchar('${f.name}', { length: 255 })${nn}${uq}`;
+  }
+}
+
+function mapToDrizzleSqlite(f: NamedField): string {
+  const nn = f.nullable ? '' : '.notNull()';
+  const uq = f.unique ? '.unique()' : '';
+  switch (f.type) {
+    case 'id':      return `integer('${f.name}').primaryKey({ autoIncrement: true })`;
+    case 'uuid':    return `text('${f.name}').primaryKey()`;
+    case 'integer': case 'tinyInteger': case 'smallInteger': case 'mediumInteger': case 'bigInteger': case 'unsignedInteger':
+                    return `integer('${f.name}')${nn}`;
+    case 'boolean': return `integer('${f.name}', { mode: 'boolean' })${nn}`;
+    case 'date': case 'dateTime': case 'timestamp': return `integer('${f.name}', { mode: 'timestamp' })${nn}`;
+    case 'float': case 'double': case 'decimal': return `real('${f.name}')${nn}`;
+    default:        return `text('${f.name}')${nn}${uq}`;
+  }
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function generateExpressService(modelName: string, mLow: string, orm: string): string {
-  return `import { prisma } from '../lib/prisma';
+  const mLowPlural = mLow + 's';
+
+  const ormImport =
+    orm === 'prisma'    ? `import { prisma } from '../lib/prisma';`
+    : orm === 'mongoose'  ? `import { ${modelName} } from '../models/${modelName}';`
+    : orm === 'sequelize' ? `import { ${modelName} } from '../models/${modelName}';`
+    : orm === 'typeorm'   ? `import { AppDataSource } from '../lib/dataSource';\nimport { ${modelName} } from '../entities/${modelName}.entity';`
+    : orm === 'drizzle'   ? `import { eq } from 'drizzle-orm';\nimport { db } from '../db';\nimport { ${mLowPlural} } from '../db/schema';`
+    : '';
+
+  const findAll =
+    orm === 'prisma'    ? `return prisma.${mLow}.findMany();`
+    : orm === 'mongoose'  ? `return ${modelName}.find();`
+    : orm === 'sequelize' ? `return ${modelName}.findAll();`
+    : orm === 'typeorm'   ? `return AppDataSource.getRepository(${modelName}).find();`
+    : orm === 'drizzle'   ? `return db.select().from(${mLowPlural});`
+    : `return [];`;
+
+  const findOne =
+    orm === 'prisma'    ? `return prisma.${mLow}.findUnique({ where: { id } });`
+    : orm === 'mongoose'  ? `return ${modelName}.findById(id);`
+    : orm === 'sequelize' ? `return ${modelName}.findByPk(id);`
+    : orm === 'typeorm'   ? `return AppDataSource.getRepository(${modelName}).findOne({ where: { id } as any });`
+    : orm === 'drizzle'   ? `const rows = await db.select().from(${mLowPlural}).where(eq(${mLowPlural}.id, id));\n    return rows[0] ?? null;`
+    : `return null;`;
+
+  const create =
+    orm === 'prisma'    ? `return prisma.${mLow}.create({ data });`
+    : orm === 'mongoose'  ? `return ${modelName}.create(data);`
+    : orm === 'sequelize' ? `return ${modelName}.create(data as any);`
+    : orm === 'typeorm'   ? `const repo = AppDataSource.getRepository(${modelName});\n    return repo.save(repo.create(data));`
+    : orm === 'drizzle'   ? `const rows = await db.insert(${mLowPlural}).values(data).returning();\n    return rows[0];`
+    : `return { id: Date.now(), ...data };`;
+
+  const update =
+    orm === 'prisma'    ? `return prisma.${mLow}.update({ where: { id }, data });`
+    : orm === 'mongoose'  ? `return ${modelName}.findByIdAndUpdate(id, data, { new: true });`
+    : orm === 'sequelize' ? `await ${modelName}.update(data, { where: { id } });\n    return ${modelName}.findByPk(id);`
+    : orm === 'typeorm'   ? `const repo = AppDataSource.getRepository(${modelName});\n    await repo.update(id, data);\n    return repo.findOne({ where: { id } as any });`
+    : orm === 'drizzle'   ? `const rows = await db.update(${mLowPlural}).set(data).where(eq(${mLowPlural}.id, id)).returning();\n    return rows[0] ?? null;`
+    : `return { id, ...data };`;
+
+  const remove =
+    orm === 'prisma'    ? `return prisma.${mLow}.delete({ where: { id } });`
+    : orm === 'mongoose'  ? `return ${modelName}.findByIdAndDelete(id);`
+    : orm === 'sequelize' ? `await ${modelName}.destroy({ where: { id } });`
+    : orm === 'typeorm'   ? `await AppDataSource.getRepository(${modelName}).delete(id);`
+    : orm === 'drizzle'   ? `await db.delete(${mLowPlural}).where(eq(${mLowPlural}.id, id));`
+    : '';
+
+  return `${ormImport}
 
 export const ${modelName}Service = {
   findAll: async () => {
-    ${orm === 'prisma' ? `return prisma.${mLow}.findMany();` : 'return [];'}
+    ${findAll}
   },
   findOne: async (id: number) => {
-    ${orm === 'prisma' ? `return prisma.${mLow}.findUnique({ where: { id } });` : 'return null;'}
+    ${findOne}
   },
   create: async (data: any) => {
-    ${orm === 'prisma' ? `return prisma.${mLow}.create({ data });` : 'return { id: Date.now(), ...data };'}
+    ${create}
   },
   update: async (id: number, data: any) => {
-    ${orm === 'prisma' ? `return prisma.${mLow}.update({ where: { id }, data });` : 'return { id, ...data };'}
+    ${update}
   },
   remove: async (id: number) => {
-    ${orm === 'prisma' ? `return prisma.${mLow}.delete({ where: { id } });` : 'return { id };'}
+    ${remove}
   },
 };
 `;
@@ -600,11 +742,14 @@ export const ${modelName}Service = {
 
 function generateExpressController(modelName: string, mLow: string, orm: string, architecture: string): string {
   const useService = architecture === 'layered';
+  const mLowPlural = mLow + 's';
+
   const serviceImport = useService ? `import { ${modelName}Service } from '../services/${modelName}Service';` : '';
-  const prismaImport  = !useService && orm === 'prisma'   ? `import { prisma } from '../lib/prisma';`           : '';
+  const prismaImport  = !useService && orm === 'prisma'    ? `import { prisma } from '../lib/prisma';` : '';
   const mongoImport   = !useService && orm === 'mongoose'  ? `import { ${modelName} } from '../models/${modelName}';` : '';
   const seqImport     = !useService && orm === 'sequelize' ? `import { ${modelName} } from '../models/${modelName}';` : '';
   const typeImport    = !useService && orm === 'typeorm'   ? `import { AppDataSource } from '../lib/dataSource';\nimport { ${modelName} } from '../entities/${modelName}.entity';` : '';
+  const drizzleImport = !useService && orm === 'drizzle'   ? `import { eq } from 'drizzle-orm';\nimport { db } from '../db';\nimport { ${mLowPlural} } from '../db/schema';` : '';
 
   const repo = orm === 'typeorm' && !useService ? `const repo = AppDataSource.getRepository(${modelName});` : '';
 
@@ -614,6 +759,7 @@ function generateExpressController(modelName: string, mLow: string, orm: string,
     : orm === 'mongoose'  ? `return ${modelName}.find();`
     : orm === 'sequelize' ? `return ${modelName}.findAll();`
     : orm === 'typeorm'   ? `${repo}\n    return repo.find();`
+    : orm === 'drizzle'   ? `return db.select().from(${mLowPlural});`
     : `return [];`;
 
   const getOne = useService
@@ -622,6 +768,7 @@ function generateExpressController(modelName: string, mLow: string, orm: string,
     : orm === 'mongoose'  ? `return ${modelName}.findById(id);`
     : orm === 'sequelize' ? `return ${modelName}.findByPk(Number(id));`
     : orm === 'typeorm'   ? `${repo}\n    return repo.findOne({ where: { id: Number(id) } });`
+    : orm === 'drizzle'   ? `const rows = await db.select().from(${mLowPlural}).where(eq(${mLowPlural}.id, Number(id)));\n    return rows[0] ?? null;`
     : `return null;`;
 
   const create = useService
@@ -630,6 +777,7 @@ function generateExpressController(modelName: string, mLow: string, orm: string,
     : orm === 'mongoose'  ? `return ${modelName}.create(req.body);`
     : orm === 'sequelize' ? `return ${modelName}.create(req.body);`
     : orm === 'typeorm'   ? `${repo}\n    return repo.save(repo.create(req.body));`
+    : orm === 'drizzle'   ? `const rows = await db.insert(${mLowPlural}).values(req.body).returning();\n    return rows[0];`
     : `return { ...req.body, id: Date.now() };`;
 
   const update = useService
@@ -638,6 +786,7 @@ function generateExpressController(modelName: string, mLow: string, orm: string,
     : orm === 'mongoose'  ? `return ${modelName}.findByIdAndUpdate(id, req.body, { new: true });`
     : orm === 'sequelize' ? `await ${modelName}.update(req.body, { where: { id: Number(id) } });\n    return ${modelName}.findByPk(Number(id));`
     : orm === 'typeorm'   ? `${repo}\n    await repo.update(Number(id), req.body);\n    return repo.findOne({ where: { id: Number(id) } });`
+    : orm === 'drizzle'   ? `const rows = await db.update(${mLowPlural}).set(req.body).where(eq(${mLowPlural}.id, Number(id))).returning();\n    return rows[0] ?? null;`
     : `return { id, ...req.body };`;
 
   const remove = useService
@@ -646,10 +795,11 @@ function generateExpressController(modelName: string, mLow: string, orm: string,
     : orm === 'mongoose'  ? `await ${modelName}.findByIdAndDelete(id);`
     : orm === 'sequelize' ? `await ${modelName}.destroy({ where: { id: Number(id) } });`
     : orm === 'typeorm'   ? `${repo}\n    await repo.delete(Number(id));`
+    : orm === 'drizzle'   ? `await db.delete(${mLowPlural}).where(eq(${mLowPlural}.id, Number(id)));`
     : '';
 
   return `import { Request, Response } from 'express';
-${serviceImport}${prismaImport}${mongoImport}${seqImport}${typeImport}
+${serviceImport}${prismaImport}${mongoImport}${seqImport}${typeImport}${drizzleImport}
 
 export const getAll = async (req: Request, res: Response) => {
   try {

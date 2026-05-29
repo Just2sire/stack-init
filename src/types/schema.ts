@@ -14,6 +14,7 @@ export type Stack =
   | 'mern'
   | 'pern'
   | 't3'
+  | 'django'
   | 'mevn'
   | 'mean';
 
@@ -101,6 +102,14 @@ export interface LaravelOptions {
   php_version: string;
   laravel_version: string;
   db_engine: string;
+  runner?: 'makefile' | 'bash' | 'both' | 'none';
+}
+
+export interface VueOptions {
+  ui_lib: 'none' | 'vuetify' | 'primevue';
+  state_lib: 'pinia' | 'vuex' | 'none';
+  router: 'vue-router' | 'none';
+  css: 'tailwind' | 'css-modules' | 'none';
 }
 
 export interface ReactOptions {
@@ -109,16 +118,16 @@ export interface ReactOptions {
   form_lib: string;
   ui_lib: string;
   http_lib: string;
+  data_fetching?: string;
   router: string;
   css: string;
 }
 
 export interface ExpressConfig {
   architecture: 'mvc' | 'layered' | 'minimal' | string;
-  database: 'prisma' | 'sequelize' | 'typeorm' | 'mongoose' | 'none';
+  orm: 'prisma' | 'sequelize' | 'typeorm' | 'mongoose' | 'drizzle' | 'none';
   db_engine: 'postgresql' | 'mysql' | 'sqlite' | 'mongodb';
   middlewares?: string[];
-  orm?: string;
   auth?: string;
   validation?: string;
   swagger?: boolean;
@@ -127,10 +136,9 @@ export interface ExpressConfig {
 
 export interface NestConfig {
   architecture: 'modular' | 'cqrs' | 'layered' | string;
-  database: 'prisma' | 'typeorm' | 'mongoose' | 'drizzle' | 'none';
+  orm: 'typeorm' | 'prisma' | 'mongoose' | 'drizzle' | 'none';
   db_engine: 'postgresql' | 'mysql' | 'sqlite' | 'mongodb';
   swagger?: boolean;
-  orm?: string;
   auth?: string;
   validation?: boolean;
   serialization?: boolean;
@@ -167,8 +175,9 @@ export interface ProjectConfig {
   nextjsUsage?: 'frontend-only' | 'full-stack';
   laravel?: LaravelOptions;
   react?: ReactOptions;
+  vue?: VueOptions;
   express?: ExpressConfig;
-  nest?: NestConfig;
+  nestjs?: NestConfig;
   fastapi?: FastAPIConfig;
 }
 
@@ -179,7 +188,7 @@ export function isZipStack(stack: Stack | null): boolean {
     'express', 'nestjs', 'nestjs+react', 'express+react',
     'laravel+react', 'laravel+nextjs',
     'fastapi', 'fastapi+react', 'fastapi+nextjs',
-    'mern', 'pern', 't3', 'mevn', 'mean',
+    'mern', 'pern', 't3', 'django', 'mevn', 'mean',
   ];
   return zipStacks.includes(stack as any);
 }

@@ -3,9 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useWizardStore } from "@/stores/useWizardStore";
 import { ComboId } from "@/types/combos";
+import { AIAssistant } from "@/components/wizard/AIAssistant";
 import { COMMUNITY_TEMPLATES } from "@/lib/templates/community";
 import { loadPresets, deletePreset, importPresetFile, exportPresetFile } from "@/lib/presets";
 import type { Preset } from "@/types/presets";
+import type { ProjectConfig } from "@/types/schema";
+import { Sparkles, Loader2 } from "lucide-react";
 
 const SINGLE_STACKS = [
   {
@@ -56,16 +59,38 @@ const SINGLE_STACKS = [
     desc: "Vite-based Single Page Application.",
     badgeColor: "#61dafb",
   },
+  {
+    id: "t3" as const,
+    icon: (
+      <div style={{ width: 28, height: 28, borderRadius: 6, background: "linear-gradient(135deg,#6d28d9,#a78bfa)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ fontWeight: 900, fontSize: 11, color: "#fff", letterSpacing: "-0.03em" }}>T3</span>
+      </div>
+    ),
+    title: "T3 Stack",
+    badge: "Full",
+    desc: "Next.js · tRPC · Prisma · Tailwind.",
+    badgeColor: "#6d28d9",
+  },
+  {
+    id: "django" as const,
+    icon: <img src="/icons/django.svg" alt="Django" style={{ width: 28, height: 28 }} />,
+    title: "Django",
+    badge: "Python",
+    desc: "Django REST Framework + PostgreSQL.",
+    badgeColor: "#092e20",
+  },
 ];
 
 const COMBO_STACKS = [
   { id: 'mern', title: 'MERN', desc: 'MongoDB · Express · React · Node', icon: '/icons/expressjs.svg', useCombo: true },
   { id: 'pern', title: 'PERN', desc: 'PostgreSQL · Express · React · Node', icon: '/icons/prisma.svg', useCombo: true },
+  { id: 'mevn', title: 'MEVN', desc: 'MongoDB · Express · Vue 3 · Node', icon: '/icons/expressjs.svg', useCombo: true },
+  { id: 'mean', title: 'MEAN', desc: 'MongoDB · Express · Angular · Node', icon: '/icons/expressjs.svg', useCombo: true },
   { id: 'fastapi-react', title: 'FastAPI + React', desc: 'Python · PostgreSQL · React', icon: '/icons/fastapi.svg', useCombo: true },
   { id: 'laravel+react', title: 'Laravel + React', desc: 'PHP · Laravel API · React SPA', icon: '/icons/laravel.svg', useCombo: false },
 ] as const;
 
-const COMBO_STACK_IDS = ['mern', 'pern', 'fastapi+react', 'laravel+react'];
+const COMBO_STACK_IDS = ['mern', 'pern', 'mevn', 'mean', 'fastapi+react', 'laravel+react'];
 
 function isComboActive(comboId: string, stack: string | null | undefined): boolean {
   if (!stack) return false;
@@ -78,6 +103,40 @@ export function StackStep() {
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
   const [presets, setPresets] = useState<Preset[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [aiDescription, setAiDescription]   = useState('');
+  const [aiLoading, setAiLoading]           = useState(false);
+  const [aiError, setAiError]               = useState<string | null>(null);
+  const [aiApplied, setAiApplied]           = useState(false);
+  const [aiReasoning, setAiReasoning]       = useState<string | null>(null);
+
+  async function handleAIRecommend() {
+    const desc = aiDescription.trim();
+    if (!desc) return;
+    setAiLoading(true);
+    setAiError(null);
+    setAiApplied(false);
+    setAiReasoning(null);
+    try {
+      const res = await fetch('/api/recommend-stack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: desc }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAiError(data.error ?? 'AI error');
+        return;
+      }
+      importConfig(data.config as ProjectConfig);
+      setAiReasoning(data.reasoning ?? null);
+      setAiApplied(true);
+    } catch {
+      setAiError('Network error. Try again.');
+    } finally {
+      setAiLoading(false);
+    }
+  }
 
   useEffect(() => {
     setPresets(loadPresets());
@@ -301,6 +360,42 @@ export function StackStep() {
         )}
       </div>
 
+      {/* AI Stack Recommender — full wizard pre-fill */}
+      <div style={{ maxWidth: 760, marginBottom: 40, padding: 20, borderRadius: 14, border: "1px solid rgba(245,200,66,0.2)", background: "rgba(245,200,66,0.04)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          <Sparkles size={15} style={{ color: "var(--gold)" }} />
+          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--gold)" }}>Let AI build your stack</span>
+          <span style={{ fontSize: 11, color: "var(--text3)" }}>— describe your project, AI picks stack + models + services</span>
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <input
+            value={aiDescription}
+            onChange={(e) => { setAiDescription(e.target.value); setAiError(null); setAiApplied(false); }}
+            onKeyDown={(e) => e.key === 'Enter' && handleAIRecommend()}
+            placeholder='e.g. "SaaS with teams, subscriptions, real-time chat and PDF invoices"'
+            className="si-input flex-1"
+            style={{ fontSize: 13 }}
+            disabled={aiLoading}
+          />
+          <button
+            onClick={handleAIRecommend}
+            disabled={aiLoading || !aiDescription.trim()}
+            className="si-btn-primary"
+            style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 18px", flexShrink: 0, fontSize: 13 }}
+          >
+            {aiLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+            {aiLoading ? 'Thinking…' : 'Build'}
+          </button>
+        </div>
+        {aiError && <p style={{ fontSize: 12, color: "var(--red)", marginTop: 8 }}>{aiError}</p>}
+        {aiApplied && (
+          <div style={{ marginTop: 10 }}>
+            <p style={{ fontSize: 12, color: "#4dff91", fontWeight: 600, marginBottom: 4 }}>✓ Stack configured — stack, models and services pre-filled.</p>
+            {aiReasoning && <p style={{ fontSize: 12, color: "var(--text3)", lineHeight: 1.5 }}>{aiReasoning}</p>}
+          </div>
+        )}
+      </div>
+
       {/* Divider */}
       <div
         style={{
@@ -435,6 +530,11 @@ export function StackStep() {
             })}
           </div>
         </div>
+      </div>
+
+      {/* AI Stack Recommender */}
+      <div style={{ maxWidth: 760, marginBottom: 24 }}>
+        <AIAssistant step="stack" placeholder='Describe your project — "SaaS with teams, subscriptions and real-time chat"' />
       </div>
 
       {/* Info card */}

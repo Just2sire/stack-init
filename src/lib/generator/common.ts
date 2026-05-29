@@ -94,8 +94,11 @@ export function buildDeps(opts: ReactOptions): Record<string, string> {
   if (opts.state_lib === 'jotai')          { deps.jotai = '^2.11.0'; }
   if (opts.form_lib === 'react-hook-form') { deps['react-hook-form'] = '^7.54.2'; }
   if (opts.form_lib === 'formik')          { deps.formik = '^2.0.0'; }
+  if (opts.form_lib === 'zod')             { deps['react-hook-form'] = '^7.54.2'; deps.zod = '^3.23.4'; deps['@hookform/resolvers'] = '^3.9.0'; }
   if (opts.http_lib === 'axios')           { deps.axios = '^1.8.4'; }
   if (opts.http_lib === 'ky')              { deps.ky = '^1.7.2'; }
+  if (opts.data_fetching === 'tanstack-query') { deps['@tanstack/react-query'] = '^5.65.0'; }
+  if (opts.data_fetching === 'swr')            { deps.swr = '^2.2.5'; }
   if (opts.ui_lib === 'shadcn')            {
     deps['@radix-ui/react-slot'] = '^1.2.0';
     deps['class-variance-authority'] = '^0.7.0';
@@ -118,14 +121,14 @@ export function buildDeps(opts: ReactOptions): Record<string, string> {
 }
 
 export function generateCommonReadme(config: ProjectConfig): string {
-  const { name, stack, models, react, express, nest, fastapi } = config;
+  const { name, stack, models, react, express, nestjs, fastapi } = config;
   const today = new Date().toLocaleDateString('en-GB');
 
   // ── Stack table ──
   let stackTable = `| Layer | Choice |\n|-------|--------|\n`;
   if (stack.includes('laravel')) stackTable += `| Backend | Laravel 11 |\n`;
-  if (stack.includes('express')) stackTable += `| Backend | Express 5 (Node.js) |\n| Architecture | ${express?.architecture || 'MVC'} |\n| ORM | ${express?.database || express?.orm || 'Prisma'} |\n`;
-  if (stack.includes('nestjs'))  stackTable += `| Backend | NestJS 11 |\n| Architecture | ${nest?.architecture || 'Modular'} |\n| ORM | ${nest?.orm || nest?.database || 'Prisma'} |\n`;
+  if (stack.includes('express')) stackTable += `| Backend | Express 5 (Node.js) |\n| Architecture | ${express?.architecture || 'MVC'} |\n| ORM | ${express?.orm || 'Prisma'} |\n`;
+  if (stack.includes('nestjs'))  stackTable += `| Backend | NestJS 11 |\n| Architecture | ${nestjs?.architecture || 'Modular'} |\n| ORM | ${nestjs?.orm || 'TypeORM'} |\n`;
   if (stack.includes('fastapi')) stackTable += `| Backend | FastAPI (Python) |\n| ORM | ${fastapi?.orm || 'SQLModel'} |\n`;
   if (react) stackTable += `| Frontend | Next.js 15 / React 19 |\n| UI Lib | ${react.ui_lib || 'none'} |\n| State | ${react.state_lib || 'none'} |\n| Forms | ${react.form_lib || 'none'} |\n`;
 
@@ -136,8 +139,8 @@ export function generateCommonReadme(config: ProjectConfig): string {
   }).join('\n');
 
   // ── DB engine / ORM detection ──
-  const dbEngine = express?.db_engine || nest?.db_engine || (fastapi as any)?.db_engine || 'postgresql';
-  const orm = express?.database || express?.orm || nest?.orm || nest?.database || fastapi?.orm || 'prisma';
+  const dbEngine = express?.db_engine || nestjs?.db_engine || (fastapi as any)?.db_engine || 'postgresql';
+  const orm = express?.orm || nestjs?.orm || fastapi?.orm || 'prisma';
 
   const dbUrlExample = dbEngine === 'mysql'
     ? `mysql://user:password@localhost:3306/${name}`
@@ -320,7 +323,7 @@ export function generatePrismaSchema(config: ProjectConfig): string {
   const { models, stack } = config;
   let dbEngine = 'postgresql';
   
-  if (stack === 'nestjs') dbEngine = config.nest?.db_engine || 'postgresql';
+  if (stack === 'nestjs') dbEngine = config.nestjs?.db_engine || 'postgresql';
   else if (stack === 'express') dbEngine = (config as any).express?.db_engine || 'postgresql';
   else if (stack === 'nextjs') dbEngine = 'postgresql';
 

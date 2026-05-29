@@ -32,6 +32,8 @@ export type { ServiceId };
 export const SUB_STEP_COUNTS: Partial<Record<StepId, number>> = {
   'react-setup':   2,
   'fastapi-setup': 2,
+  'nest-setup':    2,
+  'laravel-setup': 2,
 };
 
 const DEFAULT_LARAVEL_OPTIONS: LaravelOptions = {
@@ -40,6 +42,7 @@ const DEFAULT_LARAVEL_OPTIONS: LaravelOptions = {
   php_version: '8.4',
   laravel_version: '12',
   db_engine: 'mysql',
+  runner: 'makefile',
 };
 
 const DEFAULT_REACT_OPTIONS: ReactOptions = {
@@ -47,22 +50,24 @@ const DEFAULT_REACT_OPTIONS: ReactOptions = {
   form_lib: 'react-hook-form',
   ui_lib: 'shadcn',
   http_lib: 'axios',
-  router: 'none',
+  router: 'react-router-v6',
   css: 'tailwind',
 };
 
 const DEFAULT_EXPRESS_OPTIONS: ExpressConfig = {
   architecture: 'layered',
-  database: 'prisma',
+  orm: 'prisma',
   db_engine: 'postgresql',
   middlewares: ['cors', 'morgan'] as any,
 };
 
 const DEFAULT_NEST_OPTIONS: NestConfig = {
   architecture: 'modular',
-  database: 'prisma',
+  orm: 'typeorm',
   db_engine: 'postgresql',
   swagger: true,
+  validation: true,
+  serialization: true,
 };
 
 const DEFAULT_FASTAPI_OPTIONS: FastAPIConfig = {
@@ -213,6 +218,9 @@ function computeSteps(stack: Stack | null, nextjsUsage: string | null): StepId[]
     case 't3':
       return [...base, 'database', 'models', 'relations', 'output'];
 
+    case 'django':
+      return [...base, 'models', 'relations', 'output'];
+
     default:
       return [...base, 'output'];
   }
@@ -262,7 +270,9 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
     }
     const idx = steps.indexOf(currentStepId);
     if (idx > 0) {
-      set({ currentStepId: steps[idx - 1], currentSubStep: 0 });
+      const prevStepId = steps[idx - 1];
+      const prevTotal = SUB_STEP_COUNTS[prevStepId] ?? 1;
+      set({ currentStepId: prevStepId, currentSubStep: prevTotal - 1 });
     }
   },
 
@@ -442,7 +452,8 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
     const { stack, projectName, models, nextjsUsage, laravelOptions, reactOptions, expressOptions, nestOptions, fastapiOptions, backendUrl, enabledServices } = get();
     const s = stack!;
 
-    const hasFrontend = ['react', 'nextjs', 'express+react', 'nestjs+react', 'fastapi+react', 'fastapi+nextjs', 'laravel+react', 'laravel+nextjs', 'mern', 'pern', 'mevn', 'mean', 't3'].includes(s);
+    const hasReact    = ['react', 'nextjs', 'express+react', 'nestjs+react', 'fastapi+react', 'fastapi+nextjs', 'laravel+react', 'laravel+nextjs', 'mern', 'pern', 't3'].includes(s);
+    const hasVue      = s === 'mevn';
     const hasExpress  = ['express', 'express+react', 'mern', 'pern', 'mevn', 'mean'].includes(s);
     const hasNest     = ['nestjs', 'nestjs+react'].includes(s);
     const hasFastAPI  = ['fastapi', 'fastapi+react', 'fastapi+nextjs'].includes(s);
@@ -455,9 +466,10 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
       ...(backendUrl                   && { backendUrl }),
       ...(nextjsUsage                  && { nextjsUsage }),
       ...(s.includes('laravel')        && { laravel: laravelOptions }),
-      ...(hasFrontend                  && { react: reactOptions }),
+      ...(hasReact                     && { react: reactOptions }),
+      ...(hasVue                       && { vue: { ui_lib: 'none', state_lib: 'pinia', router: 'vue-router', css: 'none' } }),
       ...(hasExpress                   && { express: expressOptions }),
-      ...(hasNest                      && { nest: nestOptions }),
+      ...(hasNest                      && { nestjs: nestOptions }),
       ...(hasFastAPI                   && { fastapi: fastapiOptions }),
     } as ProjectConfig;
   },
@@ -471,7 +483,7 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
     laravelOptions:   config.laravel || s.laravelOptions,
     reactOptions:     config.react || s.reactOptions,
     expressOptions:   config.express || s.expressOptions,
-    nestOptions:      config.nest || s.nestOptions,
+    nestOptions:      config.nestjs || s.nestOptions,
     fastapiOptions:   config.fastapi || s.fastapiOptions,
     backendUrl:       config.backendUrl || '',
     steps:            computeSteps(config.stack, config.nextjsUsage || null),

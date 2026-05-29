@@ -73,7 +73,7 @@ export function buildYamlContent(config: ProjectConfig): string {
   if (config.laravel) output.laravel = config.laravel;
   if (config.react)   output.react   = config.react;
   if (config.express) output.express = config.express;
-  if (config.nest)    output.nest    = config.nest;
+  if (config.nestjs)  output.nestjs  = config.nestjs;
   if (config.fastapi) output.fastapi = config.fastapi;
 
   return yaml.dump(output, {

@@ -4,10 +4,15 @@ import { generateCommonReadme } from './common';
 import { generateExpressProject } from './express';
 import { generateNestProject } from './nest';
 import { generateNextjsProject } from './nextjs';
+import { generateReactProject } from './react';
 import { generateFastAPIProject } from './fastapi';
 import { generateIntegration } from './integration';
 import { buildYamlContent, buildGettingStarted } from './yaml';
-import { generateDockerCompose, generateGithubCI } from './docker';
+import { generateDockerCompose, generateGithubCI, generateDockerfile, generateDockerIgnore, generateNginxConf } from './docker'
+import { generateVueProject } from './vue';
+import { generateAngularProject } from './angular';
+import { generateT3Project } from './t3';
+import { generateDjangoProject } from './django';
 
 function generateDevScripts(zip: JSZip, config: ProjectConfig): void {
   const { stack, name } = config;
@@ -165,12 +170,25 @@ export async function generateZip(config: ProjectConfig): Promise<void> {
     await generateNestProject(isMixed ? zip.folder('backend')! : zip, config);
   } else if (stack === 'fastapi' || stack === 'fastapi+react' || stack === 'fastapi+nextjs') {
     await generateFastAPIProject(isMixed ? zip.folder('backend')! : zip, config);
-  } else if (stack === 'nextjs' || stack === 'react') {
+  } else if (stack === 'nextjs') {
     await generateNextjsProject(zip, config);
+  } else if (stack === 'react') {
+    await generateReactProject(zip, config);
+  } else if (stack === 't3') {
+    await generateT3Project(zip, config);
+  } else if (stack === 'django') {
+    await generateDjangoProject(zip, config);
   }
 
   if (isMixed) {
-    await generateNextjsProject(zip.folder('frontend')!, config);
+    // MEVN uses Vue, MEAN uses Angular, all other mixed stacks use React
+    if (stack === 'mevn') {
+      await generateVueProject(zip.folder('frontend')!, config);
+    } else if (stack === 'mean') {
+      await generateAngularProject(zip.folder('frontend')!, config);
+    } else {
+      await generateReactProject(zip.folder('frontend')!, config);
+    }
     await generateIntegration(zip, config, 'frontend');
     // Laravel backend is PHP — no Node dev scripts applicable
     if (!stack.includes('laravel')) {
@@ -182,10 +200,55 @@ export async function generateZip(config: ProjectConfig): Promise<void> {
   zip.file('stack-init.yaml', buildYamlContent(config));
   zip.file('README.md', generateCommonReadme(config));
 
-  // DevOps files (skip for pure frontend stacks)
+  // DevOps files — pure frontend stacks (no server) don't get docker-compose
   if (stack !== 'nextjs' && stack !== 'react') {
     zip.file('docker-compose.yml', generateDockerCompose(config));
   }
+
+  // Dockerfiles per component
+  const backendFolder = isMixed ? zip.folder('backend')! : zip;
+  const frontendFolder = isMixed ? zip.folder('frontend')! : null;
+
+  if (stack.includes('fastapi')) {
+    backendFolder.file('Dockerfile', generateDockerfile('fastapi', config));
+    backendFolder.file('.dockerignore', generateDockerIgnore('fastapi'));
+  } else if (stack.includes('laravel')) {
+    backendFolder.file('Dockerfile', generateDockerfile('laravel', config));
+    backendFolder.file('.dockerignore', generateDockerIgnore('laravel'));
+  } else if (stack.includes('express') || stack.includes('nestjs') || stack === 'mern' || stack === 'pern' || stack === 'mevn') {
+    backendFolder.file('Dockerfile', generateDockerfile('node', config));
+    backendFolder.file('.dockerignore', generateDockerIgnore('node'));
+  } else if (stack === 't3') {
+    zip.file('Dockerfile', generateDockerfile('t3', config));
+    zip.file('.dockerignore', generateDockerIgnore('node'));
+  } else if (stack === 'django') {
+    zip.file('Dockerfile', generateDockerfile('django', config));
+    zip.file('.dockerignore', generateDockerIgnore('fastapi'));
+  } else if (stack === 'nextjs') {
+    zip.file('Dockerfile', generateDockerfile('nextjs', config));
+    zip.file('.dockerignore', generateDockerIgnore('node'));
+  } else if (stack === 'react') {
+    zip.file('Dockerfile', generateDockerfile('react-spa', config));
+    zip.file('.dockerignore', generateDockerIgnore('node'));
+    zip.file('nginx.conf', generateNginxConf());
+  }
+
+  if (isMixed && frontendFolder) {
+    if (stack === 'mevn') {
+      frontendFolder.file('Dockerfile', generateDockerfile('react-spa', config));
+      frontendFolder.file('nginx.conf', generateNginxConf());
+    } else if (stack === 'mean') {
+      frontendFolder.file('Dockerfile', generateDockerfile('angular', config));
+      frontendFolder.file('nginx.conf', generateNginxConf());
+    } else if (stack.includes('nextjs')) {
+      frontendFolder.file('Dockerfile', generateDockerfile('nextjs', config));
+    } else {
+      frontendFolder.file('Dockerfile', generateDockerfile('react-spa', config));
+      frontendFolder.file('nginx.conf', generateNginxConf());
+    }
+    frontendFolder.file('.dockerignore', generateDockerIgnore('node'));
+  }
+
   zip.folder('.github/workflows')!.file('ci.yml', generateGithubCI(config));
 
   const content = await zip.generateAsync({ type: 'blob' });
