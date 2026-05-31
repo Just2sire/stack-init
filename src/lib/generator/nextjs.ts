@@ -322,40 +322,85 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
 function generateListPage(model: Model, apiBase: string, pages: ModelPages, opts?: ReactOptions | null): string {
   const slug = slugify(model.name);
-  const firstField = model.fields[0]?.name ?? 'id';
   const uiLib = opts?.ui_lib ?? 'none';
   const useTailwind = opts?.css === 'tailwind' || uiLib === 'shadcn' || uiLib === 'tailwind';
 
-  const fetchBlock = `async function getData() {
-  const res = await fetch('${apiBase}', { cache: 'no-store' });
-  if (!res.ok) throw new Error('Failed to fetch');
-  return res.json();
-}`;
+  const displayFields = model.fields.filter((f: any) => f.type !== 'foreignId').slice(0, 6);
+
+  // Helper: render a cell value expression for the generated JSX
+  function cellExpr(f: any): string {
+    if (f.type === 'boolean') return `{item.${f.name} ? '✓' : '✗'}`;
+    return `{String(item.${f.name} ?? '—')}`;
+  }
 
   if (uiLib === 'mui') {
-    return `import Link from 'next/link';
-import { Container, Typography, Stack, Card, CardContent, CardActions, Button } from '@mui/material';
+    const thCells = displayFields.map(f => `            <TableCell><strong>${f.name}</strong></TableCell>`).join('\n');
+    const tdCells = displayFields.map(f => `              <TableCell>${cellExpr(f)}</TableCell>`).join('\n');
+    const newBtn = pages.create
+      ? `<Button component={Link} href="/${slug}/new" variant="contained" size="small">+ New</Button>`
+      : '';
+    const editCell = pages.edit
+      ? `<Button component={Link} href={\`/${slug}/\${item.id}/edit\`} size="small">Edit</Button>`
+      : '';
+    return `'use client';
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { Container, Typography, Stack, Button, Table, TableHead, TableBody, TableRow, TableCell, Alert } from '@mui/material';
 
-${fetchBlock}
+export default function ${model.name}ListPage() {
+  const [items, setItems]   = useState<any[]>([]);
+  const [error, setError]   = useState<string | null>(null);
 
-export default async function ${model.name}ListPage() {
-  const items = await getData();
+  const load = useCallback(async () => {
+    setError(null);
+    try {
+      const res = await fetch('${apiBase}');
+      if (!res.ok) throw new Error('Failed to fetch');
+      setItems(await res.json());
+    } catch (e: any) {
+      setError(e.message ?? 'Unknown error');
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Delete this item?')) return;
+    await fetch(\`${apiBase}/\${id}\`, { method: 'DELETE' });
+    setItems(prev => prev.filter((i: any) => i.id !== id));
+  };
+
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4">${model.name}s</Typography>
-        ${pages.create ? `<Button component={Link} href="/${slug}/new" variant="contained">+ New</Button>` : ''}
+        ${newBtn}
       </Stack>
-      <Stack spacing={2}>
-        {items.map((item: any) => (
-          <Card key={item.id} variant="outlined">
-            <CardContent>
-              <Typography>#{item.id} &ndash; {item.${firstField}}</Typography>
-            </CardContent>
-            ${pages.detail ? `<CardActions><Button component={Link} href={\`/${slug}/\${item.id}\`} size="small">View &rarr;</Button></CardActions>` : ''}
-          </Card>
-        ))}
-      </Stack>
+      {error && <Alert severity="error" action={<Button onClick={load} size="small">Retry</Button>} sx={{ mb: 2 }}>{error}</Alert>}
+      <Table>
+        <TableHead>
+          <TableRow>
+${thCells}
+            <TableCell>Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {items.length === 0 && !error && (
+            <TableRow><TableCell colSpan={${displayFields.length + 1}} align="center">No items found.</TableCell></TableRow>
+          )}
+          {items.map((item: any) => (
+            <TableRow key={item.id} hover>
+${tdCells}
+              <TableCell>
+                <Stack direction="row" spacing={1}>
+                  ${editCell}
+                  <Button onClick={() => handleDelete(item.id)} color="error" size="small">Delete</Button>
+                </Stack>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </Container>
   );
 }
@@ -363,35 +408,66 @@ export default async function ${model.name}ListPage() {
   }
 
   if (uiLib === 'antd') {
+    const columnsArr = displayFields.map(f =>
+      f.type === 'boolean'
+        ? `  { title: '${f.name}', dataIndex: '${f.name}', key: '${f.name}', render: (v: any) => (v ? '✓' : '✗') }`
+        : `  { title: '${f.name}', dataIndex: '${f.name}', key: '${f.name}', render: (v: any) => String(v ?? '—') }`
+    ).join(',\n');
+    const editAction = pages.edit
+      ? `<Link href={\`/${slug}/\${record.id}/edit\`}><Button type="link" size="small">Edit</Button></Link>`
+      : '';
+    const newBtn = pages.create
+      ? `<Link href="/${slug}/new"><Button type="primary">+ New</Button></Link>`
+      : '';
     return `'use client';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Typography, List, Button, Space } from 'antd';
-import { useEffect, useState } from 'react';
+import { Typography, Button, Space, Table, Alert } from 'antd';
+
+const columns = (onDelete: (id: number) => void) => [
+${columnsArr},
+  {
+    title: 'Actions',
+    key: 'actions',
+    render: (_: any, record: any) => (
+      <Space>
+        ${editAction}
+        <Button danger size="small" onClick={() => { if (confirm('Delete this item?')) onDelete(record.id); }}>Delete</Button>
+      </Space>
+    ),
+  },
+];
 
 export default function ${model.name}ListPage() {
   const [items, setItems] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch('${apiBase}').then(r => r.json()).then(setItems);
+  const load = useCallback(async () => {
+    setError(null);
+    try {
+      const res = await fetch('${apiBase}');
+      if (!res.ok) throw new Error('Failed to fetch');
+      setItems(await res.json());
+    } catch (e: any) {
+      setError(e.message ?? 'Unknown error');
+    }
   }, []);
 
+  useEffect(() => { load(); }, [load]);
+
+  const handleDelete = async (id: number) => {
+    await fetch(\`${apiBase}/\${id}\`, { method: 'DELETE' });
+    setItems(prev => prev.filter((i: any) => i.id !== id));
+  };
+
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: '2rem' }}>
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '2rem' }}>
       <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 24 }}>
         <Typography.Title level={3} style={{ margin: 0 }}>${model.name}s</Typography.Title>
-        ${pages.create ? `<Link href="/${slug}/new"><Button type="primary">+ New</Button></Link>` : ''}
+        ${newBtn}
       </Space>
-      <List
-        bordered
-        dataSource={items}
-        renderItem={(item: any) => (
-          <List.Item
-            actions={[${pages.detail ? `<Link key="view" href={\`/${slug}/\${item.id}\`}>View &rarr;</Link>` : ''}]}
-          >
-            #{item.id} &ndash; {item.${firstField}}
-          </List.Item>
-        )}
-      />
+      {error && <Alert message={error} type="error" showIcon action={<Button onClick={load} size="small">Retry</Button>} style={{ marginBottom: 16 }} />}
+      <Table dataSource={items} columns={columns(handleDelete)} rowKey="id" locale={{ emptyText: 'No items found.' }} />
     </div>
   );
 }
@@ -399,32 +475,76 @@ export default function ${model.name}ListPage() {
   }
 
   if (useTailwind) {
+    const thCells = displayFields.map(f => `              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">${f.name}</th>`).join('\n');
+    const tdCells = displayFields.map(f => `              <td className="px-4 py-3 text-sm text-gray-700">${cellExpr(f)}</td>`).join('\n');
     const newLink = pages.create
-      ? `<Link href="/${slug}/new" className="px-4 py-2 bg-black text-white rounded-md text-sm hover:bg-gray-800 no-underline">+ New</Link>`
+      ? `<a href="/${slug}/new" className="px-4 py-2 bg-black text-white rounded-md text-sm hover:bg-gray-800 no-underline">+ New</a>`
       : '';
-    const viewLink = pages.detail
-      ? `<Link href={\`/${slug}/\${item.id}\`} className="text-sm text-indigo-500 hover:underline">View &rarr;</Link>`
+    const editLink = pages.edit
+      ? `<a href={\`/${slug}/\${item.id}/edit\`} className="text-sm text-indigo-600 hover:underline">Edit</a>`
       : '';
-    return `import Link from 'next/link';
+    return `'use client';
+import { useState, useEffect, useCallback } from 'react';
 
-${fetchBlock}
+export default function ${model.name}ListPage() {
+  const [items, setItems] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-export default async function ${model.name}ListPage() {
-  const items = await getData();
+  const load = useCallback(async () => {
+    setError(null);
+    try {
+      const res = await fetch('${apiBase}');
+      if (!res.ok) throw new Error('Failed to fetch');
+      setItems(await res.json());
+    } catch (e: any) {
+      setError(e.message ?? 'Unknown error');
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Delete this item?')) return;
+    await fetch(\`${apiBase}/\${id}\`, { method: 'DELETE' });
+    setItems(prev => prev.filter((i: any) => i.id !== id));
+  };
+
   return (
-    <main className="p-8 max-w-4xl mx-auto">
+    <main className="p-8 max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">${model.name}s</h1>
         ${newLink}
       </div>
-      <ul className="flex flex-col gap-2 list-none p-0">
-        {items.map((item: any) => (
-          <li key={item.id} className="border rounded-lg px-4 py-3 flex justify-between items-center hover:bg-gray-50">
-            <span className="text-sm">#{item.id} &ndash; {item.${firstField}}</span>
-            ${viewLink}
-          </li>
-        ))}
-      </ul>
+      {error && (
+        <div className="mb-4 flex items-center gap-3 rounded-md bg-red-50 border border-red-300 px-4 py-3 text-red-700 text-sm">
+          <span>{error}</span>
+          <button onClick={load} className="ml-auto text-xs underline">Retry</button>
+        </div>
+      )}
+      <div className="overflow-x-auto rounded-lg border border-gray-200">
+        <table className="w-full text-left border-collapse">
+          <thead className="bg-gray-50">
+            <tr>
+${thCells}
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.length === 0 && !error && (
+              <tr><td colSpan={${displayFields.length + 1}} className="px-4 py-8 text-center text-gray-400 text-sm">No items found.</td></tr>
+            )}
+            {items.map((item: any) => (
+              <tr key={item.id} className="border-t border-gray-100 hover:bg-gray-50">
+${tdCells}
+                <td className="px-4 py-3 text-sm flex gap-3 items-center">
+                  ${editLink}
+                  <button onClick={() => handleDelete(item.id)} className="text-red-600 hover:underline text-sm">Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </main>
   );
 }
@@ -432,32 +552,76 @@ export default async function ${model.name}ListPage() {
   }
 
   // Default: inline styles
+  const thCells = displayFields.map(f => `            <th style={{ padding: '10px 16px', background: '#f9fafb', fontWeight: 600, fontSize: 12, color: '#6b7280', textTransform: 'uppercase', textAlign: 'left' }}>${f.name}</th>`).join('\n');
+  const tdCells = displayFields.map(f => `            <td style={{ padding: '12px 16px', fontSize: 14 }}>${cellExpr(f)}</td>`).join('\n');
   const newLink = pages.create
-    ? `<Link href="/${slug}/new" style={{ padding: '8px 16px', background: '#000', color: '#fff', borderRadius: 6, textDecoration: 'none' }}>+ New</Link>`
+    ? `<a href="/${slug}/new" style={{ padding: '8px 16px', background: '#000', color: '#fff', borderRadius: 6, textDecoration: 'none', fontSize: 14 }}>+ New</a>`
     : '';
-  const viewLink = pages.detail
-    ? `<Link href={\`/${slug}/\${item.id}\`} style={{ fontSize: 14, color: '#6366f1' }}>View &rarr;</Link>`
+  const editLink = pages.edit
+    ? `<a href={\`/${slug}/\${item.id}/edit\`} style={{ color: '#6366f1', fontSize: 13 }}>Edit</a>`
     : '';
-  return `import Link from 'next/link';
+  return `'use client';
+import { useState, useEffect, useCallback } from 'react';
 
-${fetchBlock}
+export default function ${model.name}ListPage() {
+  const [items, setItems] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-export default async function ${model.name}ListPage() {
-  const items = await getData();
+  const load = useCallback(async () => {
+    setError(null);
+    try {
+      const res = await fetch('${apiBase}');
+      if (!res.ok) throw new Error('Failed to fetch');
+      setItems(await res.json());
+    } catch (e: any) {
+      setError(e.message ?? 'Unknown error');
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Delete this item?')) return;
+    await fetch(\`${apiBase}/\${id}\`, { method: 'DELETE' });
+    setItems(prev => prev.filter((i: any) => i.id !== id));
+  };
+
   return (
-    <main style={{ padding: '2rem' }}>
+    <main style={{ padding: '2rem', maxWidth: 900, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <h1>${model.name}s</h1>
+        <h1 style={{ margin: 0 }}>${model.name}s</h1>
         ${newLink}
       </div>
-      <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {items.map((item: any) => (
-          <li key={item.id} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>#{item.id} &ndash; {item.${firstField}}</span>
-            ${viewLink}
-          </li>
-        ))}
-      </ul>
+      {error && (
+        <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12, background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, padding: '10px 16px', color: '#dc2626', fontSize: 14 }}>
+          <span>{error}</span>
+          <button onClick={load} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', textDecoration: 'underline', fontSize: 13 }}>Retry</button>
+        </div>
+      )}
+      <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid #e5e7eb' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+${thCells}
+              <th style={{ padding: '10px 16px', background: '#f9fafb', fontWeight: 600, fontSize: 12, color: '#6b7280', textTransform: 'uppercase', textAlign: 'left' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.length === 0 && !error && (
+              <tr><td colSpan={${displayFields.length + 1}} style={{ padding: '2rem', textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>No items found.</td></tr>
+            )}
+            {items.map((item: any) => (
+              <tr key={item.id} style={{ borderTop: '1px solid #f3f4f6' }}>
+${tdCells}
+                <td style={{ padding: '12px 16px', display: 'flex', gap: 12, alignItems: 'center' }}>
+                  ${editLink}
+                  <button onClick={() => handleDelete(item.id)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: 13, padding: 0 }}>Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </main>
   );
 }
@@ -629,17 +793,108 @@ function generateEditPage(model: Model, apiBase: string, slug: string, opts?: Re
   return generateEditPageVanilla(model, apiBase, slug, uiLib, fields);
 }
 
-function uiInput(uiLib: string, field: { name: string }, valueExpr: string, onChangeExpr: string): string {
+function uiInput(uiLib: string, field: any, valueExpr: string, onChangeExpr: string): string {
+  const type: string = field.type ?? 'string';
+  const name: string = field.name;
+  const isBoolean   = type === 'boolean';
+  const isEnum      = type === 'enum' && Array.isArray(field.values) && field.values.length > 0;
+  const isTextArea  = ['text', 'mediumText', 'longText'].includes(type);
+  const isDate      = type === 'date';
+  const isDateTime  = ['dateTime', 'timestamp', 'dateTimeTz', 'timestampTz'].includes(type);
+  const isNumber    = ['integer','bigInteger','smallInteger','tinyInteger','mediumInteger','unsignedInteger','unsignedBigInteger','float','double','decimal'].includes(type);
+
   if (uiLib === 'mui') {
-    return `<TextField label="${field.name}" value={${valueExpr}} onChange={${onChangeExpr}} fullWidth size="small" />`;
+    if (isBoolean) {
+      return `<FormControlLabel label="${name}" control={<Checkbox checked={!!${valueExpr}} onChange={${onChangeExpr}} />} />`;
+    }
+    if (isEnum) {
+      const options = (field.values as string[]).map(v => `<MenuItem value="${v}">${v}</MenuItem>`).join('');
+      return `<FormControl fullWidth size="small"><InputLabel>${name}</InputLabel><Select label="${name}" value={${valueExpr}} onChange={${onChangeExpr}}>${options}</Select></FormControl>`;
+    }
+    if (isTextArea) {
+      return `<TextField label="${name}" value={${valueExpr}} onChange={${onChangeExpr}} fullWidth size="small" multiline rows={3} />`;
+    }
+    if (isDate) {
+      return `<TextField label="${name}" type="date" value={${valueExpr}} onChange={${onChangeExpr}} fullWidth size="small" InputLabelProps={{ shrink: true }} />`;
+    }
+    if (isDateTime) {
+      return `<TextField label="${name}" type="datetime-local" value={${valueExpr}} onChange={${onChangeExpr}} fullWidth size="small" InputLabelProps={{ shrink: true }} />`;
+    }
+    if (isNumber) {
+      return `<TextField label="${name}" type="number" value={${valueExpr}} onChange={${onChangeExpr}} fullWidth size="small" />`;
+    }
+    return `<TextField label="${name}" value={${valueExpr}} onChange={${onChangeExpr}} fullWidth size="small" />`;
   }
+
   if (uiLib === 'antd') {
-    return `<Form.Item label="${field.name}"><Input value={${valueExpr}} onChange={${onChangeExpr}} /></Form.Item>`;
+    if (isBoolean) {
+      return `<Form.Item label="${name}"><Checkbox checked={!!${valueExpr}} onChange={${onChangeExpr}} /></Form.Item>`;
+    }
+    if (isEnum) {
+      const options = (field.values as string[]).map(v => `{ label: '${v}', value: '${v}' }`).join(', ');
+      return `<Form.Item label="${name}"><Select value={${valueExpr}} onChange={${onChangeExpr}} options={[${options}]} style={{ width: '100%' }} /></Form.Item>`;
+    }
+    if (isTextArea) {
+      return `<Form.Item label="${name}"><Input.TextArea value={${valueExpr}} onChange={${onChangeExpr}} rows={3} /></Form.Item>`;
+    }
+    if (isDate) {
+      return `<Form.Item label="${name}"><Input type="date" value={${valueExpr}} onChange={${onChangeExpr}} /></Form.Item>`;
+    }
+    if (isDateTime) {
+      return `<Form.Item label="${name}"><Input type="datetime-local" value={${valueExpr}} onChange={${onChangeExpr}} /></Form.Item>`;
+    }
+    if (isNumber) {
+      return `<Form.Item label="${name}"><InputNumber value={${valueExpr}} onChange={${onChangeExpr}} style={{ width: '100%' }} /></Form.Item>`;
+    }
+    return `<Form.Item label="${name}"><Input value={${valueExpr}} onChange={${onChangeExpr}} /></Form.Item>`;
   }
+
+  // shadcn / tailwind
   if (uiLib === 'shadcn') {
-    return `<div className="space-y-1"><label className="text-sm font-medium">${field.name}</label><Input value={${valueExpr}} onChange={${onChangeExpr}} /></div>`;
+    if (isBoolean) {
+      return `<div className="flex items-center gap-2"><input type="checkbox" id="${name}" checked={!!${valueExpr}} onChange={${onChangeExpr}} className="h-4 w-4" /><label htmlFor="${name}" className="text-sm font-medium">${name}</label></div>`;
+    }
+    if (isEnum) {
+      const options = (field.values as string[]).map(v => `<option value="${v}">${v}</option>`).join('');
+      return `<div className="space-y-1"><label className="text-sm font-medium">${name}</label><select value={${valueExpr}} onChange={${onChangeExpr}} className="w-full px-3 py-2 border rounded text-sm">${options}</select></div>`;
+    }
+    if (isTextArea) {
+      return `<div className="space-y-1"><label className="text-sm font-medium">${name}</label><textarea value={${valueExpr}} onChange={${onChangeExpr}} rows={3} className="w-full px-3 py-2 border rounded text-sm" /></div>`;
+    }
+    if (isDate) {
+      return `<div className="space-y-1"><label className="text-sm font-medium">${name}</label><Input type="date" value={${valueExpr}} onChange={${onChangeExpr}} /></div>`;
+    }
+    if (isDateTime) {
+      return `<div className="space-y-1"><label className="text-sm font-medium">${name}</label><Input type="datetime-local" value={${valueExpr}} onChange={${onChangeExpr}} /></div>`;
+    }
+    if (isNumber) {
+      return `<div className="space-y-1"><label className="text-sm font-medium">${name}</label><Input type="number" value={${valueExpr}} onChange={${onChangeExpr}} /></div>`;
+    }
+    return `<div className="space-y-1"><label className="text-sm font-medium">${name}</label><Input value={${valueExpr}} onChange={${onChangeExpr}} /></div>`;
   }
-  return `<label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><span style={{ fontSize: 13, fontWeight: 600 }}>${field.name}</span><input value={${valueExpr}} onChange={${onChangeExpr}} style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6 }} /></label>`;
+
+  // Default: inline styles
+  const inputStyle = `style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, width: '100%' }}`;
+  if (isBoolean) {
+    return `<label style={{ display: 'flex', alignItems: 'center', gap: 8 }}><input type="checkbox" checked={!!${valueExpr}} onChange={${onChangeExpr}} /><span style={{ fontSize: 13, fontWeight: 600 }}>${name}</span></label>`;
+  }
+  if (isEnum) {
+    const options = (field.values as string[]).map(v => `<option value="${v}">${v}</option>`).join('');
+    return `<label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><span style={{ fontSize: 13, fontWeight: 600 }}>${name}</span><select value={${valueExpr}} onChange={${onChangeExpr}} ${inputStyle}>${options}</select></label>`;
+  }
+  if (isTextArea) {
+    return `<label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><span style={{ fontSize: 13, fontWeight: 600 }}>${name}</span><textarea value={${valueExpr}} onChange={${onChangeExpr}} rows={3} ${inputStyle} /></label>`;
+  }
+  if (isDate) {
+    return `<label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><span style={{ fontSize: 13, fontWeight: 600 }}>${name}</span><input type="date" value={${valueExpr}} onChange={${onChangeExpr}} ${inputStyle} /></label>`;
+  }
+  if (isDateTime) {
+    return `<label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><span style={{ fontSize: 13, fontWeight: 600 }}>${name}</span><input type="datetime-local" value={${valueExpr}} onChange={${onChangeExpr}} ${inputStyle} /></label>`;
+  }
+  if (isNumber) {
+    return `<label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><span style={{ fontSize: 13, fontWeight: 600 }}>${name}</span><input type="number" value={${valueExpr}} onChange={${onChangeExpr}} ${inputStyle} /></label>`;
+  }
+  return `<label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><span style={{ fontSize: 13, fontWeight: 600 }}>${name}</span><input value={${valueExpr}} onChange={${onChangeExpr}} ${inputStyle} /></label>`;
 }
 
 function uiButton(uiLib: string, label: string): string {
@@ -650,8 +905,8 @@ function uiButton(uiLib: string, label: string): string {
 }
 
 function uiImports(uiLib: string): string {
-  if (uiLib === 'mui') return `import { TextField, Button } from '@mui/material';`;
-  if (uiLib === 'antd') return `import { Form, Input, Button } from 'antd';`;
+  if (uiLib === 'mui') return `import { TextField, Button, Checkbox, FormControlLabel, FormControl, InputLabel, Select, MenuItem } from '@mui/material';`;
+  if (uiLib === 'antd') return `import { Form, Input, Button, Checkbox, Select, InputNumber } from 'antd';`;
   if (uiLib === 'shadcn') return `import { Input } from '@/components/ui/input';\nimport { Button } from '@/components/ui/button';`;
   return '';
 }
@@ -726,7 +981,26 @@ ${fields.map(f => `          <div>
 `;
 }
 
+function vanillaOnChange(f: AnyField, antd = false): string {
+  const isBoolean = f.type === 'boolean';
+  const isNumber  = ['integer','bigInteger','smallInteger','tinyInteger','mediumInteger','unsignedInteger','unsignedBigInteger','float','double','decimal'].includes(f.type);
+  const isEnum    = f.type === 'enum';
+  if (isBoolean) return `e => setForm(p => ({ ...p, ${f.name}: e.target.checked }))`;
+  if (isNumber && !antd) return `e => setForm(p => ({ ...p, ${f.name}: Number(e.target.value) }))`;
+  if (isNumber && antd)  return `v => setForm(p => ({ ...p, ${f.name}: Number(v) }))`;
+  if (isEnum && antd)    return `v => setForm(p => ({ ...p, ${f.name}: v }))`;
+  return `e => setForm(p => ({ ...p, ${f.name}: e.target.value }))`;
+}
+
+function vanillaDefaultValue(f: AnyField): string {
+  if (f.type === 'boolean') return 'false';
+  const isNumber = ['integer','bigInteger','smallInteger','tinyInteger','mediumInteger','unsignedInteger','unsignedBigInteger','float','double','decimal'].includes(f.type);
+  if (isNumber) return '0';
+  return "''";
+}
+
 function generateCreatePageVanilla(model: Model, apiBase: string, slug: string, uiLib: string, fields: AnyField[]): string {
+  const antd = uiLib === 'antd';
   return `'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -734,7 +1008,7 @@ ${uiImports(uiLib)}
 
 export default function ${model.name}CreatePage() {
   const router = useRouter();
-  const [form, setForm] = useState({ ${fields.map(f => `${f.name}: ''`).join(', ')} });
+  const [form, setForm] = useState({ ${fields.map(f => `${f.name}: ${vanillaDefaultValue(f)}`).join(', ')} });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -746,7 +1020,7 @@ export default function ${model.name}CreatePage() {
     <main style={{ padding: '2rem', maxWidth: 480 }}>
       <h1>New ${model.name}</h1>
       <form onSubmit={handleSubmit} style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: 16 }}>
-${fields.map(f => `        ${uiInput(uiLib, f, `form.${f.name}`, `e => setForm(p => ({ ...p, ${f.name}: e.target.value }))`)}`).join('\n')}
+${fields.map(f => `        ${uiInput(uiLib, f, `form.${f.name}`, vanillaOnChange(f, antd))}`).join('\n')}
         ${uiButton(uiLib, 'Create')}
       </form>
     </main>
@@ -838,6 +1112,7 @@ ${fields.map(f => `          <div>
 }
 
 function generateEditPageVanilla(model: Model, apiBase: string, slug: string, uiLib: string, fields: AnyField[]): string {
+  const antd = uiLib === 'antd';
   return `'use client';
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -846,7 +1121,7 @@ ${uiImports(uiLib)}
 export default function ${model.name}EditPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
-  const [form, setForm] = useState({ ${fields.map(f => `${f.name}: ''`).join(', ')} });
+  const [form, setForm] = useState({ ${fields.map(f => `${f.name}: ${vanillaDefaultValue(f)}`).join(', ')} });
 
   useEffect(() => {
     fetch(\`${apiBase}/\${id}\`).then(r => r.json()).then(data => setForm(data));
@@ -862,7 +1137,7 @@ export default function ${model.name}EditPage() {
     <main style={{ padding: '2rem', maxWidth: 480 }}>
       <h1>Edit ${model.name}</h1>
       <form onSubmit={handleSubmit} style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: 16 }}>
-${fields.map(f => `        ${uiInput(uiLib, f, `form.${f.name} ?? ''`, `e => setForm(p => ({ ...p, ${f.name}: e.target.value }))`)}`).join('\n')}
+${fields.map(f => `        ${uiInput(uiLib, f, `form.${f.name}`, vanillaOnChange(f, antd))}`).join('\n')}
         ${uiButton(uiLib, 'Save')}
       </form>
     </main>

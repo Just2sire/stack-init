@@ -357,7 +357,7 @@ ${models.map(m => `        <a href="/${slugify(m.name)}" className="text-blue-60
     const slug   = slugify(model.name);
 
     zip.file(`src/pages/${pascal}/${pascal}ListPage.tsx`,
-      buildListPage(pascal, mLow, slug, query));
+      buildListPage(pascal, mLow, slug, query, model.fields));
 
     zip.file(`src/pages/${pascal}/${pascal}FormPage.tsx`,
       buildFormPage(pascal, mLow, slug, model.fields, formLib));
@@ -370,14 +370,28 @@ function toPascal(name: string): string {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-function buildListPage(pascal: string, mLow: string, slug: string, query: string): string {
+function buildListPage(pascal: string, mLow: string, slug: string, query: string, fields: NamedField[]): string {
+  const displayFields = fields.filter((f: NamedField) => f.type !== 'foreignId').slice(0, 6);
+
+  const thCells = displayFields.map(f =>
+    `              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">${f.name}</th>`
+  ).join('\n');
+
+  const tdCells = displayFields.map(f =>
+    f.type === 'boolean'
+      ? `              <td className="px-4 py-3 text-sm text-gray-700">{item.${f.name} ? '✓' : '✗'}</td>`
+      : `              <td className="px-4 py-3 text-sm text-gray-700">{String(item.${f.name} ?? '—')}</td>`
+  ).join('\n');
+
+  const colSpan = displayFields.length + 1;
+
   if (query === 'tanstack-query') {
     return `import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ${mLow}Api } from '../../api/${mLow}.api';
 
 export default function ${pascal}ListPage() {
   const queryClient = useQueryClient();
-  const { data: items = [], isLoading } = useQuery({
+  const { data: items = [], isLoading, isError, error } = useQuery({
     queryKey: ['${mLow}s'],
     queryFn:  ${mLow}Api.findAll,
   });
@@ -389,24 +403,40 @@ export default function ${pascal}ListPage() {
   if (isLoading) return <p className="p-8">Loading…</p>;
 
   return (
-    <div className="p-8">
+    <div className="p-8 max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">${pascal}s</h1>
         <a href="/${slug}/new" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">New ${pascal}</a>
       </div>
-      <table className="w-full border-collapse border border-gray-200">
-        <tbody>
-          {items.map((item: any) => (
-            <tr key={item.id} className="border-b border-gray-200 hover:bg-gray-50">
-              <td className="py-3 px-4">{item.id}</td>
-              <td className="py-3 px-4 flex gap-3">
-                <a href={\`/${slug}/\${item.id}\`} className="text-blue-600 hover:underline">Edit</a>
-                <button onClick={() => removeMutation.mutate(item.id)} className="text-red-600 hover:underline">Delete</button>
-              </td>
+      {isError && (
+        <div className="mb-4 rounded-md bg-red-50 border border-red-300 px-4 py-3 text-red-700 text-sm">
+          {(error as Error)?.message ?? 'Failed to load data.'}
+        </div>
+      )}
+      <div className="overflow-x-auto rounded-lg border border-gray-200">
+        <table className="w-full text-left border-collapse">
+          <thead className="bg-gray-50">
+            <tr>
+${thCells}
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {items.length === 0 && !isError && (
+              <tr><td colSpan={${colSpan}} className="px-4 py-8 text-center text-gray-400 text-sm">No items found.</td></tr>
+            )}
+            {items.map((item: any) => (
+              <tr key={item.id} className="border-t border-gray-100 hover:bg-gray-50">
+${tdCells}
+                <td className="px-4 py-3 text-sm flex gap-3 items-center">
+                  <a href={\`/${slug}/\${item.id}/edit\`} className="text-blue-600 hover:underline">Edit</a>
+                  <button onClick={() => { if (confirm('Delete this item?')) removeMutation.mutate(item.id); }} className="text-red-600 hover:underline">Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -414,38 +444,67 @@ export default function ${pascal}ListPage() {
   }
 
   // Plain useState fallback
-  return `import { useEffect, useState } from 'react';
+  return `import { useEffect, useState, useCallback } from 'react';
 import { ${mLow}Api } from '../../api/${mLow}.api';
 
 export default function ${pascal}ListPage() {
   const [items, setItems] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => { ${mLow}Api.findAll().then(setItems); }, []);
+  const load = useCallback(async () => {
+    setError(null);
+    try {
+      const data = await ${mLow}Api.findAll();
+      setItems(data);
+    } catch (e: any) {
+      setError(e.message ?? 'Failed to load data.');
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const handleDelete = async (id: number) => {
+    if (!confirm('Delete this item?')) return;
     await ${mLow}Api.remove(id);
     setItems(prev => prev.filter((i: any) => i.id !== id));
   };
 
   return (
-    <div className="p-8">
+    <div className="p-8 max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">${pascal}s</h1>
         <a href="/${slug}/new" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">New ${pascal}</a>
       </div>
-      <table className="w-full border-collapse border border-gray-200">
-        <tbody>
-          {items.map((item: any) => (
-            <tr key={item.id} className="border-b border-gray-200 hover:bg-gray-50">
-              <td className="py-3 px-4">{item.id}</td>
-              <td className="py-3 px-4 flex gap-3">
-                <a href={\`/${slug}/\${item.id}\`} className="text-blue-600 hover:underline">Edit</a>
-                <button onClick={() => handleDelete(item.id)} className="text-red-600 hover:underline">Delete</button>
-              </td>
+      {error && (
+        <div className="mb-4 flex items-center gap-3 rounded-md bg-red-50 border border-red-300 px-4 py-3 text-red-700 text-sm">
+          <span>{error}</span>
+          <button onClick={load} className="ml-auto text-xs underline">Retry</button>
+        </div>
+      )}
+      <div className="overflow-x-auto rounded-lg border border-gray-200">
+        <table className="w-full text-left border-collapse">
+          <thead className="bg-gray-50">
+            <tr>
+${thCells}
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {items.length === 0 && !error && (
+              <tr><td colSpan={${colSpan}} className="px-4 py-8 text-center text-gray-400 text-sm">No items found.</td></tr>
+            )}
+            {items.map((item: any) => (
+              <tr key={item.id} className="border-t border-gray-100 hover:bg-gray-50">
+${tdCells}
+                <td className="px-4 py-3 text-sm flex gap-3 items-center">
+                  <a href={\`/${slug}/\${item.id}/edit\`} className="text-blue-600 hover:underline">Edit</a>
+                  <button onClick={() => handleDelete(item.id)} className="text-red-600 hover:underline">Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -453,15 +512,43 @@ export default function ${pascal}ListPage() {
 }
 
 function buildFormPage(pascal: string, mLow: string, slug: string, fields: NamedField[], formLib: string): string {
-  const isNumber = (f: NamedField) => ['integer', 'bigInteger', 'tinyInteger', 'smallInteger', 'mediumInteger', 'float', 'double', 'decimal'].includes(f.type);
-  const isBoolean = (f: NamedField) => f.type === 'boolean';
+  const isNumber   = (f: NamedField) => ['integer', 'bigInteger', 'tinyInteger', 'smallInteger', 'mediumInteger', 'unsignedInteger', 'unsignedBigInteger', 'float', 'double', 'decimal'].includes(f.type);
+  const isBoolean  = (f: NamedField) => f.type === 'boolean';
+  const isDate     = (f: NamedField) => f.type === 'date';
+  const isDateTime = (f: NamedField) => ['dateTime', 'timestamp', 'dateTimeTz', 'timestampTz'].includes(f.type);
+  const isTextArea = (f: NamedField) => ['text', 'mediumText', 'longText'].includes(f.type);
+  const isEnum     = (f: NamedField) => f.type === 'enum' && Array.isArray(f.values) && (f.values as string[]).length > 0;
+
+  function inputType(f: NamedField): string {
+    if (isDate(f)) return 'date';
+    if (isDateTime(f)) return 'datetime-local';
+    if (isNumber(f)) return 'number';
+    return 'text';
+  }
+
+  function defaultValue(f: NamedField): string {
+    if (isBoolean(f)) return 'false';
+    if (isNumber(f)) return '0';
+    return "''";
+  }
 
   if (formLib === 'react-hook-form') {
     const inputs = fields.map(f => {
       if (isBoolean(f)) return `        <label className="flex items-center gap-2"><input type="checkbox" {...register('${f.name}')} /> ${f.name}</label>`;
+      if (isEnum(f)) {
+        const options = (f.values as string[]).map(v => `<option value="${v}">${v}</option>`).join('');
+        return `        <div>
+          <label className="block text-sm font-medium mb-1">${f.name}</label>
+          <select {...register('${f.name}')} className="w-full px-3 py-2 border rounded">${options}</select>
+        </div>`;
+      }
+      if (isTextArea(f)) return `        <div>
+          <label className="block text-sm font-medium mb-1">${f.name}</label>
+          <textarea {...register('${f.name}')} rows={3} className="w-full px-3 py-2 border rounded" />
+        </div>`;
       return `        <div>
           <label className="block text-sm font-medium mb-1">${f.name}</label>
-          <input type="${isNumber(f) ? 'number' : 'text'}" {...register('${f.name}'${isNumber(f) ? ", { valueAsNumber: true }" : ""})} className="w-full px-3 py-2 border rounded" />
+          <input type="${inputType(f)}" {...register('${f.name}'${isNumber(f) ? ", { valueAsNumber: true }" : ""})} className="w-full px-3 py-2 border rounded" />
         </div>`;
     }).join('\n');
 
@@ -502,7 +589,7 @@ ${inputs}
   }
 
   // Plain useState form
-  const stateInit = fields.map(f => `${f.name}: ${isNumber(f) ? '0' : isBoolean(f) ? 'false' : "''"} as any`).join(', ');
+  const stateInit = fields.map(f => `${f.name}: ${defaultValue(f)} as any`).join(', ');
   const inputs = fields.map(f => {
     if (isBoolean(f)) {
       return `        <label className="flex items-center gap-2">
@@ -510,9 +597,25 @@ ${inputs}
           ${f.name}
         </label>`;
     }
+    if (isEnum(f)) {
+      const options = (f.values as string[]).map(v => `<option value="${v}">${v}</option>`).join('');
+      return `        <div>
+          <label className="block text-sm font-medium mb-1">${f.name}</label>
+          <select value={form.${f.name}} onChange={e => setForm(p => ({ ...p, ${f.name}: e.target.value }))} className="w-full px-3 py-2 border rounded">${options}</select>
+        </div>`;
+    }
+    if (isTextArea(f)) {
+      return `        <div>
+          <label className="block text-sm font-medium mb-1">${f.name}</label>
+          <textarea value={form.${f.name}} onChange={e => setForm(p => ({ ...p, ${f.name}: e.target.value }))} rows={3} className="w-full px-3 py-2 border rounded" />
+        </div>`;
+    }
+    const onChange = isNumber(f)
+      ? `e => setForm(p => ({ ...p, ${f.name}: Number(e.target.value) }))`
+      : `e => setForm(p => ({ ...p, ${f.name}: e.target.value }))`;
     return `        <div>
           <label className="block text-sm font-medium mb-1">${f.name}</label>
-          <input type="${isNumber(f) ? 'number' : 'text'}" value={form.${f.name}} onChange={e => setForm(p => ({ ...p, ${f.name}: e.target.value }))} className="w-full px-3 py-2 border rounded" />
+          <input type="${inputType(f)}" value={form.${f.name}} onChange={${onChange}} className="w-full px-3 py-2 border rounded" />
         </div>`;
   }).join('\n');
 

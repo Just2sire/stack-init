@@ -144,41 +144,54 @@ import { ref } from 'vue'
 import { getAll${model.name}s, get${model.name}, create${model.name}, update${model.name}, delete${model.name} } from '@/api/${mCamel}'
 
 export const use${model.name}Store = defineStore('${mCamel}', () => {
-  const ${mPlural} = ref<any[]>([])
+  const items = ref<any[]>([])
   const current = ref<any | null>(null)
   const loading = ref(false)
+  const error = ref<string | null>(null)
 
   async function fetchAll() {
-    loading.value = true
-    try { ${mPlural}.value = await getAll${model.name}s() }
-    finally { loading.value = false }
+    try {
+      loading.value = true
+      error.value = null
+      items.value = await getAll${model.name}s()
+    } catch (e: any) {
+      error.value = e.message ?? 'Failed to load'
+    } finally {
+      loading.value = false
+    }
   }
 
   async function fetchOne(id: number | string) {
-    loading.value = true
-    try { current.value = await get${model.name}(id) }
-    finally { loading.value = false }
+    try {
+      loading.value = true
+      error.value = null
+      current.value = await get${model.name}(id)
+    } catch (e: any) {
+      error.value = e.message ?? 'Failed to load'
+    } finally {
+      loading.value = false
+    }
   }
 
   async function create(data: Record<string, unknown>) {
     const item = await create${model.name}(data)
-    ${mPlural}.value.push(item)
+    items.value.push(item)
     return item
   }
 
   async function update(id: number | string, data: Record<string, unknown>) {
     const item = await update${model.name}(id, data)
-    const idx = ${mPlural}.value.findIndex((i: any) => i.id === id)
-    if (idx !== -1) ${mPlural}.value[idx] = item
+    const idx = items.value.findIndex((i: any) => i.id === id)
+    if (idx !== -1) items.value[idx] = item
     return item
   }
 
   async function remove(id: number | string) {
     await delete${model.name}(id)
-    ${mPlural}.value = ${mPlural}.value.filter((i: any) => i.id !== id)
+    items.value = items.value.filter((i: any) => i.id !== id)
   }
 
-  return { ${mPlural}, current, loading, fetchAll, fetchOne, create, update, remove }
+  return { items, current, loading, error, fetchAll, fetchOne, create, update, remove }
 })
 `)
   }
@@ -261,18 +274,44 @@ nav a { color: inherit; }
     const slug    = plural(kebab(model.name))
     const mPlural = plural(model.name)
 
+    const displayFields = (model.fields as any[]).filter(f => f.type !== 'foreignId').slice(0, 6)
+    const colCount = displayFields.length + 2 // id + fields + actions
+    const thCols = displayFields.map((f: any) => `      <th>${f.name}</th>`).join('\n')
+    const tdCols = displayFields.map((f: any) => {
+      if (f.type === 'boolean') return `      <td>\${ item.${f.name} ? '✓' : '✗' }</td>`
+      return `      <td>\${ item.${f.name} ?? '—' }</td>`
+    }).join('\n')
+
     viewsDir.file(`${model.name}ListView.vue`, `<template>
   <div>
     <h1>${mPlural}</h1>
     <RouterLink to="/${slug}/new">New ${model.name}</RouterLink>
+    <div v-if="store.error" style="background:#fef2f2;color:#dc2626;padding:12px 16px;border-radius:6px;margin-bottom:16px">
+      \{{ store.error }} <button @click="store.error = null; store.fetchAll()">Retry</button>
+    </div>
     <div v-if="store.loading">Loading…</div>
-    <ul v-else>
-      <li v-for="item in store.${plural(mCamel)}" :key="item.id">
-        <span>{{ item.id }}</span>
-        <RouterLink :to="\`/${slug}/\${item.id}/edit\`">Edit</RouterLink>
-        <button @click="remove(item.id)">Delete</button>
-      </li>
-    </ul>
+    <table v-else>
+      <thead>
+        <tr>
+          <th>ID</th>
+${thCols}
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-if="!store.items.length">
+          <td :colspan="${colCount}" style="text-align:center;color:#9ca3af;padding:2rem">No items found.</td>
+        </tr>
+        <tr v-for="item in store.items" :key="item.id">
+          <td>\{{ item.id }}</td>
+${tdCols}
+          <td>
+            <RouterLink :to="\`/${slug}/\${item.id}/edit\`">Edit</RouterLink>
+            <button @click="remove(item.id)">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
@@ -291,16 +330,56 @@ async function remove(id: number | string) {
 </script>
 `)
 
-    const formFields = model.fields.map(f => {
-      const fAny = f as any
+    const numberTypes = new Set(['integer','bigInteger','smallInteger','tinyInteger','mediumInteger','unsignedInteger','unsignedBigInteger','float','double','decimal'])
+    const dateTimeTypes = new Set(['dateTime','timestamp','dateTimeTz','timestampTz'])
+
+    const formFields = (model.fields as any[]).map(f => {
+      if (f.type === 'boolean') {
+        return `      <div>
+        <label><input type="checkbox" v-model="form.${f.name}" /> ${f.name}</label>
+      </div>`
+      }
+      if (numberTypes.has(f.type)) {
+        return `      <div>
+        <label>${f.name}</label>
+        <input type="number" v-model.number="form.${f.name}" />
+      </div>`
+      }
+      if (f.type === 'date') {
+        return `      <div>
+        <label>${f.name}</label>
+        <input type="date" v-model="form.${f.name}" />
+      </div>`
+      }
+      if (dateTimeTypes.has(f.type)) {
+        return `      <div>
+        <label>${f.name}</label>
+        <input type="datetime-local" v-model="form.${f.name}" />
+      </div>`
+      }
+      if (f.type === 'enum' && Array.isArray(f.values) && f.values.length) {
+        const opts = f.values.map((v: string) => `<option value="${v}">${v}</option>`).join('')
+        return `      <div>
+        <label>${f.name}</label>
+        <select v-model="form.${f.name}">${opts}</select>
+      </div>`
+      }
+      if (f.type === 'text' || f.type === 'mediumText' || f.type === 'longText') {
+        return `      <div>
+        <label>${f.name}</label>
+        <textarea v-model="form.${f.name}" rows="4"></textarea>
+      </div>`
+      }
       return `      <div>
-        <label>${fAny.name}</label>
-        <input v-model="form.${fAny.name}" type="text" />\n      </div>`
+        <label>${f.name}</label>
+        <input type="text" v-model="form.${f.name}" />
+      </div>`
     }).join('\n')
 
-    const formInit = model.fields.map(f => {
-      const fAny = f as any
-      return `    ${fAny.name}: '',`
+    const formInit = (model.fields as any[]).map(f => {
+      if (f.type === 'boolean') return `    ${f.name}: false,`
+      if (numberTypes.has(f.type)) return `    ${f.name}: 0,`
+      return `    ${f.name}: '',`
     }).join('\n')
 
     viewsDir.file(`${model.name}FormView.vue`, `<template>

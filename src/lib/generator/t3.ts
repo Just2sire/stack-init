@@ -338,6 +338,7 @@ export { handler as GET, handler as POST };
     zip.file(`src/server/api/routers/${slug}.ts`, buildRouter(model, mLow, mCamel));
     zip.file(`src/app/${slug}/page.tsx`, buildListPage(model, slug, mCamel));
     zip.file(`src/app/${slug}/new/page.tsx`, buildCreatePage(model, slug, mCamel));
+    zip.file(`src/app/${slug}/[id]/edit/page.tsx`, buildEditPage(model, slug, mCamel));
   }
 }
 
@@ -427,16 +428,113 @@ ${inputFields.replace(/,$/mg, '.optional(),')}
 `;
 }
 
+function stateInitValue(f: NamedField): string {
+  switch (f.type) {
+    case 'boolean': return 'false';
+    case 'integer': case 'smallInteger': case 'mediumInteger': case 'bigInteger':
+    case 'float': case 'double': case 'decimal': case 'foreignId':
+      return '0';
+    default: {
+      const vals: string[] = (f as any).values ?? [];
+      return vals.length > 0 ? "'" + vals[0] + "'" : "''";
+    }
+  }
+}
+
+function buildFieldInput(f: NamedField): string {
+  const cls = 'w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400';
+  const vals: string[] = (f as any).values ?? [];
+
+  if (f.type === 'boolean') {
+    return `          <div className="flex items-center gap-2">
+            <input type="checkbox" id="${f.name}"
+              checked={form.${f.name} as boolean}
+              onChange={e => setForm(p => ({ ...p, ${f.name}: e.target.checked }))}
+              className="h-4 w-4 rounded border-gray-300 text-indigo-600" />
+            <label htmlFor="${f.name}" className="text-sm font-medium">${f.name}</label>
+          </div>`;
+  }
+  if (['integer','smallInteger','mediumInteger','bigInteger','float','double','decimal','foreignId'].includes(f.type)) {
+    return `          <div>
+            <label className="block text-sm font-medium mb-1">${f.name}</label>
+            <input type="number" className="${cls}"
+              value={form.${f.name} as number}
+              onChange={e => setForm(p => ({ ...p, ${f.name}: Number(e.target.value) }))}
+            />
+          </div>`;
+  }
+  if (f.type === 'date') {
+    return `          <div>
+            <label className="block text-sm font-medium mb-1">${f.name}</label>
+            <input type="date" className="${cls}"
+              value={form.${f.name} as string}
+              onChange={e => setForm(p => ({ ...p, ${f.name}: e.target.value }))}
+            />
+          </div>`;
+  }
+  if (f.type === 'dateTime' || f.type === 'timestamp') {
+    return `          <div>
+            <label className="block text-sm font-medium mb-1">${f.name}</label>
+            <input type="datetime-local" className="${cls}"
+              value={form.${f.name} as string}
+              onChange={e => setForm(p => ({ ...p, ${f.name}: e.target.value }))}
+            />
+          </div>`;
+  }
+  if (f.type === 'text' || f.type === 'mediumText' || f.type === 'longText') {
+    return `          <div>
+            <label className="block text-sm font-medium mb-1">${f.name}</label>
+            <textarea rows={4} className="${cls}"
+              value={form.${f.name} as string}
+              onChange={e => setForm(p => ({ ...p, ${f.name}: e.target.value }))}
+            />
+          </div>`;
+  }
+  if (vals.length > 0) {
+    const options = vals.map((v: string) => `              <option value="${v}">${v}</option>`).join('\n');
+    return `          <div>
+            <label className="block text-sm font-medium mb-1">${f.name}</label>
+            <select className="${cls}"
+              value={form.${f.name} as string}
+              onChange={e => setForm(p => ({ ...p, ${f.name}: e.target.value }))}
+            >
+${options}
+            </select>
+          </div>`;
+  }
+  return `          <div>
+            <label className="block text-sm font-medium mb-1">${f.name}</label>
+            <input type="text" className="${cls}"
+              value={form.${f.name} as string}
+              onChange={e => setForm(p => ({ ...p, ${f.name}: e.target.value }))}
+            />
+          </div>`;
+}
+
 function buildListPage(model: Model, slug: string, mCamel: string): string {
-  const Name       = model.name;
-  const firstField = (model.fields as NamedField[])[0]?.name ?? 'id';
+  const Name = model.name;
+  const displayFields = (model.fields as NamedField[])
+    .filter(f => !['id', 'uuid', 'ulid', 'foreignId'].includes(f.type))
+    .slice(0, 6);
+
+  const headers = displayFields.map(f =>
+    `            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">${f.name}</th>`
+  ).join('\n');
+
+  const cells = displayFields.map(f => {
+    if (f.type === 'boolean') {
+      return `              <td className="py-3 px-4">{item.${f.name} ? '✓' : '✗'}</td>`;
+    }
+    return `              <td className="py-3 px-4 text-gray-700">{String(item.${f.name} ?? '—')}</td>`;
+  }).join('\n');
 
   return `'use client';
 import Link from 'next/link';
 import { api } from '~/trpc/react';
 
 export default function ${Name}ListPage() {
-  const { data: items = [], isLoading } = api.${mCamel}.getAll.useQuery();
+  const query = api.${mCamel}.getAll.useQuery();
+  const { data: items = [], isLoading } = query;
   const utils = api.useUtils();
   const del = api.${mCamel}.delete.useMutation({
     onSuccess: () => utils.${mCamel}.getAll.invalidate(),
@@ -445,30 +543,50 @@ export default function ${Name}ListPage() {
   if (isLoading) return <p className="p-8 text-gray-500">Loading…</p>;
 
   return (
-    <main className="p-8 max-w-4xl mx-auto">
+    <main className="p-8 max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">${Name}s</h1>
         <Link href="/${slug}/new" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 no-underline">
           + New
         </Link>
       </div>
-      <ul className="flex flex-col gap-2 list-none p-0">
-        {items.map((item) => (
-          <li key={item.id} className="border rounded-lg px-4 py-3 flex justify-between items-center hover:bg-gray-50">
-            <span className="text-sm font-medium">#{item.id} — {String(item.${firstField})}</span>
-            <div className="flex gap-2">
-              <Link href={\`/${slug}/\${item.id}\`} className="text-xs text-indigo-500 hover:underline">View</Link>
-              <button
-                onClick={() => del.mutate({ id: item.id })}
-                className="text-xs text-red-500 hover:underline"
-              >
-                Delete
-              </button>
-            </div>
-          </li>
-        ))}
-        {items.length === 0 && <p className="text-gray-400 text-sm">No ${model.name.toLowerCase()}s yet.</p>}
-      </ul>
+      {query.isError && (
+        <div className="mb-4 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <span>{query.error?.message}</span>
+          <button onClick={() => query.refetch()} className="ml-auto underline hover:no-underline">Retry</button>
+        </div>
+      )}
+      {!query.isError && items.length === 0 && (
+        <p className="text-gray-400 text-sm">No ${model.name.toLowerCase()}s yet.</p>
+      )}
+      {!query.isError && items.length > 0 && (
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+${headers}
+                <th className="py-3 px-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {items.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50">
+${cells}
+                  <td className="py-3 px-4 text-right">
+                    <div className="flex justify-end gap-3">
+                      <Link href={\`/${slug}/\${item.id}/edit\`} className="text-xs text-indigo-500 hover:underline">Edit</Link>
+                      <button
+                        onClick={() => { if (window.confirm('Delete this ${model.name.toLowerCase()}?')) del.mutate({ id: item.id }); }}
+                        className="text-xs text-red-500 hover:underline"
+                      >Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </main>
   );
 }
@@ -478,16 +596,8 @@ export default function ${Name}ListPage() {
 function buildCreatePage(model: Model, slug: string, mCamel: string): string {
   const Name   = model.name;
   const fields = (model.fields as NamedField[]).filter(f => !['id', 'uuid', 'ulid'].includes(f.type)).slice(0, 10);
-  const stateInit = fields.map(f => `${f.name}: ''`).join(', ');
-  const inputs    = fields.map(f => `
-          <div>
-            <label className="block text-sm font-medium mb-1">${f.name}</label>
-            <input
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              value={form.${f.name}}
-              onChange={e => setForm(p => ({ ...p, ${f.name}: e.target.value }))}
-            />
-          </div>`).join('');
+  const stateInit = fields.map(f => `${f.name}: ${stateInitValue(f)}`).join(', ');
+  const inputs    = fields.map(f => buildFieldInput(f)).join('\n');
 
   return `'use client';
 import { useState } from 'react';
@@ -521,6 +631,68 @@ ${inputs}
           </button>
         </div>
         {create.error && <p className="text-red-500 text-sm">{create.error.message}</p>}
+      </form>
+    </main>
+  );
+}
+`;
+}
+
+function buildEditPage(model: Model, slug: string, mCamel: string): string {
+  const Name   = model.name;
+  const fields = (model.fields as NamedField[]).filter(f => !['id', 'uuid', 'ulid'].includes(f.type)).slice(0, 10);
+  const stateInit    = fields.map(f => `${f.name}: ${stateInitValue(f)}`).join(', ');
+  const effectFields = fields.map(f => `        ${f.name}: data.${f.name} ?? ${stateInitValue(f)},`).join('\n');
+  const inputs       = fields.map(f => buildFieldInput(f)).join('\n');
+
+  return `'use client';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { api } from '~/trpc/react';
+
+export default function ${Name}EditPage() {
+  const router = useRouter();
+  const params = useParams<{ id: string }>();
+  const id = Number(params.id);
+  const [form, setForm] = useState({ ${stateInit} });
+
+  const query = api.${mCamel}.getById.useQuery({ id }, { enabled: !isNaN(id) });
+  const utils = api.useUtils();
+  const update = api.${mCamel}.update.useMutation({
+    onSuccess: () => { utils.${mCamel}.getAll.invalidate(); router.push('/${slug}'); },
+  });
+
+  useEffect(() => {
+    if (query.data) {
+      const data = query.data;
+      setForm({
+${effectFields}
+      });
+    }
+  }, [query.data]);
+
+  if (query.isLoading) return <p className="p-8 text-gray-500">Loading…</p>;
+  if (query.isError)   return <p className="p-8 text-red-500">{query.error?.message}</p>;
+
+  return (
+    <main className="p-8 max-w-lg mx-auto">
+      <h1 className="text-2xl font-bold mb-6">Edit ${Name}</h1>
+      <form
+        onSubmit={e => { e.preventDefault(); update.mutate({ id, ...form } as any); }}
+        className="flex flex-col gap-4"
+      >
+${inputs}
+        <div className="flex gap-3 mt-2">
+          <button type="submit" disabled={update.isPending}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50">
+            {update.isPending ? 'Saving…' : 'Save'}
+          </button>
+          <button type="button" onClick={() => router.push('/${slug}')}
+            className="px-4 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200">
+            Cancel
+          </button>
+        </div>
+        {update.error && <p className="text-red-500 text-sm">{update.error.message}</p>}
       </form>
     </main>
   );
