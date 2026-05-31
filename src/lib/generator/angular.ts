@@ -479,6 +479,9 @@ import { ${mPascal}Service } from '../../services/${mKebab}.service';
         <h1>${plural(mPascal)}</h1>
         <a routerLink="/${mKebabPlural}/new" class="btn btn-primary">New ${mPascal}</a>
       </div>
+      <div *ngIf="error" style="background:#fef2f2;color:#dc2626;padding:12px 16px;border-radius:6px;margin-bottom:16px">
+        {{ error }} <button (click)="error = null; load()">Retry</button>
+      </div>
       <div *ngIf="loading" class="loading">Loading...</div>
       <table *ngIf="!loading" class="data-table">
         <thead>
@@ -522,6 +525,7 @@ ${tableCells}
 export class ${mPascal}ListComponent implements OnInit {
   items: ${mPascal}[] = [];
   loading = false;
+  error: string | null = null;
 
   constructor(private ${mCamelPlural}Service: ${mPascal}Service) {}
 
@@ -531,9 +535,10 @@ export class ${mPascal}ListComponent implements OnInit {
 
   load(): void {
     this.loading = true;
+    this.error = null;
     this.${mCamelPlural}Service.getAll().subscribe({
       next: (data) => { this.items = data; this.loading = false; },
-      error: () => { this.loading = false; },
+      error: (err) => { this.error = err.message ?? 'Failed to load'; this.loading = false; },
     });
   }
 
@@ -549,7 +554,8 @@ export class ${mPascal}ListComponent implements OnInit {
       return `      ${f.name}: [${defaultVal}],`;
     }).join('\n');
 
-    const formInputs = model.fields.map(f => {
+    const angularDateTimeTypes = new Set(['dateTime', 'timestamp', 'dateTimeTz', 'timestampTz']);
+    const formInputs = (model.fields as any[]).map(f => {
       const tsType = toTsType(f.type);
       if (tsType === 'boolean') {
         return `      <label class="checkbox-label">
@@ -557,10 +563,42 @@ export class ${mPascal}ListComponent implements OnInit {
         ${f.name}
       </label>`;
       }
-      const inputType = tsType === 'number' ? 'number' : 'text';
+      if (tsType === 'number') {
+        return `      <div class="form-group">
+        <label>${f.name}</label>
+        <input type="number" formControlName="${f.name}" class="form-control" />
+      </div>`;
+      }
+      if (f.type === 'date') {
+        return `      <div class="form-group">
+        <label>${f.name}</label>
+        <input type="date" formControlName="${f.name}" class="form-control" />
+      </div>`;
+      }
+      if (angularDateTimeTypes.has(f.type)) {
+        return `      <div class="form-group">
+        <label>${f.name}</label>
+        <input type="datetime-local" formControlName="${f.name}" class="form-control" />
+      </div>`;
+      }
+      if (f.type === 'enum' && Array.isArray(f.values) && f.values.length) {
+        const opts = (f.values as string[]).map(v => `          <option [value]="'${v}'">${v}</option>`).join('\n');
+        return `      <div class="form-group">
+        <label>${f.name}</label>
+        <select formControlName="${f.name}" class="form-control">
+${opts}
+        </select>
+      </div>`;
+      }
+      if (f.type === 'text' || f.type === 'mediumText' || f.type === 'longText') {
+        return `      <div class="form-group">
+        <label>${f.name}</label>
+        <textarea formControlName="${f.name}" class="form-control" rows="4"></textarea>
+      </div>`;
+      }
       return `      <div class="form-group">
         <label>${f.name}</label>
-        <input type="${inputType}" formControlName="${f.name}" class="form-control" />
+        <input type="text" formControlName="${f.name}" class="form-control" />
       </div>`;
     }).join('\n');
 
