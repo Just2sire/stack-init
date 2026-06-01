@@ -5,6 +5,7 @@ import "@xyflow/react/dist/style.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import JsonLd from "@/components/landing/JsonLd";
+import { Analytics } from "@vercel/analytics/next"
 
 /**
  * Stack-Init Typography (from stack-init.html reference)
@@ -94,6 +95,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col" data-scroll-behavior="smooth">
         <JsonLd />
         <TooltipProvider>{children}</TooltipProvider>
+        <Analytics />
       </body>
     </html>
   );
