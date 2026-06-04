@@ -4,14 +4,16 @@ import { useWizardStore } from "@/stores/useWizardStore";
 import { SubStepPills } from "../SubStepPills";
 import { Terminal, Settings, Shield, Box, Globe, Zap, Wifi, Activity, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const SUB_STEPS = [
-  { label: "Core Layout & Tooling" },
-  { label: "Middlewares & Features" },
-];
+import { useTranslations } from "next-intl";
 
 export function FastAPISetupStep() {
+  const t = useTranslations("steps");
   const { fastapiOptions, setFastAPIOptions, currentSubStep, setCurrentSubStep } = useWizardStore();
+
+  const SUB_STEPS = [
+    { label: t("fastapiSetup.substep.core") },
+    { label: t("fastapiSetup.substep.middlewares") },
+  ];
 
   const toggleFeature = (key: keyof typeof fastapiOptions) =>
     setFastAPIOptions({ [key]: !fastapiOptions[key] } as any);
@@ -19,26 +21,26 @@ export function FastAPISetupStep() {
   const isBeanie = fastapiOptions.orm === 'beanie';
 
   const features = [
-    ...(!isBeanie ? [{ key: 'migrations', label: 'Alembic Migrations', desc: 'Generate alembic.ini + env.py for DB migrations.', icon: <Box size={18} /> }] : []),
-    { key: 'async_mode',       label: 'Async Mode',           desc: 'Use async/await for handlers and DB sessions.',     icon: <Terminal size={18} /> },
-    { key: 'cors',             label: 'CORS Middleware',       desc: 'Enable Cross-Origin Resource Sharing.',            icon: <Globe size={18} /> },
-    { key: 'swagger',          label: 'Swagger / OpenAPI',     desc: 'Auto-generate API docs at /docs.',                 icon: <Settings size={18} /> },
-    { key: 'rate_limiting',    label: 'Rate Limiting',         desc: 'SlowAPI rate limiter on all endpoints.',           icon: <Shield size={18} /> },
-    { key: 'background_tasks', label: 'Background Tasks',      desc: 'Generate tasks.py with example BackgroundTasks.',  icon: <Zap size={18} /> },
-    { key: 'websockets',       label: 'WebSockets',            desc: 'Add a WebSocket connection manager endpoint.',     icon: <Wifi size={18} /> },
+    ...(!isBeanie ? [{ key: 'migrations', label: 'Alembic Migrations', desc: t("fastapiSetup.features.migrations.desc"), icon: <Box size={18} /> }] : []),
+    { key: 'async_mode',       label: 'Async Mode',           desc: t("fastapiSetup.features.async_mode.desc"),        icon: <Terminal size={18} /> },
+    { key: 'cors',             label: 'CORS Middleware',       desc: t("fastapiSetup.features.cors.desc"),              icon: <Globe size={18} /> },
+    { key: 'swagger',          label: 'Swagger / OpenAPI',     desc: t("fastapiSetup.features.swagger.desc"),           icon: <Settings size={18} /> },
+    { key: 'rate_limiting',    label: 'Rate Limiting',         desc: t("fastapiSetup.features.rate_limiting.desc"),     icon: <Shield size={18} /> },
+    { key: 'background_tasks', label: 'Background Tasks',      desc: t("fastapiSetup.features.background_tasks.desc"), icon: <Zap size={18} /> },
+    { key: 'websockets',       label: 'WebSockets',            desc: t("fastapiSetup.features.websockets.desc"),        icon: <Wifi size={18} /> },
   ];
 
   const pythonVersions = [
-    { value: "3.12", label: "Python 3.12", desc: "Latest version" },
-    { value: "3.11", label: "Python 3.11", desc: "Recommended stable" },
-    { value: "3.10", label: "Python 3.10", desc: "Legacy LTS support" },
+    { value: "3.12", label: "Python 3.12", desc: t("fastapiSetup.version.3_12.desc") },
+    { value: "3.11", label: "Python 3.11", desc: t("fastapiSetup.version.3_11.desc") },
+    { value: "3.10", label: "Python 3.10", desc: t("fastapiSetup.version.3_10.desc") },
   ] as const;
 
   const ormOptions = [
-    { value: "sqlmodel", label: "SQLModel", desc: "Pydantic v2 + SQLAlchemy" },
-    { value: "sqlalchemy", label: "SQLAlchemy", desc: "Raw ORM + Alembic" },
-    { value: "tortoise-orm", label: "Tortoise-ORM", desc: "Django-style async ORM" },
-    { value: "beanie", label: "Beanie (MongoDB)", desc: "Async MongoDB ODM via Motor" },
+    { value: "sqlmodel",      label: "SQLModel",        desc: t("fastapiSetup.orm.sqlmodel.desc") },
+    { value: "sqlalchemy",    label: "SQLAlchemy",      desc: t("fastapiSetup.orm.sqlalchemy.desc") },
+    { value: "tortoise-orm",  label: "Tortoise-ORM",    desc: t("fastapiSetup.orm.tortoise_orm.desc") },
+    { value: "beanie",        label: "Beanie (MongoDB)", desc: t("fastapiSetup.orm.beanie.desc") },
   ] as const;
 
   const handleOrmChange = (value: string) => {
@@ -51,31 +53,31 @@ export function FastAPISetupStep() {
   };
 
   const authOptions = [
-    { value: "none", label: "No Auth", desc: "Public access only" },
-    { value: "jwt", label: "JWT Token", desc: "Jose + PyJWT tokens" },
-    { value: "oauth2", label: "OAuth2 Bearer", desc: "Password flow" },
-    { value: "api-key", label: "API Key Header", desc: "X-API-Key token check" },
+    { value: "none",    label: "No Auth",         desc: t("fastapiSetup.auth.none.desc") },
+    { value: "jwt",     label: "JWT Token",        desc: t("fastapiSetup.auth.jwt.desc") },
+    { value: "oauth2",  label: "OAuth2 Bearer",    desc: t("fastapiSetup.auth.oauth2.desc") },
+    { value: "api-key", label: "API Key Header",   desc: t("fastapiSetup.auth.api_key.desc") },
   ] as const;
 
   const architectures = [
-    { value: "flat", label: "Flat (Single folder)", desc: "Simple one-file API" },
-    { value: "layered", label: "Layered (N-Tier)", desc: "Controllers, services, models" },
-    { value: "feature-based", label: "Feature-based", desc: "Grouped by business area" },
-    { value: "domain", label: "Domain-driven (DDD)", desc: "Highly modular context boundaries" },
+    { value: "flat",           label: "Flat (Single folder)", desc: t("fastapiSetup.arch.flat.desc") },
+    { value: "layered",        label: "Layered (N-Tier)",     desc: t("fastapiSetup.arch.layered.desc") },
+    { value: "feature-based",  label: "Feature-based",        desc: t("fastapiSetup.arch.feature_based.desc") },
+    { value: "domain",         label: "Domain-driven (DDD)",  desc: t("fastapiSetup.arch.domain.desc") },
   ] as const;
 
   const taskRunners = [
-    { value: "makefile", label: "GNU Makefile", desc: "Command shortcuts" },
-    { value: "bash", label: "Bash Scripts", desc: "Utility bash files" },
-    { value: "none", label: "None", desc: "No default runner" },
+    { value: "makefile", label: "GNU Makefile",  desc: t("fastapiSetup.runner.makefile.desc") },
+    { value: "bash",     label: "Bash Scripts",  desc: t("fastapiSetup.runner.bash.desc") },
+    { value: "none",     label: "None",          desc: t("fastapiSetup.runner.none.desc") },
   ] as const;
 
   return (
     <div className="si-step-panel">
       <div>
         <span className="si-section-label">Backend</span>
-        <h2 className="si-title" style={{ marginBottom: 4 }}>FastAPI Configuration</h2>
-        <p className="si-subtitle">Fine-tune your high-performance Python ASGI backend settings.</p>
+        <h2 className="si-title" style={{ marginBottom: 4 }}>{t("fastapiSetup.title")}</h2>
+        <p className="si-subtitle">{t("fastapiSetup.subtitle")}</p>
       </div>
 
       <div style={{ marginTop: 24, marginBottom: 12 }}>
@@ -85,7 +87,7 @@ export function FastAPISetupStep() {
       {/* Sub-step 0 — Core configuration */}
       {currentSubStep === 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 24, maxWidth: 840 }}>
-          
+
           {/* Python Version Selection */}
           <div>
             <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>Python Runtime Version</span>
@@ -242,8 +244,8 @@ export function FastAPISetupStep() {
       {/* Sub-step 1 — Features & Tooling */}
       {currentSubStep === 1 && (
         <div style={{ maxWidth: 840 }} className="space-y-6">
-          <span className="si-section-label" style={{ display: "block" }}>Middlewares & Middleware Services</span>
-          
+          <span className="si-section-label" style={{ display: "block" }}>{t("fastapiSetup.middlewaresSection")}</span>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {features.map(({ key, label, desc, icon }) => {
               const isOn = !!(fastapiOptions as any)[key];
@@ -283,7 +285,7 @@ export function FastAPISetupStep() {
             <div className="flex gap-3">
               <Activity className="text-gold shrink-0" size={20} />
               <div>
-                <p className="text-xs font-bold text-gold uppercase tracking-wider mb-1">Production-Ready Python Boilerplate</p>
+                <p className="text-xs font-bold text-gold uppercase tracking-wider mb-1">{t("fastapiSetup.productionReady")}</p>
                 <p className="text-sm text-text2" style={{ lineHeight: 1.5 }}>
                   We follow official FastAPI production standards. All modules, models, dependency injections, and async DB handlers are generated inside a standard <code className="text-gold">app/</code> structure.
                 </p>

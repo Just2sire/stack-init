@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useWizardStore } from "@/stores/useWizardStore";
 import { generate } from "@/lib/generator";
 import { generateShareUrl } from "@/lib/sharing";
 import { savePreset } from "@/lib/presets";
 import { buildYamlContent } from "@/lib/generator/yaml";
 import { generateDockerCompose } from "@/lib/generator/docker";
-import { Download, Loader2, Sparkles, FileCode, Check, ChevronDown, ChevronUp, Database, Box, Layers as LayersIcon, RefreshCw, Edit3, Share2, ClipboardCheck, BookmarkPlus, Copy, FileText, Container } from "lucide-react";
+import { Download, Loader2, Sparkles, FileCode, Check, ChevronDown, ChevronUp, Database, Box, Layers as LayersIcon, RefreshCw, Edit3, Share2, ClipboardCheck, BookmarkPlus, Copy, FileText, Container, ShieldCheck, Terminal } from "lucide-react";
 import { SaveConfigButton } from "@/components/auth/SaveConfigButton";
 import type { ProjectConfig, ModelPages } from "@stack-init/schema";
 
@@ -79,7 +80,7 @@ function computeFileList(config: ProjectConfig): FileEntry[] {
     files.push({ path: 'package.json', icon: '📄' });
     files.push({ path: 'tsconfig.json', icon: '📄' });
     files.push({ path: 'src/app.ts', icon: '📄' });
-    
+
     for (const model of config.models) {
       const slug = slugify(model.name);
       files.push({ path: `src/models/${model.name}.ts`, icon: '📄' });
@@ -158,6 +159,7 @@ function computeEnvExample(config: ProjectConfig): string {
 
 
 export function OutputStep() {
+  const t = useTranslations("steps");
   const { getConfig, stack, reset, setStep, models, projectName } = useWizardStore();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDone, setIsDone] = useState(false);
@@ -210,9 +212,9 @@ export function OutputStep() {
     const isExpanded = expanded === id;
     return (
       <div className="si-card mb-3 overflow-hidden" style={{ borderColor: isExpanded ? "var(--gold-border)" : undefined }}>
-        <div 
+        <div
           onClick={() => setExpanded(isExpanded ? null : id)}
-          className="si-card-header" 
+          className="si-card-header"
           style={{ cursor: "pointer", background: isExpanded ? "var(--bg4)" : "transparent" }}
         >
           <div className="flex items-center gap-3">
@@ -232,17 +234,17 @@ export function OutputStep() {
         <div className="w-16 h-16 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center mb-6 animate-in zoom-in duration-500">
           <Check className="text-gold w-8 h-8" strokeWidth={3} />
         </div>
-        <h1 className="si-title mb-2">Project Generated!</h1>
-        <p className="si-subtitle mb-10">Your project is ready. Check the files below.</p>
+        <h1 className="si-title mb-2">{t("output.projectGenerated")}</h1>
+        <p className="si-subtitle mb-10">{t("output.projectReadyDesc")}</p>
 
         <div className="w-full max-w-[700px] space-y-6">
           <div className="si-card">
             <div className="si-card-header">
               <div className="flex items-center gap-2">
                 <FileCode className="text-gold" size={16} />
-                <span className="font-bold text-sm">Generated Files</span>
+                <span className="font-bold text-sm">{t("output.generatedFiles")}</span>
               </div>
-              <span className="si-badge si-badge-gold">{fileList.length} files</span>
+              <span className="si-badge si-badge-gold">{t("output.filesCount", { count: fileList.length })}</span>
             </div>
             <div className="si-card-body max-h-[300px] overflow-y-auto font-mono text-[11px] text-text2 space-y-1">
               {fileList.map((f) => (
@@ -256,11 +258,11 @@ export function OutputStep() {
 
           {isLaravel && (
             <div className="bg-bg4 border border-white/5 rounded-xl p-6">
-              <p className="text-[10px] font-bold text-gold uppercase tracking-widest mb-4">CLI Instructions</p>
+              <p className="text-[10px] font-bold text-gold uppercase tracking-widest mb-4">{t("output.cliTitle")}</p>
               <div className="bg-bg rounded-lg p-4 font-mono text-xs text-text2 border border-white/5 leading-relaxed">
-                <p className="opacity-40 mb-2"># 1. Run generation in your project</p>
+                <p className="opacity-40 mb-2">{t("output.cliStep1")}</p>
                 <p className="text-text"><span className="opacity-40">$</span> npx stack-init generate</p>
-                <p className="opacity-40 mt-4 mb-2"># 2. Setup database & start</p>
+                <p className="opacity-40 mt-4 mb-2">{t("output.cliStep2")}</p>
                 <p className="text-text"><span className="opacity-40">$</span> php artisan migrate</p>
                 <p className="text-text"><span className="opacity-40">$</span> php artisan serve</p>
               </div>
@@ -268,19 +270,19 @@ export function OutputStep() {
           )}
 
           <div className="flex gap-4 pt-6">
-            <button 
-              onClick={() => { setIsDone(false); setStep('stack'); }} 
+            <button
+              onClick={() => { setIsDone(false); setStep('stack'); }}
               className="si-btn-secondary flex-1 flex items-center justify-center gap-2 py-3"
             >
               <Edit3 size={16} />
-              Modify Config
+              {t("output.modifyConfig")}
             </button>
-            <button 
-              onClick={() => reset()} 
+            <button
+              onClick={() => reset()}
               className="si-btn-ghost flex-1 flex items-center justify-center gap-2 py-3 border border-white/10"
             >
               <RefreshCw size={16} />
-              Start New Project
+              {t("output.startNew")}
             </button>
           </div>
         </div>
@@ -294,32 +296,32 @@ export function OutputStep() {
         <div className="w-16 h-16 rounded-full bg-gold-subtle border border-gold-border flex items-center justify-center mb-6">
           <Sparkles className="text-gold w-7 h-7" />
         </div>
-        <div className="si-section-label justify-center">Final Step</div>
-        <h1 className="si-title mb-2">Review & Generate</h1>
+        <div className="si-section-label justify-center">{t("output.finalStepLabel")}</div>
+        <h1 className="si-title mb-2">{t("output.title")}</h1>
         <p className="si-subtitle max-w-[480px]">
-          Review your project structure before we scaffold the codebase.
+          {t("output.subtitle")}
         </p>
       </div>
 
       <div className="max-w-[700px] mx-auto mb-12">
-        <SummaryItem id="summary" title="Project Summary" icon={<Box size={18} />}>
+        <SummaryItem id="summary" title={t("output.projectSummary")} icon={<Box size={18} />}>
           <div className="grid grid-cols-2 gap-y-4 text-sm">
             <div>
-              <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-1">Project Name</p>
+              <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-1">{t("output.projectNameLabel")}</p>
               <p className="font-mono text-gold">{projectName || "my-project"}</p>
             </div>
             <div>
-              <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-1">Stack</p>
+              <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-1">{t("output.stackLabel")}</p>
               <p className="text-text">{stack?.toUpperCase()}</p>
             </div>
             <div>
-              <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-1">Database</p>
+              <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-1">{t("output.databaseLabel")}</p>
               <p className="text-text">
                 {isLaravel ? config.laravel?.db_engine : (config.express?.db_engine || config.nestjs?.db_engine || config.fastapi?.db_engine || "SQLite")}
               </p>
             </div>
             <div>
-              <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-1">ORM / Driver</p>
+              <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-1">{t("output.ormLabel")}</p>
               <p className="text-text">
                 {isLaravel ? "Eloquent" : (config.express?.orm || config.nestjs?.orm || config.fastapi?.orm || "None")}
               </p>
@@ -327,29 +329,29 @@ export function OutputStep() {
           </div>
         </SummaryItem>
 
-        <SummaryItem id="models" title={`Models & Schema (${models.length})`} icon={<LayersIcon size={18} />}>
+        <SummaryItem id="models" title={t("output.modelsLabel", { count: models.length })} icon={<LayersIcon size={18} />}>
           <div className="space-y-3">
             {models.map(m => (
               <div key={m.name} className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5">
                 <div className="flex items-center gap-3">
                   <span className="font-mono text-gold text-xs font-bold">{m.name}</span>
-                  <span className="text-[10px] text-text3">{m.fields.length} fields</span>
+                  <span className="text-[10px] text-text3">{t("output.fieldsCount", { count: m.fields.length })}</span>
                 </div>
                 <div className="flex gap-2">
-                  {m.relations.length > 0 && <span className="si-badge si-badge-gray !text-[9px]">{m.relations.length} rel</span>}
+                  {m.relations.length > 0 && <span className="si-badge si-badge-gray !text-[9px]">{t("output.relCount", { count: m.relations.length })}</span>}
                   {m.generate.controller && <span className="si-badge si-badge-gold !text-[9px]">API</span>}
                 </div>
               </div>
             ))}
-            {models.length === 0 && <p className="text-xs text-text3 italic">No models defined yet.</p>}
+            {models.length === 0 && <p className="text-xs text-text3 italic">{t("output.noModels")}</p>}
           </div>
         </SummaryItem>
 
-        <SummaryItem id="tech" title="Technical Options" icon={<Terminal size={18} />}>
+        <SummaryItem id="tech" title={t("output.technicalLabel")} icon={<Terminal size={18} />}>
           <div className="space-y-4">
             {isLaravel && config.laravel && (
               <div>
-                <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-2">Laravel Config</p>
+                <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-2">{t("output.laravelConfigLabel")}</p>
                 <div className="flex flex-wrap gap-2">
                   <span className="si-badge si-badge-gray">PHP {config.laravel.php_version}</span>
                   <span className="si-badge si-badge-gray">Auth: {config.laravel.auth}</span>
@@ -359,7 +361,7 @@ export function OutputStep() {
             )}
             {config.fastapi && (
               <div>
-                <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-2">FastAPI Config</p>
+                <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-2">{t("output.fastapiConfigLabel")}</p>
                 <div className="flex flex-wrap gap-2">
                   <span className="si-badge si-badge-gray">Python {config.fastapi.python_version}</span>
                   <span className="si-badge si-badge-gray">Auth: {config.fastapi.auth}</span>
@@ -369,7 +371,7 @@ export function OutputStep() {
             )}
             {config.express && config.express.middlewares && config.express.middlewares.length > 0 && (
               <div>
-                <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-2">Middlewares</p>
+                <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-2">{t("output.middlewaresLabel")}</p>
                 <div className="flex flex-wrap gap-2">
                   {config.express.middlewares.map(m => <span key={m} className="si-badge si-badge-gray">{m}</span>)}
                 </div>
@@ -377,7 +379,7 @@ export function OutputStep() {
             )}
             {config.react && (
               <div>
-                <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-2">Frontend Stack</p>
+                <p className="text-[10px] text-text3 uppercase font-bold tracking-widest mb-2">{t("output.frontendStackLabel")}</p>
                 <div className="flex flex-wrap gap-2">
                   <span className="si-badge si-badge-gray">{config.react.ui_lib}</span>
                   <span className="si-badge si-badge-gray">{config.react.state_lib}</span>
@@ -395,14 +397,14 @@ export function OutputStep() {
           <div className="si-card-header" style={{ paddingBottom: 0 }}>
             <div className="flex items-center gap-3">
               <FileText className="text-gold" size={16} />
-              <span className="font-bold text-sm">Preview Generated Files</span>
+              <span className="font-bold text-sm">{t("output.previewFiles")}</span>
             </div>
           </div>
           <div className="flex gap-1 px-4 pt-3 border-b border-white/5">
             {([
-              { id: 'env',    label: '.env.example', icon: '🔑' },
-              { id: 'docker', label: 'docker-compose.yml', icon: '🐳' },
-              { id: 'yaml',   label: 'stack-init.yaml', icon: '📄' },
+              { id: 'env',    label: t("output.envTab"), icon: '🔑' },
+              { id: 'docker', label: t("output.dockerTab"), icon: '🐳' },
+              { id: 'yaml',   label: t("output.yamlTab"), icon: '📄' },
             ] as const).map(tab => (
               <button
                 key={tab.id}
@@ -419,7 +421,7 @@ export function OutputStep() {
           </div>
           <div className="relative">
             <pre className="si-card-body font-mono text-[11px] text-text2 overflow-x-auto max-h-[200px] overflow-y-auto leading-relaxed whitespace-pre-wrap">
-              {previewTab === 'env'    && (computeEnvExample(config) || '# No environment variables for this stack')}
+              {previewTab === 'env'    && (computeEnvExample(config) || t("output.noEnvVars"))}
               {previewTab === 'docker' && generateDockerCompose(config)}
               {previewTab === 'yaml'   && buildYamlContent(config)}
             </pre>
@@ -433,7 +435,7 @@ export function OutputStep() {
               className="absolute top-3 right-3 si-btn-ghost py-1 px-2 text-[10px] gap-1"
             >
               {copiedTab === previewTab ? <Check size={10} className="text-gold" /> : <Copy size={10} />}
-              {copiedTab === previewTab ? 'Copied!' : 'Copy'}
+              {copiedTab === previewTab ? t("output.copiedButton") : t("output.copyButton")}
             </button>
           </div>
         </div>
@@ -448,12 +450,12 @@ export function OutputStep() {
           {isGenerating ? (
             <>
               <Loader2 className="w-6 h-6 animate-spin" />
-              Generating your project...
+              {t("output.generating")}
             </>
           ) : (
             <>
               <Download className="w-6 h-6" />
-              Generate {projectName || "Project"}
+              {t("output.generateButton", { name: projectName || "Project" })}
             </>
           )}
         </button>
@@ -464,7 +466,7 @@ export function OutputStep() {
             className="si-btn-ghost text-xs gap-2 py-2"
           >
             {isShared ? <ClipboardCheck size={14} className="text-gold" /> : <Share2 size={14} />}
-            {isShared ? "Link copied!" : "Share config link"}
+            {isShared ? t("output.linkCopied") : t("output.shareConfig")}
           </button>
           <button
             onClick={() => {
@@ -476,21 +478,21 @@ export function OutputStep() {
             className="si-btn-ghost text-xs gap-2 py-2"
           >
             {copiedTab === 'yaml-btn' ? <Check size={14} className="text-gold" /> : <Copy size={14} />}
-            {copiedTab === 'yaml-btn' ? "YAML copied!" : "Copy YAML"}
+            {copiedTab === 'yaml-btn' ? t("output.yamlCopied") : t("output.copyYaml")}
           </button>
           <button
             onClick={() => setShowSaveModal(true)}
             className="si-btn-ghost text-xs gap-2 py-2"
           >
             {savedToast ? <Check size={14} className="text-gold" /> : <BookmarkPlus size={14} />}
-            {savedToast ? "Preset saved!" : "Save as Preset"}
+            {savedToast ? t("output.presetSaved") : t("output.saveAsPreset")}
           </button>
           <SaveConfigButton />
         </div>
 
         <p className="text-[10px] text-text3 flex items-center gap-2">
           <ShieldCheck size={12} className="text-gold" />
-          By clicking generate, a ZIP or YAML file will be prepared for you.
+          {t("output.securityNote")}
         </p>
       </div>
 
@@ -517,14 +519,14 @@ export function OutputStep() {
             }}
           >
             <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--text)", marginBottom: 4, fontFamily: "var(--font-syne)" }}>
-              Save as Preset
+              {t("output.savePresetTitle")}
             </h3>
             <p style={{ fontSize: 12, color: "var(--text3)", marginBottom: 20 }}>
-              Save your current configuration to reuse in future projects.
+              {t("output.savePresetDesc")}
             </p>
 
             <div style={{ marginBottom: 14 }}>
-              <label className="si-section-label">Preset Name</label>
+              <label className="si-section-label">{t("output.presetNameLabel")}</label>
               <input
                 autoFocus
                 value={presetName}
@@ -538,7 +540,7 @@ export function OutputStep() {
 
             <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
               <div style={{ flex: "0 0 80px" }}>
-                <label className="si-section-label">Icon</label>
+                <label className="si-section-label">{t("output.iconLabel")}</label>
                 <input
                   value={presetIcon}
                   onChange={(e) => setPresetIcon(e.target.value)}
@@ -548,11 +550,11 @@ export function OutputStep() {
                 />
               </div>
               <div style={{ flex: 1 }}>
-                <label className="si-section-label">Description (optional)</label>
+                <label className="si-section-label">{t("output.descriptionLabel")}</label>
                 <input
                   value={presetDesc}
                   onChange={(e) => setPresetDesc(e.target.value)}
-                  placeholder="Short description..."
+                  placeholder={t("output.descriptionPlaceholder")}
                   className="si-input"
                   style={{ marginTop: 6 }}
                 />
@@ -561,10 +563,10 @@ export function OutputStep() {
 
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={handleSavePreset} className="si-btn-primary" style={{ flex: 1 }}>
-                Save Preset
+                {t("output.savePresetButton")}
               </button>
               <button onClick={() => setShowSaveModal(false)} className="si-btn-secondary" style={{ flex: 1 }}>
-                Cancel
+                {t("output.cancelButton")}
               </button>
             </div>
           </div>
@@ -573,5 +575,3 @@ export function OutputStep() {
     </div>
   );
 }
-
-import { ShieldCheck, Terminal } from "lucide-react";

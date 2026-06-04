@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 const SERVICE_ICONS: Record<string, string> = {
   'auth':        '🔐',
@@ -15,26 +16,15 @@ const SERVICE_ICONS: Record<string, string> = {
   'queue':       '📬',
 };
 
-const STEP_LABELS: Record<StepId, string> = {
-  stack:           "Stack & Project",
-  usage:           "Next.js Usage",
-  architecture:    "Architecture",
-  database:        "Database",
-  services:        "Services",
-  models:          "Models & Fields",
-  relations:       "Relations",
-  routes:          "Routes",
-  middlewares:     "Middlewares",
-  "laravel-setup": "Laravel Setup",
-  "nest-setup":    "NestJS Setup",
-  "fastapi-setup": "FastAPI Setup",
-  "react-setup":   "React Setup",
-  integration:     "Integration",
-  output:          "Output",
-};
 
-export function WizardSidebar() {
+interface WizardSidebarProps {
+  variant?: "default" | "sheet";
+  onNavigate?: () => void;
+}
+
+export function WizardSidebar({ variant = "default", onNavigate }: WizardSidebarProps = {}) {
   const { steps, currentStepId, setStep, models, stack, enabledServices, projectName } = useWizardStore();
+  const t = useTranslations("wizard");
   const currentIndex = steps.indexOf(currentStepId);
 
   const baseFiles = 8;
@@ -50,9 +40,9 @@ export function WizardSidebar() {
   };
 
   return (
-    <div className="si-wizard-sidebar" role="navigation" aria-label="Creation Wizard Steps">
+    <div className={cn("si-wizard-sidebar", variant === "sheet" && "si-wizard-sidebar--sheet")} role="navigation" aria-label="Creation Wizard Steps">
       {/* Logo */}
-      <Link href="/" className="si-wiz-logo" style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textDecoration: "none" }}>
+      <Link href="/" className="si-wiz-logo" onClick={onNavigate} style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textDecoration: "none" }}>
         <Image src="/favicon.svg" alt="StackInit logo" width={28} height={28} />
         <span style={{
           fontFamily: "var(--font-syne), 'Syne', sans-serif",
@@ -69,13 +59,13 @@ export function WizardSidebar() {
           const isActive = currentStepId === id;
           const isCompleted = currentIndex > stepIndex;
           const isClickable = isCompleted || isActive || !!stack;
-          const label = STEP_LABELS[id];
+          const label = t(`stepLabels.${id}`);
           const badge = getStepBadge(id);
 
           return (
             <button
               key={id}
-              onClick={() => isClickable && setStep(id)}
+              onClick={() => { if (isClickable) { setStep(id); onNavigate?.(); } }}
               disabled={!isClickable}
               className={cn(
                 "si-step-item w-full text-left",
@@ -118,13 +108,13 @@ export function WizardSidebar() {
         }}
       >
         <div style={{ fontWeight: 600, color: "var(--text2)", marginBottom: 4, textTransform: "uppercase" }}>
-          Project Name
+          {t("sidebar.projectName")}
         </div>
         <span style={{ color: "var(--text)", fontFamily: "var(--font-jetbrains-mono)", fontSize: 12 }}>
-          {projectName || "unnamed-project"}
+          {projectName || t("sidebar.unnamedProject")}
         </span>
         <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 4 }}>
-          ~{estimatedFiles} files will be generated
+          {t("sidebar.filesEstimate", { count: estimatedFiles })}
         </div>
         {enabledServices.length > 0 && (
           <div style={{ marginTop: 8, display: "flex", gap: 4, flexWrap: "wrap" }} aria-label="Enabled integrations">

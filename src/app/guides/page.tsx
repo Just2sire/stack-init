@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Clock, BookOpen } from "lucide-react";
 import { guides } from "@/lib/guides-manifest";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
   title: "Guides | StackInit — Tech-Stack Scaffolding Tutorials",
@@ -32,7 +33,8 @@ const TAG_COLORS: Record<string, string> = {
   Python: "#ffca28",
 };
 
-export default function GuidesPage() {
+export default async function GuidesPage() {
+  const t = await getTranslations("guides");
   return (
     <main style={{ position: "relative", zIndex: 10 }}>
       {/* Hero */}
@@ -57,7 +59,7 @@ export default function GuidesPage() {
           marginBottom: 24,
         }}>
           <BookOpen size={11} />
-          Guides & Tutorials
+          {t("badge")}
         </div>
         <h1 style={{
           fontFamily: "var(--font-syne)",
@@ -68,8 +70,8 @@ export default function GuidesPage() {
           marginBottom: 16,
           color: "var(--text)",
         }}>
-          Scaffold faster.<br />
-          <span style={{ color: "var(--gold)" }}>Ship sooner.</span>
+          {t("headline1")}<br />
+          <span style={{ color: "var(--gold)" }}>{t("headline2")}</span>
         </h1>
         <p style={{
           fontSize: "clamp(14px, 1.2vw, 16px)",
@@ -77,7 +79,7 @@ export default function GuidesPage() {
           lineHeight: 1.65,
           maxWidth: 520,
         }}>
-          Step-by-step guides to generate production-ready codebases with StackInit — from Laravel APIs to full-stack Next.js apps.
+          {t("description")}
         </p>
       </section>
 
@@ -94,7 +96,7 @@ export default function GuidesPage() {
         }} />
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(min(340px, 100%), 1fr))",
           gap: 20,
         }}>
           {guides.map((guide) => (
@@ -150,10 +152,10 @@ export default function GuidesPage() {
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text3)" }}>
                     <Clock size={12} />
-                    {guide.readTime} read
+                    {t("readTime", { time: guide.readTime })}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--gold)", fontWeight: 600 }}>
-                    Read guide <ArrowRight size={12} />
+                    {t("readGuide")} <ArrowRight size={12} />
                   </div>
                 </div>
               </article>

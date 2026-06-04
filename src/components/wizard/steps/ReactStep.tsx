@@ -5,83 +5,85 @@ import { SubStepPills } from "../SubStepPills";
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import { Monitor, FileCode, Layout, Pencil, Check, Terminal, Search, FolderOpen, Globe, Sliders } from "lucide-react";
-
-const PAGE_TYPES = [
-  { key: "list"   as const, label: "List page",   desc: "Data table index view",    icon: Layout,   defaultEnabled: true  },
-  { key: "detail" as const, label: "Detail page",  desc: "Individual resource show", icon: FileCode, defaultEnabled: true  },
-  { key: "create" as const, label: "Create page",  desc: "Interactive create form",  icon: Pencil,   defaultEnabled: true  },
-  { key: "edit"   as const, label: "Edit page",    desc: "Update resource form",     icon: Monitor,  defaultEnabled: false },
-];
-
-const LIBRARIES_MATRIX = [
-  {
-    category: "State Management",
-    key: "state_lib" as const,
-    options: [
-      { value: "zustand",       label: "Zustand",       desc: "Stores", package: "zustand" },
-      { value: "redux-toolkit", label: "Redux",         desc: "Global", package: "@reduxjs/toolkit" },
-      { value: "jotai",         label: "Jotai",         desc: "Atomic", package: "jotai" },
-      { value: "none",          label: "None",          desc: "React",  package: null },
-    ],
-  },
-  {
-    category: "Form & Validation",
-    key: "form_lib" as const,
-    options: [
-      { value: "react-hook-form", label: "Hook Form", desc: "Performant", package: "react-hook-form" },
-      { value: "formik",          label: "Formik",    desc: "Classic",    package: "formik" },
-      { value: "zod",             label: "Zod",       desc: "Schema",     package: "zod" },
-      { value: "none",            label: "None",      desc: "Native",     package: null },
-    ],
-  },
-  {
-    category: "HTTP Fetch Client",
-    key: "http_lib" as const,
-    options: [
-      { value: "axios", label: "Axios",     desc: "Promises", package: "axios" },
-      { value: "ky",    label: "Ky",        desc: "Hooks",    package: "ky" },
-      { value: "fetch", label: "Fetch API", desc: "Browser",  package: null },
-    ],
-  },
-  {
-    category: "Data Fetching",
-    key: "data_fetching" as const,
-    options: [
-      { value: "tanstack-query", label: "TanStack Query", desc: "Caching",  package: "@tanstack/react-query" },
-      { value: "swr",            label: "SWR",            desc: "Hooks",    package: "swr" },
-      { value: "none",           label: "None",           desc: "Vanilla",  package: null },
-    ],
-  },
-  {
-    category: "Router",
-    key: "router" as const,
-    options: [
-      { value: "react-router-v6", label: "React Router", desc: "v7 / file-based", package: "react-router-dom" },
-      { value: "tanstack-router", label: "TanStack Router", desc: "Type-safe",    package: "@tanstack/react-router" },
-      { value: "none",            label: "None",            desc: "SPA no routing", package: null },
-    ],
-  },
-  {
-    category: "UI Component Library",
-    key: "ui_lib" as const,
-    options: [
-      { value: "shadcn", label: "shadcn/ui",   desc: "Tailwind", package: "lucide-react" },
-      { value: "mui",    label: "Material UI", desc: "Google",   package: "@mui/material" },
-      { value: "antd",   label: "Ant Design",  desc: "AntD",     package: "antd" },
-      { value: "none",   label: "None",        desc: "Custom",   package: null },
-    ],
-  },
-];
-
-const SUB_STEPS = [
-  { label: "Libraries Console" },
-  { label: "Pages Explorer" },
-];
+import { useTranslations } from "next-intl";
 
 export function ReactStep() {
+  const t = useTranslations("steps");
   const { models, reactOptions, setReactOptions, setModelPages, currentSubStep, setCurrentSubStep } = useWizardStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeModelName, setActiveModelName] = useState<string | null>(null);
+
+  const PAGE_TYPES = [
+    { key: "list"   as const, label: t("reactSetup.pages.list.title"),   desc: t("reactSetup.pages.list.desc"),   icon: Layout,   defaultEnabled: true  },
+    { key: "detail" as const, label: t("reactSetup.pages.detail.title"), desc: t("reactSetup.pages.detail.desc"), icon: FileCode, defaultEnabled: true  },
+    { key: "create" as const, label: t("reactSetup.pages.create.title"), desc: t("reactSetup.pages.create.desc"), icon: Pencil,   defaultEnabled: true  },
+    { key: "edit"   as const, label: t("reactSetup.pages.edit.title"),   desc: t("reactSetup.pages.edit.desc"),   icon: Monitor,  defaultEnabled: false },
+  ];
+
+  const LIBRARIES_MATRIX = [
+    {
+      category: t("reactSetup.categories.state_lib"),
+      key: "state_lib" as const,
+      options: [
+        { value: "zustand",       label: "Zustand",       desc: t("reactSetup.libs.zustand.desc"),       package: "zustand" },
+        { value: "redux-toolkit", label: "Redux",         desc: t("reactSetup.libs.redux_toolkit.desc"), package: "@reduxjs/toolkit" },
+        { value: "jotai",         label: "Jotai",         desc: t("reactSetup.libs.jotai.desc"),         package: "jotai" },
+        { value: "none",          label: "None",          desc: t("reactSetup.libs.none_state.desc"),    package: null },
+      ],
+    },
+    {
+      category: t("reactSetup.categories.form_lib"),
+      key: "form_lib" as const,
+      options: [
+        { value: "react-hook-form", label: "Hook Form", desc: t("reactSetup.libs.react_hook_form.desc"), package: "react-hook-form" },
+        { value: "formik",          label: "Formik",    desc: t("reactSetup.libs.formik.desc"),          package: "formik" },
+        { value: "zod",             label: "Zod",       desc: t("reactSetup.libs.zod.desc"),             package: "zod" },
+        { value: "none",            label: "None",      desc: t("reactSetup.libs.none_form.desc"),       package: null },
+      ],
+    },
+    {
+      category: t("reactSetup.categories.http_lib"),
+      key: "http_lib" as const,
+      options: [
+        { value: "axios", label: "Axios",     desc: t("reactSetup.libs.axios.desc"),     package: "axios" },
+        { value: "ky",    label: "Ky",        desc: t("reactSetup.libs.ky.desc"),        package: "ky" },
+        { value: "fetch", label: "Fetch API", desc: t("reactSetup.libs.fetch.desc"),     package: null },
+      ],
+    },
+    {
+      category: t("reactSetup.categories.data_fetching"),
+      key: "data_fetching" as const,
+      options: [
+        { value: "tanstack-query", label: "TanStack Query", desc: t("reactSetup.libs.tanstack_query.desc"), package: "@tanstack/react-query" },
+        { value: "swr",            label: "SWR",            desc: t("reactSetup.libs.swr.desc"),            package: "swr" },
+        { value: "none",           label: "None",           desc: t("reactSetup.libs.none_data.desc"),      package: null },
+      ],
+    },
+    {
+      category: t("reactSetup.categories.router"),
+      key: "router" as const,
+      options: [
+        { value: "react-router-v6", label: "React Router",   desc: t("reactSetup.libs.react_router.desc"),   package: "react-router-dom" },
+        { value: "tanstack-router", label: "TanStack Router", desc: t("reactSetup.libs.tanstack_router.desc"), package: "@tanstack/react-router" },
+        { value: "none",            label: "None",            desc: t("reactSetup.libs.none_router.desc"),    package: null },
+      ],
+    },
+    {
+      category: t("reactSetup.categories.ui_lib"),
+      key: "ui_lib" as const,
+      options: [
+        { value: "shadcn", label: "shadcn/ui",   desc: t("reactSetup.libs.shadcn.desc"), package: "lucide-react" },
+        { value: "mui",    label: "Material UI", desc: t("reactSetup.libs.mui.desc"),    package: "@mui/material" },
+        { value: "antd",   label: "Ant Design",  desc: t("reactSetup.libs.antd.desc"),   package: "antd" },
+        { value: "none",   label: "None",        desc: t("reactSetup.libs.none_ui.desc"), package: null },
+      ],
+    },
+  ];
+
+  const SUB_STEPS = [
+    { label: t("reactSetup.librariesSection") },
+    { label: t("reactSetup.pagesSection") },
+  ];
 
   // Compute active model or default to first filtered model
   const activeModel = useMemo(() => {
@@ -145,8 +147,8 @@ export function ReactStep() {
       {/* Title */}
       <div style={{ flexShrink: 0, marginBottom: 16 }}>
         <span className="si-section-label">Frontend Setup</span>
-        <h2 className="si-title" style={{ marginBottom: 4 }}>React SPA Setup</h2>
-        <p className="si-subtitle">Fine-tune library architectures and model views for your client application.</p>
+        <h2 className="si-title" style={{ marginBottom: 4 }}>{t("reactSetup.title")}</h2>
+        <p className="si-subtitle">{t("reactSetup.subtitle")}</p>
       </div>
 
       <div style={{ flexShrink: 0, marginBottom: 20 }}>
@@ -156,7 +158,7 @@ export function ReactStep() {
       {/* Sub-step 0 — Tactile Library Matrix & Terminal Preview */}
       {currentSubStep === 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: 32, flex: 1, minHeight: 0, overflow: "hidden" }}>
-          
+
           {/* Left panel: Tactical matrices */}
           <div style={{ overflowY: "auto", paddingRight: 8 }} className="space-y-6">
             {LIBRARIES_MATRIX.map((track) => {
@@ -212,8 +214,8 @@ export function ReactStep() {
 
           {/* Right panel: Terminal dependencies viewer */}
           <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-            <span className="si-section-label" style={{ display: "block", marginBottom: 8 }}>Dependencies Preview</span>
-            <div 
+            <span className="si-section-label" style={{ display: "block", marginBottom: 8 }}>{t("reactSetup.dependenciesPreview")}</span>
+            <div
               className="si-terminal-window flex-1"
               style={{
                 boxShadow: "inset 0 4px 12px rgba(0,0,0,0.60)",
@@ -224,7 +226,7 @@ export function ReactStep() {
             >
               <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 12, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 8, flexShrink: 0 }}>
                 <Terminal size={13} className="text-gold" />
-                <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--text3)", letterSpacing: "0.08em" }}>package.json</span>
+                <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--text3)", letterSpacing: "0.08em" }}>{t("reactSetup.packageJson")}</span>
               </div>
               <div style={{ overflowY: "auto", flex: 1, fontFamily: "var(--font-jetbrains-mono), monospace" }}>
                 <span style={{ color: "#fca5a5" }}>{`{`}</span>
@@ -262,7 +264,7 @@ export function ReactStep() {
       {/* Sub-step 1 — Pages per Model (Scalability Fix) */}
       {currentSubStep === 1 && (
         <div style={{ display: "grid", gridTemplateColumns: "250px 1fr", gap: 24, flex: 1, minHeight: 0, overflow: "hidden" }}>
-          
+
           {/* Column 1: Model Navigator List */}
           <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "var(--bg2)", border: "1px solid var(--border-subtle)", borderRadius: 16, overflow: "hidden" }}>
             {/* Search Box */}
@@ -295,7 +297,7 @@ export function ReactStep() {
               ) : (
                 filteredModels.map((m) => {
                   const isActive = activeModel?.name === m.name;
-                  
+
                   // Compute number of pages enabled
                   const pageCount = PAGE_TYPES.reduce((acc, pt) => {
                     const active = m.pages?.[pt.key] ?? (pt.key === "edit" ? false : true);
@@ -331,11 +333,11 @@ export function ReactStep() {
 
           {/* Column 2: Focused Workspace Pane */}
           <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto", paddingRight: 4 }} className="space-y-6">
-            
+
             {/* Global Master Preset Switcher */}
             <div>
-              <span className="si-section-label" style={{ display: "block", marginBottom: 8 }}>Global Master Presets</span>
-              <div 
+              <span className="si-section-label" style={{ display: "block", marginBottom: 8 }}>{t("reactSetup.globalPresets")}</span>
+              <div
                 style={{
                   background: "var(--bg3)",
                   border: "1px dashed var(--border-medium)",
@@ -350,8 +352,8 @@ export function ReactStep() {
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <Sliders size={16} className="text-gold" />
                   <div>
-                    <span style={{ fontSize: 13, fontWeight: 700, display: "block" }}>Master Page Controls</span>
-                    <span style={{ fontSize: 10, color: "var(--text3)", display: "block", marginTop: 2 }}>Globally toggle page templates for every database model simultaneously.</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, display: "block" }}>{t("reactSetup.masterControls")}</span>
+                    <span style={{ fontSize: 10, color: "var(--text3)", display: "block", marginTop: 2 }}>{t("reactSetup.globalDesc")}</span>
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
@@ -384,7 +386,7 @@ export function ReactStep() {
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                   <FolderOpen size={15} className="text-gold" />
-                  <span className="si-section-label" style={{ marginBottom: 0 }}>Model Overrides: {activeModel.name}</span>
+                  <span className="si-section-label" style={{ marginBottom: 0 }}>{t("reactSetup.modelOverrides", { name: activeModel.name })}</span>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
@@ -407,14 +409,14 @@ export function ReactStep() {
                           <div className="si-toggle-knob" />
                         </div>
                         <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 12 }}>
-                          <div style={{ 
-                            width: 32, 
-                            height: 32, 
-                            borderRadius: 8, 
-                            display: "flex", 
-                            alignItems: "center", 
-                            justifyContent: "center", 
-                            background: isEnabled ? "var(--gold-border)" : "var(--bg4)", 
+                          <div style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 8,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: isEnabled ? "var(--gold-border)" : "var(--bg4)",
                             color: isEnabled ? "var(--gold)" : "var(--text3)",
                             flexShrink: 0
                           }}>
@@ -432,7 +434,7 @@ export function ReactStep() {
               </div>
             ) : (
               <div style={{ padding: 48, border: "1px dashed var(--border-subtle)", borderRadius: 16, textAlign: "center", color: "var(--text3)" }}>
-                No active model override.
+                {t("reactSetup.noOverride")}
               </div>
             )}
 

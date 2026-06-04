@@ -1,0 +1,793 @@
+{
+  "nav": {
+    "guides": "Guides",
+    "freeOpenSource": "Free · Open Source",
+    "systemReady": "SYSTEM READY",
+    "home": "StackInit Home"
+  },
+
+  "auth": {
+    "tagline1": "Configure once.",
+    "taglineGold": "Ship fast.",
+    "taglineDesc": "Sign in to find your projects, schemas and relaunch your generations in one click.",
+    "featureVisual": "Visual data modeling",
+    "featureSql": "Automatic SQL extraction",
+    "featureRelations": "Relations & routes generated",
+    "featureDownload": "Client-side download",
+    "backHome": "Home",
+    "signInTitle": "Welcome back",
+    "signInSubtitle": "Sign in to your StackInit account",
+    "signInWithGithub": "Continue with GitHub",
+    "orByEmail": "or by email",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "••••••••",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "signInButton": "Sign in",
+    "signingIn": "Signing in...",
+    "noAccount": "No account yet?",
+    "createAccountLink": "Create an account",
+    "footerPrivacy": "Privacy",
+    "footerTerms": "Terms",
+    "footerHelp": "Help",
+    "loading": "Loading...",
+    "registerTitle": "Create an account",
+    "registerSubtitle": "Save and reuse your configurations",
+    "orDivider": "or",
+    "passwordRegisterPlaceholder": "8 characters minimum",
+    "registerButton": "Create account",
+    "creating": "Creating...",
+    "checkEmail": "Check your inbox",
+    "checkEmailDesc": "A confirmation link was sent to {email}. Click it to activate your account.",
+    "backToLogin": "Back to login",
+    "alreadyAccount": "Already have an account?",
+    "signInLink": "Sign in",
+    "dashboard": "Dashboard",
+    "signIn": "Sign in"
+  },
+
+  "dashboard": {
+    "backLink": "← StackInit",
+    "logout": "Logout",
+    "title": "My configurations",
+    "configCount": "{count, plural, =0 {No saved configurations} one {# configuration saved} other {# configurations saved}}",
+    "newProject": "+ New project",
+    "emptyTitle": "No saved configuration.",
+    "emptyHint": "Create a project and click \"Save\" in the Output step.",
+    "loadButton": "Load",
+    "unknownStack": "unknown stack",
+    "deleteConfirm": "Delete this configuration?",
+    "signInToSave": "Sign in to save",
+    "saved": "Saved!",
+    "saving": "...",
+    "saveButton": "Save",
+    "saveError": "Error during save",
+    "cancel": "Cancel",
+    "configNamePlaceholder": "Config name"
+  },
+
+  "guides": {
+    "badge": "Guides & Tutorials",
+    "headline1": "Scaffold faster.",
+    "headline2": "Ship sooner.",
+    "description": "Step-by-step guides to generate production-ready codebases with StackInit — from Laravel APIs to full-stack Next.js apps.",
+    "readTime": "{time} read",
+    "readGuide": "Read guide"
+  },
+
+  "landing": {
+    "badge": "Visual Scaffolder · Open Source",
+    "headline1": "Schema In.",
+    "headline2": "Code Out.",
+    "description": "StackInit is the fastest <strong>tech-stack boilerplate generator</strong>. Design your data models visually, pick your stack, and download a fully-wired codebase — no boilerplate, no copy-paste.",
+    "launchWizard": "Launch the wizard",
+    "exploreFeatures": "Explore features",
+    "ctaHeadline": "Stop writing structural boilerplate.",
+    "ctaDesc": "Launch the visual builder to structure your database models and download optimized, framework-compliant scaffolding configurations instantly.",
+    "ctaButton": "Launch Visual Scaffolder",
+    "ctaNote": "No registration required · MIT License",
+    "footerText": "StackInit — Scaffold faster, deploy sooner.",
+    "footerOpenSource": "Open Source",
+    "footerClientSide": "Client-Side Processing",
+    "footerMit": "MIT License",
+    "console": {
+      "tabVisual": "Visual Modeler",
+      "tabAi": "AI Prompt Import",
+      "tabSql": "SQL Extractor",
+      "tabPresets": "Prebuilt Templates"
+    },
+    "pipeline": {
+      "sectionLabel": "Setup Pipeline",
+      "headline": "From architecture plan to deployment.",
+      "step01Title": "Select Framework",
+      "step01Desc": "Select matching front-end & back-end options and choose MVC, Domain or service configurations.",
+      "step02Title": "Visual Modeling",
+      "step02Desc": "Inject entity models, define constraints and draw relationship flows instantly.",
+      "step03Title": "Custom Parameters",
+      "step03Desc": "Toggle API resources, validations, testing stubs, and Docker virtualization setups.",
+      "step04Title": "Generate Codebase",
+      "step04Desc": "Process and bundle your complete code library client-side inside a single ZIP file.",
+      "stepPrefix": "STEP"
+    },
+    "stacks": {
+      "sectionLabel": "Framework Engine Capabilities",
+      "headline": "Your stack, your standards.",
+      "description": "Generate complete, standard-compliant boilerplate architectures containing your specific schemas and files. Inspect their output live."
+    }
+  },
+
+  "wizard": {
+    "shell": {
+      "openNav": "Open navigation",
+      "stepLabel": "Step {current}",
+      "back": "← Back",
+      "continue": "Continue →",
+      "stepOf": "{current}/{total}",
+      "quickStart": "Quick start:",
+      "quickStartBlog": "Simple Blog",
+      "quickStartApi": "REST API",
+      "quickStartSaas": "SaaS Starter"
+    },
+    "sidebar": {
+      "projectName": "Project Name",
+      "unnamedProject": "unnamed-project",
+      "filesEstimate": "~{count} files will be generated"
+    },
+    "stepDescriptions": {
+      "stack": "Choose your tech stack",
+      "usage": "Select how you will use Next.js",
+      "architecture": "Define your project architecture",
+      "database": "Configure your database & ORM",
+      "services": "Select service modules to generate",
+      "models": "Define your data structure",
+      "relations": "Connect your models",
+      "laravel-setup": "Configure your backend",
+      "nest-setup": "Configure your NestJS backend",
+      "fastapi-setup": "Configure FastAPI backend",
+      "react-setup": "Configure your frontend",
+      "integration": "Connect Frontend & Backend",
+      "output": "Generate and download",
+      "routes": "Define your API routes",
+      "middlewares": "Select your middlewares"
+    },
+    "stepLabels": {
+      "stack": "Stack & Project",
+      "usage": "Next.js Usage",
+      "architecture": "Architecture",
+      "database": "Database",
+      "services": "Services",
+      "models": "Models & Fields",
+      "relations": "Relations",
+      "routes": "Routes",
+      "middlewares": "Middlewares",
+      "laravel-setup": "Laravel Setup",
+      "nest-setup": "NestJS Setup",
+      "fastapi-setup": "FastAPI Setup",
+      "react-setup": "React Setup",
+      "integration": "Integration",
+      "output": "Output"
+    },
+    "import": {
+      "title": "Quick Import",
+      "subtitle": "Import models from existing schemas or using AI.",
+      "tabNl": "Natural Language (AI)",
+      "tabNlDesc": "\"Build a marketplace with products, orders and reviews...\"",
+      "tabSql": "SQL DDL",
+      "tabSqlDesc": "Paste or upload a SQL file. Extracts all tables, columns, types and foreign key relations.",
+      "tabGithub": "GitHub Repo",
+      "tabGithubDesc": "Import models from an existing GitHub repository by scanning migrations & model files",
+      "tabYaml": "YAML / JSON Config",
+      "tabYamlDesc": "Upload a stack-init.yaml or exported preset JSON to resume editing a saved configuration.",
+      "cancel": "Cancel",
+      "importButton": "Import Now",
+      "processing": "Processing...",
+      "scanning": "Scanning…",
+      "scanButton": "Scan Repository",
+      "repoUrlLabel": "Repository URL",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all",
+      "modelsImported": "{count} model(s) imported",
+      "describeModels": "Describe your models",
+      "sqlLabel": "SQL DDL",
+      "yamlLabel": "YAML / JSON Config",
+      "backToOptions": "Back to options",
+      "aiAnalysis": "✨ AI-powered analysis:",
+      "searchModels": "Search models...",
+      "noModelsFound": "No models found.",
+      "goToModels": "Go to Models →",
+      "reviewModels": "Fields and relations have been extracted. Review them in the Models step.",
+      "noCreateTable": "No CREATE TABLE statements found. Make sure you pasted valid SQL DDL."
+    },
+    "assistant": {
+      "label": "Ask AI",
+      "contextAware": "— context-aware recommendations",
+      "signIn": "Sign in",
+      "thinking": "Thinking…",
+      "ask": "Ask",
+      "defaultPlaceholder": "Ask a question about this step…",
+      "modelsToAdd": "Models to add",
+      "servicesToEnable": "Services to enable",
+      "applied": "✓ Applied to your configuration",
+      "applySuggestions": "Apply suggestions"
+    }
+  },
+
+  "steps": {
+    "stack": {
+      "sectionLabel": "Setup",
+      "title": "Project setup",
+      "subtitle": "Choose your tech stack and name your project to get started.",
+      "projectNameLabel": "Project name",
+      "projectNamePlaceholder": "my-awesome-project",
+      "quickStart": "Quick Start",
+      "quickStartDesc": "Load a pre-built schema to get started faster.",
+      "myPresets": "My Presets",
+      "importJson": "Import .json",
+      "noPresets": "No saved presets yet — complete a config and save it from the last step.",
+      "aiTitle": "Let AI build your stack",
+      "aiSubtitle": "— describe your project, AI picks stack + models + services",
+      "aiBuildButton": "Build",
+      "aiThinking": "Thinking…",
+      "aiSuccess": "✓ Stack configured — stack, models and services pre-filled.",
+      "orBuildFromScratch": "Or build from scratch",
+      "singleStack": "Single Stack",
+      "comboStacks": "Combo Stacks",
+      "noteText": "React, Next.js & FastAPI → ZIP download. Laravel → {code} + CLI command.",
+      "applied": "Applied ✓",
+      "load": "Load",
+      "export": "↓",
+      "exportTitle": "Export .json",
+      "deletePreset": "Delete preset",
+      "presetNameLabel": "Preset Name",
+      "noteLabel": "Note"
+    },
+    "database": {
+      "title": "Database & ORM",
+      "subtitle": "Configure how your application interacts with data.",
+      "recommendationLabel": "Recommendation",
+      "recommendationJs": "Prisma + PostgreSQL for the best developer experience and type safety.",
+      "recommendationPy": "SQLModel + PostgreSQL for the best FastAPI developer experience with full type safety.",
+      "ormSection": "Object-Relational Mapping",
+      "engineSection": "Database Engine",
+      "aiPlaceholder": "Which ORM should I use? E.g. \"I need full type safety and want to avoid raw SQL\"",
+      "orm": {
+        "prisma":      { "desc": "Type-safe ORM with automated migrations." },
+        "drizzle":     { "desc": "Lightweight SQL-first ORM with great performance." },
+        "sequelize":   { "desc": "Mature ORM supporting multiple dialects." },
+        "typeorm":     { "desc": "Decorator-based ORM inspired by Hibernate." },
+        "mongoose":    { "desc": "Elegant MongoDB object modeling." },
+        "sqlmodel":    { "desc": "FastAPI-native ORM built on SQLAlchemy + Pydantic." },
+        "sqlalchemy":  { "desc": "The Python SQL toolkit and full-featured ORM." },
+        "tortoise_orm": { "desc": "Easy async ORM inspired by the Django ORM." },
+        "beanie":      { "desc": "Async MongoDB ODM built on Motor and Pydantic." }
+      }
+    },
+    "models": {
+      "title": "Models & Fields",
+      "subtitle": "Define your data models and their fields.",
+      "viewList": "List",
+      "viewGrid": "Grid",
+      "viewCanvas": "Canvas",
+      "schemaLabel": "Schema",
+      "modelsLabel": "Models",
+      "newModelLabel": "New model",
+      "quickAddLabel": "Quick Add",
+      "addModelPlaceholder": "e.g. UserProfile, BlogPost",
+      "mustStartUppercase": "Must start with uppercase letter",
+      "pascalCaseHint": "PascalCase, singular",
+      "addModelButton": "+ New model",
+      "modulesButton": "Modules",
+      "importButton": "Import",
+      "noModels": "No models yet. Add your first model above.",
+      "fieldName": "Field Name",
+      "fieldType": "Type",
+      "nullable": "Nullable",
+      "unique": "Unique",
+      "addFieldButton": "Add Field",
+      "saveChanges": "Save Changes",
+      "cancelEdit": "Cancel edit",
+      "clearButton": "Clear",
+      "canvasHint": "Double-click or + Model to create · Drag to relate",
+      "selectModelHint": "Select a model to edit",
+      "noFields": "No fields yet",
+      "aiPlaceholder": "Add a subscription system with plans and invoices",
+      "createModel": "Create a model",
+      "createModelDesc": "Give your model a PascalCase name. Fields can be added after.",
+      "modelNameLabel": "Model name",
+      "modelNamePlaceholder": "e.g. UserProfile, BlogPost, OrderItem",
+      "alreadyExists": "A model with this name already exists",
+      "pascalExample": "PascalCase, singular — e.g.",
+      "suggestions": "Suggestions",
+      "createModelButton": "Create model",
+      "cancel": "Cancel",
+      "extraFields": "+{count} more",
+      "fieldCount": "{count} fields",
+      "relCount": "{count} rel",
+      "fieldsSection": "Fields ({count})",
+      "index": "Index",
+      "settingsSection": "Settings",
+      "primaryKey": "Primary key",
+      "tableName": "Table name",
+      "timestamps": "⏱ Timestamps",
+      "softDeletes": "🗑 Soft Deletes",
+      "startAddFirst": "Start by adding your first model"
+    },
+    "routes": {
+      "title": "API Routes & Controllers",
+      "subtitle": "Control which components are generated for each model.",
+      "modelColumn": "Model",
+      "controller": "Controller",
+      "routes": "Routes",
+      "service": "Service",
+      "repository": "Repository",
+      "tests": "Tests",
+      "tipLabel": "Tip:",
+      "tip": "If you disable 'Routes', the model will still exist in the database (if 'Schema' is enabled in Models step), but no API endpoints will be created for it.",
+      "tooltipController": "Generates a CRUD controller with HTTP handler methods (index, show, store, update, destroy).",
+      "tooltipRoutes": "Registers RESTful API routes for this model in the router (GET, POST, PUT/PATCH, DELETE).",
+      "tooltipService": "Generates a Service class with business logic, separating it from the controller layer.",
+      "tooltipRepository": "Generates a Repository class abstracting data access — useful for testing and swapping ORMs.",
+      "tooltipTests": "Generates unit/feature test files with example test cases for CRUD operations."
+    },
+    "output": {
+      "title": "Review & Generate",
+      "subtitle": "Review your project structure before we scaffold the codebase.",
+      "finalStepLabel": "Final Step",
+      "generateButton": "Generate {name}",
+      "generating": "Generating your project...",
+      "projectGenerated": "Project Generated!",
+      "projectReadyDesc": "Your project is ready. Check the files below.",
+      "filesCount": "{count} files",
+      "shareConfig": "Share config link",
+      "linkCopied": "Link copied!",
+      "copyYaml": "Copy YAML",
+      "yamlCopied": "YAML copied!",
+      "saveAsPreset": "Save as Preset",
+      "presetSaved": "Preset saved!",
+      "modifyConfig": "Modify Config",
+      "startNew": "Start New Project",
+      "savePresetTitle": "Save as Preset",
+      "savePresetDesc": "Save your current configuration to reuse in future projects.",
+      "presetNameLabel": "Preset Name",
+      "iconLabel": "Icon",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "Short description...",
+      "savePresetButton": "Save Preset",
+      "envTab": ".env.example",
+      "dockerTab": "docker-compose.yml",
+      "yamlTab": "stack-init.yaml",
+      "previewFiles": "Preview Generated Files",
+      "projectSummary": "Project Summary",
+      "projectNameLabel": "Project Name",
+      "stackLabel": "Stack",
+      "databaseLabel": "Database",
+      "ormLabel": "ORM / Driver",
+      "modelsLabel": "Models & Schema ({count})",
+      "technicalLabel": "Technical Options",
+      "securityNote": "By clicking generate, a ZIP or YAML file will be prepared for you.",
+      "fieldsCount": "{count} fields",
+      "relCount": "{count} rel",
+      "noModels": "No models defined yet.",
+      "cliTitle": "CLI Instructions",
+      "cliStep1": "# 1. Run generation in your project",
+      "cliStep2": "# 2. Setup database & start",
+      "generatedFiles": "Generated Files",
+      "copyButton": "Copy",
+      "copiedButton": "Copied!",
+      "cancelButton": "Cancel",
+      "noEnvVars": "# No environment variables for this stack",
+      "laravelConfigLabel": "Laravel Config",
+      "fastapiConfigLabel": "FastAPI Config",
+      "middlewaresLabel": "Middlewares",
+      "frontendStackLabel": "Frontend Stack"
+    },
+    "middlewares": {
+      "title": "HTTP Middlewares",
+      "subtitle": "Choose which middleware to include in your Express pipeline.",
+      "infoTitle": "Standard Stack",
+      "infoDesc": "Middlewares will be automatically configured in your app.ts or server.ts using industry best practices.",
+      "options": {
+        "cors": {
+          "desc": "Cross-Origin Resource Sharing enablement."
+        },
+        "morgan": {
+          "desc": "HTTP request logger middleware for node.js."
+        },
+        "helmet": {
+          "desc": "Help secure Express apps by setting various HTTP headers."
+        },
+        "rate-limit": {
+          "desc": "Basic rate-limiting middleware for Express."
+        },
+        "cookie-parser": {
+          "desc": "Parse Cookie header and populate req.cookies."
+        },
+        "compression": {
+          "desc": "Node.js compression middleware (Gzip)."
+        },
+        "hpp": {
+          "desc": "HTTP Parameter Pollution protection."
+        },
+        "xss-clean": {
+          "desc": "Sanitize user input coming from POST body, GET queries, and url params."
+        },
+        "error-handler": {
+          "desc": "Centralized error handling for all routes."
+        }
+      }
+    },
+    "usage": {
+      "title": "How will you use Next.js?",
+      "subtitle": "Choose the architecture that best fits your needs.",
+      "nextStep": "Next step",
+      "nextStepArchitecture": "Architecture Setup",
+      "nextStepDatabase": "Database Configuration",
+      "options": {
+        "frontend-only": {
+          "title": "Frontend Only",
+          "desc": "Next.js as a React renderer. Your API comes from elsewhere (Laravel, Express, etc.).",
+          "benefit": "Generates a specialized Frontend ZIP."
+        },
+        "full-stack": {
+          "title": "Full-Stack",
+          "desc": "API Routes or Server Actions with direct database access. Everything in one project.",
+          "benefit": "Generates a full project ZIP with Prisma/ORM."
+        }
+      }
+    },
+    "architecture": {
+      "title": "Project Architecture",
+      "subtitle": "Select the organizational pattern for your source code.",
+      "options": {
+        "feature-first": {
+          "title": "Feature-First"
+        },
+        "ddd": {
+          "title": "Domain-Driven"
+        },
+        "mvc": {
+          "title": "MVC Pattern"
+        },
+        "layered": {
+          "title": "Layered (N-Tier)"
+        },
+        "minimal": {
+          "title": "Minimal"
+        }
+      }
+    },
+    "services": {
+      "title": "Services & Integrations",
+      "subtitle": "Select additional service modules to generate.",
+      "readyMadeDesc": "Select ready-made service modules to generate beyond your data models. Each service produces fully working code, not just stubs.",
+      "generatesLabel": "Generates",
+      "laravelNote": "is configured in the Laravel Setup step — choose between Sanctum, Passport, Breeze or Jetstream there.",
+      "authEnabledTitle": "Authentication enabled.",
+      "authEnabledDesc": "The auth service will be generated for your stack (JWT login, register, protected routes).",
+      "authModelsAdded": "The User, Session and PasswordReset models have been added automatically.",
+      "noServices": "No services selected — you can always add them later via the CLI.",
+      "laravelSection": "Laravel Packages",
+      "laravelDesc": "Ready-made integrations — each generates working boilerplate + install instructions.",
+      "noLaravel": "No Laravel packages selected — you can add them at any time.",
+      "aiPlaceholder": "Which services do I need? E.g. \"I want to send emails on user signup\"",
+      "options": {
+        "auth": {
+          "title": "Authentication",
+          "desc": "JWT-based login, register, logout and protected routes.",
+          "generates": "auth.service · auth.controller · auth.routes · jwt.middleware · .env JWT_SECRET"
+        },
+        "file-upload": {
+          "title": "File Upload",
+          "desc": "Multer or S3 integration for file uploads with validation.",
+          "generates": "upload.service · upload.routes · storage.config",
+          "descLaravel": "Storage facade with local/S3 disk support and file validation.",
+          "generatesLaravel": "UploadController.php · routes/upload · .env FILESYSTEM_DISK"
+        },
+        "email": {
+          "title": "Email",
+          "desc": "Nodemailer / Sendgrid setup with templated transactional emails.",
+          "generates": "mail.service · mail.templates/ · .env SMTP_*",
+          "descLaravel": "Laravel Mailable class with Blade template and SMTP/Mailgun config.",
+          "generatesLaravel": "app/Mail/WelcomeMail.php · emails/welcome.blade.php · .env MAIL_*"
+        },
+        "cache": {
+          "title": "Cache (Redis)",
+          "desc": "Redis client setup with cache helpers for common patterns.",
+          "generates": "cache.service · redis.config · .env REDIS_URL",
+          "descLaravel": "Cache facade helpers with Redis driver and example controller.",
+          "generatesLaravel": "CacheExampleController.php · .env REDIS_HOST · .env CACHE_DRIVER"
+        },
+        "websockets": {
+          "title": "WebSockets",
+          "desc": "Socket.io or native WS server with event-based architecture.",
+          "generates": "gateway · ws.server · events/",
+          "descLaravel": "Laravel Broadcasting with Reverb/Pusher and Laravel Echo client.",
+          "generatesLaravel": "config/broadcasting.php · resources/js/echo.js · .env BROADCAST_*"
+        },
+        "queue": {
+          "title": "Queue / Workers",
+          "desc": "Bull (Node) or Celery (Python) queue setup with worker boilerplate.",
+          "generates": "queue.service · workers/ · .env REDIS_URL",
+          "descLaravel": "Laravel Jobs with retry logic and configurable queue connection.",
+          "generatesLaravel": "app/Jobs/ExampleJob.php · .env QUEUE_CONNECTION · .env REDIS_URL"
+        }
+      },
+      "laravel": {
+        "notifications": {
+          "title": "Notifications",
+          "desc": "Multi-channel notifications (database, mail, broadcast, SMS) with ShouldQueue support.",
+          "generates": "app/Notifications/WelcomeNotification.php · toMail / toDatabase / toArray"
+        },
+        "socialite": {
+          "title": "OAuth / Socialite",
+          "desc": "Social login via Google, GitHub, Facebook. Redirect + callback controller auto-generated.",
+          "generates": "Auth/SocialiteController.php · routes/socialite · .env GOOGLE_CLIENT_ID"
+        },
+        "spatie-permissions": {
+          "title": "Roles & Permissions",
+          "desc": "Full RBAC with spatie/laravel-permission — roles, permissions, HasRole middleware.",
+          "generates": "RolesPermissionsSeeder.php · Middleware/CheckPermission.php · config/permission.php"
+        },
+        "spatie-media": {
+          "title": "Media Library",
+          "desc": "Upload + variants (thumbnails, conversions) via spatie/laravel-medialibrary.",
+          "generates": "MediaController.php · routes/media · config/media-library.php"
+        },
+        "spatie-activity": {
+          "title": "Activity Log",
+          "desc": "Automatic audit trail of all model changes via spatie/laravel-activitylog.",
+          "generates": "ActivityController.php · config/activitylog.php · LogsActivity trait"
+        },
+        "horizon": {
+          "title": "Laravel Horizon",
+          "desc": "Monitoring dashboard and Redis queue supervision (requires use_redis).",
+          "generates": "config/horizon.php · route /horizon · HorizonGate auth"
+        },
+        "two-factor-auth": {
+          "title": "Two-Factor Auth",
+          "desc": "TOTP-based 2FA compatible with Google Authenticator — enable, confirm, recovery codes.",
+          "generates": "Auth/TwoFactorController.php · add_2fa_to_users migration · EnsureTwoFactorEnabled"
+        }
+      }
+    },
+    "relations": {
+      "title": "Model Relations",
+      "subtitle": "Define how your models relate to each other.",
+      "sectionLabel": "Relationships",
+      "createModelsFirst": "Create models first",
+      "goBack": "Go back and define your models to set up relations",
+      "canvasHint": "Click a node to manage its relations · Drag between nodes to add · Delete edges with ✕",
+      "selectModel": "Select a model",
+      "clickNode": "Click any node in the diagram to view and edit its relations",
+      "noRelations": "No relations yet.",
+      "addRelation": "Add relationship",
+      "autoDetection": "Auto-detection",
+      "autoDesc": "Fields of type foreignId automatically generate relations."
+    },
+    "integration": {
+      "title": "Integration & Orchestration",
+      "subtitle": "Configure how your backend and frontend will work together.",
+      "apiUrlLabel": "Backend API URL",
+      "apiUrlHint": "This URL will be injected into your frontend environment variables.",
+      "resetTitle": "Reset to default",
+      "resetButton": "Reset",
+      "envVarNote": "→ Stored in NEXT_PUBLIC_API_URL",
+      "structureLabel": "Project Structure",
+      "monorepoTitle": "Monorepo (Recommended)",
+      "monorepoDesc": "Both projects in a single archive:",
+      "corsTitle": "CORS Configured",
+      "corsDesc": "We will automatically enable CORS in your backend to allow requests from your frontend development server."
+    },
+
+    "fastapiSetup": {
+      "title": "FastAPI Configuration",
+      "subtitle": "Fine-tune your high-performance Python ASGI backend settings.",
+      "coreSection": "Core Layout & Tooling",
+      "middlewaresSection": "Middlewares & Features",
+      "productionReady": "Production-Ready Python Boilerplate",
+      "substep": {
+        "core": "Core Layout & Tooling",
+        "middlewares": "Middlewares & Features"
+      },
+      "version": {
+        "3_12": { "desc": "Latest version" },
+        "3_11": { "desc": "Recommended stable" },
+        "3_10": { "desc": "Legacy LTS support" }
+      },
+      "orm": {
+        "sqlmodel":     { "desc": "Pydantic v2 + SQLAlchemy" },
+        "sqlalchemy":   { "desc": "Raw ORM + Alembic" },
+        "tortoise_orm": { "desc": "Django-style async ORM" },
+        "beanie":       { "desc": "Async MongoDB ODM via Motor" }
+      },
+      "auth": {
+        "none":    { "desc": "Public access only" },
+        "jwt":     { "desc": "Jose + PyJWT tokens" },
+        "oauth2":  { "desc": "Password flow" },
+        "api_key": { "desc": "X-API-Key token check" }
+      },
+      "arch": {
+        "flat":         { "desc": "Simple one-file API" },
+        "layered":      { "desc": "Controllers, services, models" },
+        "feature_based":{ "desc": "Grouped by business area" },
+        "domain":       { "desc": "Highly modular context boundaries" }
+      },
+      "runner": {
+        "makefile": { "desc": "Command shortcuts" },
+        "bash":     { "desc": "Utility bash files" },
+        "none":     { "desc": "No default runner" }
+      },
+      "features": {
+        "migrations":        { "desc": "Generate alembic.ini + env.py for DB migrations." },
+        "async_mode":        { "desc": "Use async/await for handlers and DB sessions." },
+        "cors":              { "desc": "Enable Cross-Origin Resource Sharing." },
+        "swagger":           { "desc": "Auto-generate API docs at /docs." },
+        "rate_limiting":     { "desc": "SlowAPI rate limiter on all endpoints." },
+        "background_tasks":  { "desc": "Generate tasks.py with example BackgroundTasks." },
+        "websockets":        { "desc": "Add a WebSocket connection manager endpoint." }
+      }
+    },
+
+    "reactSetup": {
+      "title": "React SPA Setup",
+      "subtitle": "Fine-tune library architectures and model views for your client application.",
+      "librariesSection": "Libraries Console",
+      "pagesSection": "Pages Explorer",
+      "dependenciesPreview": "Dependencies Preview",
+      "packageJson": "package.json",
+      "globalPresets": "Global Master Presets",
+      "masterControls": "Master Page Controls",
+      "globalDesc": "Globally toggle page templates for every database model simultaneously.",
+      "modelOverrides": "Model Overrides: {name}",
+      "noOverride": "No active model override.",
+      "categories": {
+        "state_lib":    "State Management",
+        "form_lib":     "Form & Validation",
+        "http_lib":     "HTTP Fetch Client",
+        "data_fetching":"Data Fetching",
+        "router":       "Router",
+        "ui_lib":       "UI Component Library"
+      },
+      "libs": {
+        "zustand":         { "desc": "Stores" },
+        "redux_toolkit":   { "desc": "Global" },
+        "jotai":           { "desc": "Atomic" },
+        "none_state":      { "desc": "React" },
+        "react_hook_form": { "desc": "Performant" },
+        "formik":          { "desc": "Classic" },
+        "zod":             { "desc": "Schema" },
+        "none_form":       { "desc": "Native" },
+        "axios":           { "desc": "Promises" },
+        "ky":              { "desc": "Hooks" },
+        "fetch":           { "desc": "Browser" },
+        "tanstack_query":  { "desc": "Caching" },
+        "swr":             { "desc": "Hooks" },
+        "none_data":       { "desc": "Vanilla" },
+        "react_router":    { "desc": "v7 / file-based" },
+        "tanstack_router": { "desc": "Type-safe" },
+        "none_router":     { "desc": "SPA no routing" },
+        "shadcn":          { "desc": "Tailwind" },
+        "mui":             { "desc": "Google" },
+        "antd":            { "desc": "AntD" },
+        "none_ui":         { "desc": "Custom" }
+      },
+      "pages": {
+        "list":   { "title": "List page",   "desc": "Data table index view" },
+        "detail": { "title": "Detail page", "desc": "Individual resource show" },
+        "create": { "title": "Create page", "desc": "Interactive create form" },
+        "edit":   { "title": "Edit page",   "desc": "Update resource form" }
+      }
+    },
+
+    "laravelSetup": {
+      "title": "Laravel Setup",
+      "subtitle": "Configure your PHP framework settings and code generation options.",
+      "patternSection": "Application Pattern",
+      "authSection": "Authentication Package",
+      "phpVersionSection": "PHP Version",
+      "laravelVersionSection": "Laravel Version",
+      "engineSection": "Database Engine",
+      "codeOptions": "PHP Code Options",
+      "globalDefaults": "Global Generation Defaults",
+      "modelOverrides": "Specific Model Overrides",
+      "strictTypes": "Strict Types",
+      "readonly": "Readonly Properties (PHP 8.1+)",
+      "redis": "Redis / Queue Worker",
+      "goldActive": "Gold Active",
+      "amberPartial": "Amber Partial",
+      "noModels": "No models to configure",
+      "goBackModels": "Go back and define your models first",
+      "noModelSelected": "No model override selected",
+      "selectModelHint": "Select one of the model buttons to configure its generated files",
+      "subStep": {
+        "frameworkSetup": "Framework Setup",
+        "globalDefaults": "Global Generation Defaults",
+        "modelOverrides": "Specific Model Overrides"
+      },
+      "pattern": {
+        "api-only": { "desc": "REST API endpoints only — no Blade views. Ideal for decoupled frontends (React, Next.js…)." },
+        "full":     { "desc": "API JSON + Blade views (index/create/edit/show) + web routes. Traditional server-rendered apps." },
+        "minimal":  { "desc": "Closure routes in api.php — no controller classes. Direct model access, zero boilerplate." }
+      },
+      "auth": {
+        "sanctum":   { "desc": "Session + API token auth — recommended for SPAs" },
+        "none":      { "desc": "No authentication scaffolding" },
+        "breeze":    { "desc": "Minimal Blade/Inertia auth starter kit" },
+        "jetstream": { "desc": "Teams + full auth UI (Livewire/Inertia)" },
+        "passport":  { "desc": "Full OAuth2 server for complex auth flows" }
+      },
+      "gen": {
+        "migration":  "Database table definition",
+        "controller": "HTTP request handler",
+        "resource":   "API JSON resource transformation",
+        "request":    "Form request validation rules",
+        "seeder":     "Seed database with test data",
+        "factory":    "Generate fake model instances",
+        "policy":     "Authorization rules",
+        "service":    "Business logic layer",
+        "repository": "Data access abstraction",
+        "tests":      "Feature and unit tests",
+        "routes":     "API / web route registration",
+        "swagger":    "L5-Swagger OpenAPI documentation",
+        "softDelete": "Use SoftDeletes trait",
+        "observer":   "ModelObserver (created/updated/deleted hooks)",
+        "events":     "Queue events on model changes",
+        "actions":    "Create/Update/Delete action objects",
+        "collection": "Collection class with pagination meta"
+      },
+      "strictTypesDesc": "Add declare(strict_types=1) to all generated PHP files",
+      "readonlyDesc": "Add readonly modifier to constructor-promoted properties in Service/Repository",
+      "redisDesc": "Add Redis service and queue:work container to docker-compose.yml",
+      "goldActiveInfo": "represents full coverage (activated on all models).",
+      "amberPartialInfo": "means it is enabled on some models and disabled on others. Click any option card to globally toggle for all models."
+    },
+
+    "nestSetup": {
+      "title": "NestJS Setup",
+      "subtitle": "Fine-tune your modular backend architecture and features.",
+      "architectureSection": "Architecture Layout",
+      "ormSection": "Database & ORM",
+      "modulesSection": "Modules & Security",
+      "selectLayout": "Select Layout",
+      "structurePreview": "Structure Preview",
+      "generatedTree": "Generated Directory Tree",
+      "ormDriver": "ORM / Database Driver",
+      "engineSection": "Database Engine",
+      "mongoWarning": "MongoDB is required when using Mongoose. Other engines are not compatible.",
+      "integrations": "Available Integrations",
+      "swagger": "Swagger Documentation",
+      "validation": "Global Validation",
+      "jwt": "JWT Authentication",
+      "tsFirst": "TypeScript Architecture First",
+      "subStep": {
+        "architectureLayout": "Architecture Layout",
+        "databaseOrm": "Database & ORM",
+        "modulesAndSecurity": "Modules & Security"
+      },
+      "arch": {
+        "layered": { "desc": "Standard controllers/services/repositories architecture." },
+        "modular": { "desc": "Highly encapsulated modules for large applications." },
+        "cqrs":    { "desc": "Separation of Read and Write concerns for complex logic." }
+      },
+      "orm": {
+        "typeorm":  { "desc": "Decorator-based ORM, native NestJS integration." },
+        "prisma":   { "desc": "Type-safe schema-first ORM with full auto-completion." },
+        "mongoose": { "desc": "MongoDB ODM — requires MongoDB engine." },
+        "drizzle":  { "desc": "Lightweight TypeScript-first SQL query builder." }
+      },
+      "mongooseOnly": "Mongoose only",
+      "swaggerDesc": "Auto-generate OpenAPI spec at /api/docs",
+      "validationDesc": "Enforce class-validator and ValidationPipe",
+      "jwtDesc": "Add Passport JWT Guard, Strategy and AuthModule",
+      "tsFirstDesc": "All generated modules, controllers, and providers will follow NestJS architectural patterns with strict dependency injection, DTO generation, and {orm} bindings."
+    }
+  },
+
+  "language": {
+    "switchTo": "Switch language",
+    "en": "English",
+    "fr": "Français"
+  }
+}

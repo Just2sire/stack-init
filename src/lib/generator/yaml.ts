@@ -143,115 +143,113 @@ Scaffold faster, ship sooner with [Stack-Init](https://stackinit.dev)
   }
   lines.push('');
 
-  // Installation
-  lines.push('## Installation');
-  lines.push('');
-  lines.push('### Option A — script (recommended)');
-  lines.push('');
-  lines.push('```bash');
-  lines.push('bash setup.sh        # Linux / macOS / WSL');
-  lines.push('.\\setup.ps1         # Windows PowerShell');
-  lines.push('setup.bat            # Windows CMD');
-  lines.push('```');
-  lines.push('');
-  lines.push('### Option B — step by step');
-  lines.push('');
-
-  if (stack.includes('laravel')) {
-    lines.push('```bash');
-    lines.push('composer install --no-interaction');
-    lines.push('cp .env.example .env');
-    lines.push('# Edit .env: DB_DATABASE, DB_USERNAME, DB_PASSWORD, APP_URL');
-    lines.push('php artisan key:generate');
-    lines.push('php artisan migrate --force');
-    lines.push('php artisan db:seed');
-    lines.push('```');
-    lines.push('');
-  }
-  if (stack.includes('fastapi')) {
-    const dir = mixed ? 'backend/' : '';
-    lines.push('```bash');
-    if (dir) lines.push(`cd ${dir}`);
-    lines.push('pip install -r requirements.txt');
-    lines.push('# Copy .env.example → .env and set DATABASE_URL');
-    if (dir) lines.push('cd ..');
-    lines.push('```');
-    lines.push('');
-  }
-  if (stack.includes('express') || stack.includes('nestjs')) {
-    const dir = mixed ? 'backend/' : '';
-    lines.push('```bash');
-    if (dir) lines.push(`cd ${dir}`);
-    lines.push('npm install');
-    lines.push('# Copy .env.example → .env and set DATABASE_URL / PORT');
-    if (dir) lines.push('cd ..');
-    lines.push('```');
-    lines.push('');
-  }
-  if (mixed && (stack.includes('react') || stack.includes('nextjs'))) {
-    lines.push('```bash');
-    lines.push('cd frontend');
-    lines.push('npm install');
-    lines.push('# Copy .env.example → .env.local and set NEXT_PUBLIC_API_URL if needed');
-    lines.push('cd ..');
-    lines.push('```');
-    lines.push('');
-  }
-  if (!mixed && (stack === 'nextjs' || stack === 'react')) {
-    lines.push('```bash');
-    lines.push('npm install');
-    lines.push('# Copy .env.example → .env.local');
-    lines.push('```');
-    lines.push('');
-  }
-
-  // Run
-  lines.push('## Run the project');
-  lines.push('');
   if (mixed) {
+    // ── Mixed stack: dev.sh covers install + start ─────────────────────────
+    lines.push('## Quick start');
+    lines.push('');
+    lines.push('The included `dev.sh` / `dev.bat` script handles **everything**:');
+    lines.push('it installs dependencies on first run, then starts backend and frontend in parallel.');
+    lines.push('');
     lines.push('```bash');
-    lines.push('bash dev.sh        # Linux / macOS / WSL — starts backend + frontend');
-    lines.push('.\\dev.ps1         # Windows PowerShell');
+    lines.push('bash dev.sh        # Linux / macOS / WSL');
+    lines.push('dev.bat            # Windows CMD');
     lines.push('```');
     lines.push('');
-    lines.push('Or manually:');
+    lines.push('> `dev.sh` checks whether dependencies are installed and runs the install step automatically if needed.');
+    lines.push('> You only need to configure your `.env` files before the first run (see **Key environment variables** below).');
+    lines.push('');
+    lines.push('### Or manually');
+    lines.push('');
+    lines.push('#### Install dependencies');
+    lines.push('');
+    lines.push('```bash');
+    if (stack.includes('fastapi')) {
+      lines.push('cd backend && pip install -r requirements.txt && cd ..');
+    } else if (stack.includes('laravel')) {
+      lines.push('composer install --no-interaction');
+    } else {
+      lines.push('cd backend && npm install && cd ..');
+    }
+    lines.push('cd frontend && npm install && cd ..');
+    lines.push('```');
+    lines.push('');
+    lines.push('#### Run the project');
     lines.push('');
     lines.push('```bash');
     if (stack.includes('laravel')) {
-      lines.push('php artisan serve         # → http://localhost:8000');
+      lines.push('php artisan serve                              # → http://localhost:8000');
     } else if (stack.includes('fastapi')) {
-      lines.push('cd backend && uvicorn main:app --reload   # → http://localhost:8000');
+      lines.push('cd backend && uvicorn app.main:app --reload    # → http://localhost:8000');
     } else {
-      lines.push('cd backend && npm run dev  # → http://localhost:3000');
+      lines.push('cd backend && npm run dev                      # → http://localhost:3000');
     }
-    lines.push('cd frontend && npm run dev  # → http://localhost:5173');
-    lines.push('```');
-  } else if (stack.includes('laravel')) {
-    lines.push('```bash');
-    lines.push('php artisan serve');
+    lines.push('cd frontend && npm run dev                       # → http://localhost:5173');
     lines.push('```');
     lines.push('');
-    lines.push('→ http://localhost:8000/api');
-  } else if (stack.includes('fastapi')) {
-    lines.push('```bash');
-    lines.push('uvicorn main:app --reload');
-    lines.push('```');
+  } else {
+    // ── Single stack: no setup.sh in ZIP — show manual steps only ──────────
+    lines.push('## Installation');
     lines.push('');
-    lines.push('→ http://localhost:8000/docs (Swagger UI)');
-  } else if (stack.includes('express') || stack.includes('nestjs')) {
-    lines.push('```bash');
-    lines.push('npm run dev');
-    lines.push('```');
+
+    if (stack.includes('laravel')) {
+      lines.push('```bash');
+      lines.push('composer install --no-interaction');
+      lines.push('cp .env.example .env');
+      lines.push('# Edit .env: DB_DATABASE, DB_USERNAME, DB_PASSWORD, APP_URL');
+      lines.push('php artisan key:generate');
+      lines.push('php artisan migrate --force');
+      lines.push('php artisan db:seed');
+      lines.push('```');
+      lines.push('');
+    } else if (stack.includes('fastapi')) {
+      lines.push('```bash');
+      lines.push('pip install -r requirements.txt');
+      lines.push('# Copy .env.example → .env and set DATABASE_URL');
+      lines.push('```');
+      lines.push('');
+    } else if (stack.includes('express') || stack.includes('nestjs')) {
+      lines.push('```bash');
+      lines.push('npm install');
+      lines.push('# Copy .env.example → .env and set DATABASE_URL / PORT');
+      lines.push('```');
+      lines.push('');
+    } else if (stack === 'nextjs' || stack === 'react') {
+      lines.push('```bash');
+      lines.push('npm install');
+      lines.push('# Copy .env.example → .env.local');
+      lines.push('```');
+      lines.push('');
+    }
+
+    lines.push('## Run the project');
     lines.push('');
-    lines.push('→ http://localhost:3000');
-  } else if (stack.includes('nextjs') || stack.includes('react')) {
-    lines.push('```bash');
-    lines.push('npm run dev');
-    lines.push('```');
+    if (stack.includes('laravel')) {
+      lines.push('```bash');
+      lines.push('php artisan serve');
+      lines.push('```');
+      lines.push('');
+      lines.push('→ http://localhost:8000/api');
+    } else if (stack.includes('fastapi')) {
+      lines.push('```bash');
+      lines.push('uvicorn app.main:app --reload');
+      lines.push('```');
+      lines.push('');
+      lines.push('→ http://localhost:8000/docs (Swagger UI)');
+    } else if (stack.includes('express') || stack.includes('nestjs')) {
+      lines.push('```bash');
+      lines.push('npm run dev');
+      lines.push('```');
+      lines.push('');
+      lines.push('→ http://localhost:3000');
+    } else if (stack.includes('nextjs') || stack.includes('react')) {
+      lines.push('```bash');
+      lines.push('npm run dev');
+      lines.push('```');
+      lines.push('');
+      lines.push('→ http://localhost:3000');
+    }
     lines.push('');
-    lines.push('→ http://localhost:3000');
   }
-  lines.push('');
 
   // Env vars
   lines.push('## Key environment variables');
@@ -271,8 +269,10 @@ Scaffold faster, ship sooner with [Stack-Init](https://stackinit.dev)
     lines.push('| `PORT` | Listening port (default: 3000 / 8000) |');
     lines.push('| `JWT_SECRET` | JWT secret key (if auth enabled) |');
   }
-  if (mixed && (stack.includes('react') || stack.includes('nextjs'))) {
+  if (mixed && stack.includes('nextjs')) {
     lines.push('| `NEXT_PUBLIC_API_URL` | Backend API URL |');
+  } else if (mixed && stack.includes('react')) {
+    lines.push('| `REACT_APP_API_URL` | Backend API URL |');
   }
   lines.push('');
 

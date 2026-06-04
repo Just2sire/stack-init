@@ -1,28 +1,30 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useWizardStore } from "@/stores/useWizardStore";
 import { Database, Server, ShieldCheck } from "lucide-react";
 import { AIAssistant } from "@/components/wizard/AIAssistant";
 
 export function DatabaseStep() {
+  const t = useTranslations("steps");
   const { stack, expressOptions, setExpressOptions, nestOptions, setNestOptions, fastapiOptions, setFastAPIOptions } = useWizardStore();
 
   const isExpress = stack === 'express' || stack === 'express+react';
   const isFastAPI = stack === 'fastapi' || stack === 'fastapi+react' || stack === 'fastapi+nextjs';
 
   const jsOrms = [
-    { id: 'prisma',    title: 'Prisma',     desc: 'Type-safe ORM with automated migrations.',          icon: <img src="/icons/prisma.svg"      alt="Prisma"     className="w-5 h-5" /> },
-    { id: 'drizzle',   title: 'Drizzle',    desc: 'Lightweight SQL-first ORM with great performance.', icon: <img src="/icons/drizzle-orm.svg" alt="Drizzle"    className="w-5 h-5" /> },
-    { id: 'sequelize', title: 'Sequelize',  desc: 'Mature ORM supporting multiple dialects.',           icon: <img src="/icons/sequelize.svg"   alt="Sequelize"  className="w-5 h-5" /> },
-    { id: 'typeorm',   title: 'TypeORM',    desc: 'Decorator-based ORM inspired by Hibernate.',         icon: <img src="/icons/typeorm.svg"     alt="TypeORM"    className="w-5 h-5" /> },
-    { id: 'mongoose',  title: 'Mongoose',   desc: 'Elegant MongoDB object modeling.',                   icon: <img src="/icons/mongoose.svg"    alt="Mongoose"   className="w-5 h-5" /> },
+    { id: 'prisma',    title: 'Prisma',     desc: t("database.orm.prisma.desc"),      icon: <img src="/icons/prisma.svg"      alt="Prisma"     className="w-5 h-5" /> },
+    { id: 'drizzle',   title: 'Drizzle',    desc: t("database.orm.drizzle.desc"),     icon: <img src="/icons/drizzle-orm.svg" alt="Drizzle"    className="w-5 h-5" /> },
+    { id: 'sequelize', title: 'Sequelize',  desc: t("database.orm.sequelize.desc"),   icon: <img src="/icons/sequelize.svg"   alt="Sequelize"  className="w-5 h-5" /> },
+    { id: 'typeorm',   title: 'TypeORM',    desc: t("database.orm.typeorm.desc"),     icon: <img src="/icons/typeorm.svg"     alt="TypeORM"    className="w-5 h-5" /> },
+    { id: 'mongoose',  title: 'Mongoose',   desc: t("database.orm.mongoose.desc"),    icon: <img src="/icons/mongoose.svg"    alt="Mongoose"   className="w-5 h-5" /> },
   ];
 
   const pyOrms = [
-    { id: 'sqlmodel',     title: 'SQLModel',     desc: 'FastAPI-native ORM built on SQLAlchemy + Pydantic.', icon: <Database size={20} /> },
-    { id: 'sqlalchemy',   title: 'SQLAlchemy',   desc: 'The Python SQL toolkit and full-featured ORM.',      icon: <Server   size={20} /> },
-    { id: 'tortoise-orm', title: 'Tortoise-ORM', desc: 'Easy async ORM inspired by the Django ORM.',         icon: <Database size={20} /> },
-    { id: 'beanie',       title: 'Beanie',       desc: 'Async MongoDB ODM built on Motor and Pydantic.',     icon: <Server   size={20} /> },
+    { id: 'sqlmodel',     title: 'SQLModel',     desc: t("database.orm.sqlmodel.desc"),     icon: <Database size={20} /> },
+    { id: 'sqlalchemy',   title: 'SQLAlchemy',   desc: t("database.orm.sqlalchemy.desc"),   icon: <Server   size={20} /> },
+    { id: 'tortoise-orm', title: 'Tortoise-ORM', desc: t("database.orm.tortoise_orm.desc"), icon: <Database size={20} /> },
+    { id: 'beanie',       title: 'Beanie',       desc: t("database.orm.beanie.desc"),       icon: <Server   size={20} /> },
   ];
 
   const orms = isFastAPI ? pyOrms : jsOrms;
@@ -49,20 +51,20 @@ export function DatabaseStep() {
     else                setNestOptions({ db_engine: id as any });
   };
 
-  const recommendation = isFastAPI
-    ? <><strong>SQLModel + PostgreSQL</strong> for the best FastAPI developer experience with full type safety.</>
-    : <><strong>Prisma + PostgreSQL</strong> for the best developer experience and type safety.</>;
+  const recommendationText = isFastAPI
+    ? t("database.recommendationPy")
+    : t("database.recommendationJs");
 
   return (
     <div className="space-y-10">
       <div>
-        <h2 className="si-title">Database & ORM</h2>
-        <p className="si-subtitle mt-2">Configure how your application interacts with data.</p>
+        <h2 className="si-title">{t("database.title")}</h2>
+        <p className="si-subtitle mt-2">{t("database.subtitle")}</p>
       </div>
 
       {/* ORM Selection */}
       <section>
-        <div className="si-section-label">Object-Relational Mapping</div>
+        <div className="si-section-label">{t("database.ormSection")}</div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {orms.map((orm) => (
             <div
@@ -94,7 +96,7 @@ export function DatabaseStep() {
 
       {/* Engine Selection */}
       <section>
-        <div className="si-section-label">Database Engine</div>
+        <div className="si-section-label">{t("database.engineSection")}</div>
         <div className="flex flex-wrap gap-3">
           {engines.map((engine) => (
             <div
@@ -116,15 +118,15 @@ export function DatabaseStep() {
         <div className="flex gap-3">
           <ShieldCheck className="text-gold shrink-0" size={20} />
           <div>
-            <p className="text-xs font-bold text-gold uppercase tracking-wider mb-1">Recommendation</p>
+            <p className="text-xs font-bold text-gold uppercase tracking-wider mb-1">{t("database.recommendationLabel")}</p>
             <p className="text-sm text-text2">
-              For most {stack} projects, we recommend {recommendation}
+              {recommendationText}
             </p>
           </div>
         </div>
       </div>
 
-      <AIAssistant step="database" placeholder='Which ORM should I use? E.g. "I need full type safety and want to avoid raw SQL"' />
+      <AIAssistant step="database" placeholder={t("database.aiPlaceholder")} />
     </div>
   );
 }

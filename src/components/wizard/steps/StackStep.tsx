@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { useWizardStore } from "@/stores/useWizardStore";
 import { ComboId } from "@/types/combos";
 import { AIAssistant } from "@/components/wizard/AIAssistant";
@@ -99,6 +100,7 @@ function isComboActive(comboId: string, stack: string | null | undefined): boole
 }
 
 export function StackStep() {
+  const t = useTranslations("steps");
   const { stack, setStack, loadCombo, applyTemplate, projectName, setProjectName, importConfig } = useWizardStore();
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
   const [presets, setPresets] = useState<Preset[]>([]);
@@ -161,10 +163,10 @@ export function StackStep() {
 
   return (
     <div className="si-step-panel">
-      <div className="si-section-label">Setup</div>
-      <h1 className="si-title" style={{ marginBottom: 8 }}>Project setup</h1>
+      <div className="si-section-label">{t("stack.sectionLabel")}</div>
+      <h1 className="si-title" style={{ marginBottom: 8 }}>{t("stack.title")}</h1>
       <p className="si-subtitle" style={{ marginBottom: 40 }}>
-        Choose your tech stack and name your project to get started.
+        {t("stack.subtitle")}
       </p>
 
       {/* Project Name */}
@@ -179,12 +181,12 @@ export function StackStep() {
             letterSpacing: "0.04em",
           }}
         >
-          Project name
+          {t("stack.projectNameLabel")}
         </label>
         <input
           value={projectName}
           onChange={(e) => setProjectName(e.target.value)}
-          placeholder="my-awesome-project"
+          placeholder={t("stack.projectNamePlaceholder")}
           className="si-input"
           style={{ maxWidth: 420, fontFamily: "var(--font-jetbrains-mono)", fontSize: 14 }}
         />
@@ -192,19 +194,19 @@ export function StackStep() {
 
       {/* Quick Start Templates */}
       <div style={{ marginBottom: 40 }}>
-        <div className="si-section-label">Quick Start</div>
+        <div className="si-section-label">{t("stack.quickStart")}</div>
         <p style={{ fontSize: 12, color: "var(--text3)", marginTop: 4, marginBottom: 16 }}>
-          Load a pre-built schema to get started faster.
+          {t("stack.quickStartDesc")}
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-          {COMMUNITY_TEMPLATES.map((t) => {
-            const isActive = activeTemplate === t.id;
+          {COMMUNITY_TEMPLATES.map((tmpl) => {
+            const isActive = activeTemplate === tmpl.id;
             return (
               <div
-                key={t.id}
+                key={tmpl.id}
                 onClick={() => {
-                  setActiveTemplate(t.id);
-                  applyTemplate(t.models as any);
+                  setActiveTemplate(tmpl.id);
+                  applyTemplate(tmpl.models as any);
                 }}
                 style={{
                   position: "relative",
@@ -245,10 +247,10 @@ export function StackStep() {
                       borderRadius: 4,
                     }}
                   >
-                    Applied ✓
+                    {t("stack.applied")}
                   </span>
                 )}
-                <div style={{ fontSize: 24, marginBottom: 8 }}>{(t as any).icon ?? "📦"}</div>
+                <div style={{ fontSize: 24, marginBottom: 8 }}>{(tmpl as any).icon ?? "📦"}</div>
                 <div
                   style={{
                     fontSize: 13,
@@ -257,10 +259,10 @@ export function StackStep() {
                     marginBottom: 4,
                   }}
                 >
-                  {t.name}
+                  {tmpl.name}
                 </div>
                 <div style={{ fontSize: 11, color: "var(--text3)", lineHeight: 1.5 }}>
-                  {(t as any).description ?? t.description}
+                  {(tmpl as any).description ?? tmpl.description}
                 </div>
               </div>
             );
@@ -271,7 +273,7 @@ export function StackStep() {
       {/* My Presets */}
       <div style={{ marginBottom: 40 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <div className="si-section-label" style={{ marginBottom: 0 }}>My Presets</div>
+          <div className="si-section-label" style={{ marginBottom: 0 }}>{t("stack.myPresets")}</div>
           <button
             onClick={() => fileInputRef.current?.click()}
             style={{
@@ -284,7 +286,7 @@ export function StackStep() {
               cursor: "pointer",
             }}
           >
-            Import .json
+            {t("stack.importJson")}
           </button>
           <input
             ref={fileInputRef}
@@ -297,7 +299,7 @@ export function StackStep() {
 
         {presets.length === 0 ? (
           <p style={{ fontSize: 12, color: "var(--text3)", fontStyle: "italic" }}>
-            No saved presets yet — complete a config and save it from the last step.
+            {t("stack.noPresets")}
           </p>
         ) : (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
@@ -337,19 +339,19 @@ export function StackStep() {
                       cursor: "pointer",
                     }}
                   >
-                    Load
+                    {t("stack.load")}
                   </button>
                   <button
                     onClick={() => exportPresetFile(p)}
                     style={{ fontSize: 11, background: "var(--bg4)", border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "4px 8px", cursor: "pointer", color: "var(--text3)" }}
-                    title="Export .json"
+                    title={t("stack.exportTitle")}
                   >
-                    ↓
+                    {t("stack.export")}
                   </button>
                   <button
                     onClick={() => handleDeletePreset(p.id)}
                     style={{ fontSize: 11, background: "none", border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "4px 8px", cursor: "pointer", color: "var(--text3)" }}
-                    title="Delete preset"
+                    title={t("stack.deletePreset")}
                   >
                     ✕
                   </button>
@@ -364,8 +366,8 @@ export function StackStep() {
       <div style={{ maxWidth: 760, marginBottom: 40, padding: 20, borderRadius: 14, border: "1px solid rgba(245,200,66,0.2)", background: "rgba(245,200,66,0.04)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
           <Sparkles size={15} style={{ color: "var(--gold)" }} />
-          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--gold)" }}>Let AI build your stack</span>
-          <span style={{ fontSize: 11, color: "var(--text3)" }}>— describe your project, AI picks stack + models + services</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--gold)" }}>{t("stack.aiTitle")}</span>
+          <span style={{ fontSize: 11, color: "var(--text3)" }}>{t("stack.aiSubtitle")}</span>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           <input
@@ -384,13 +386,13 @@ export function StackStep() {
             style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 18px", flexShrink: 0, fontSize: 13 }}
           >
             {aiLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-            {aiLoading ? 'Thinking…' : 'Build'}
+            {aiLoading ? t("stack.aiThinking") : t("stack.aiBuildButton")}
           </button>
         </div>
         {aiError && <p style={{ fontSize: 12, color: "var(--red)", marginTop: 8 }}>{aiError}</p>}
         {aiApplied && (
           <div style={{ marginTop: 10 }}>
-            <p style={{ fontSize: 12, color: "#4dff91", fontWeight: 600, marginBottom: 4 }}>✓ Stack configured — stack, models and services pre-filled.</p>
+            <p style={{ fontSize: 12, color: "#4dff91", fontWeight: 600, marginBottom: 4 }}>{t("stack.aiSuccess")}</p>
             {aiReasoning && <p style={{ fontSize: 12, color: "var(--text3)", lineHeight: 1.5 }}>{aiReasoning}</p>}
           </div>
         )}
@@ -417,7 +419,7 @@ export function StackStep() {
             whiteSpace: "nowrap",
           }}
         >
-          Or build from scratch
+          {t("stack.orBuildFromScratch")}
         </span>
         <div style={{ flex: 1, height: 1, background: "var(--border-subtle)" }} />
       </div>
@@ -434,7 +436,7 @@ export function StackStep() {
       >
         {/* Single Stacks */}
         <div>
-          <div className="si-section-label" style={{ marginBottom: 12 }}>Single Stack</div>
+          <div className="si-section-label" style={{ marginBottom: 12 }}>{t("stack.singleStack")}</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {SINGLE_STACKS.map((s) => {
               const isSelected = stack === s.id;
@@ -495,7 +497,7 @@ export function StackStep() {
 
         {/* Combo Stacks */}
         <div>
-          <div className="si-section-label" style={{ marginBottom: 12 }}>Combo Stacks</div>
+          <div className="si-section-label" style={{ marginBottom: 12 }}>{t("stack.comboStacks")}</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {COMBO_STACKS.map((c) => {
               const isSelected = isComboActive(c.id, stack);
@@ -549,23 +551,25 @@ export function StackStep() {
             letterSpacing: "0.08em",
           }}
         >
-          Note
+          {t("stack.noteLabel")}
         </p>
         <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>
-          React, Next.js & FastAPI → ZIP download. Laravel →{" "}
-          <code
-            style={{
-              fontFamily: "var(--font-jetbrains-mono)",
-              background: "rgba(255,255,255,0.06)",
-              padding: "1px 6px",
-              borderRadius: 4,
-              color: "var(--text)",
-              fontSize: 12,
-            }}
-          >
-            stack-init.yaml
-          </code>{" "}
-          + CLI command.
+          {t.rich("stack.noteText", {
+            code: (chunks) => (
+              <code
+                style={{
+                  fontFamily: "var(--font-jetbrains-mono)",
+                  background: "rgba(255,255,255,0.06)",
+                  padding: "1px 6px",
+                  borderRadius: 4,
+                  color: "var(--text)",
+                  fontSize: 12,
+                }}
+              >
+                {chunks}
+              </code>
+            ),
+          })}
         </p>
       </div>
     </div>

@@ -5,6 +5,8 @@ import "@xyflow/react/dist/style.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import JsonLd from "@/components/landing/JsonLd";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, getLocale } from "next-intl/server";
 // import { Analytics } from "@vercel/analytics/next";
 
 /**
@@ -79,12 +81,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={cn(
         "h-full",
         spaceGrotesk.variable,
@@ -94,7 +99,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col" data-scroll-behavior="smooth">
         <JsonLd />
-        <TooltipProvider>{children}</TooltipProvider>
+        <NextIntlClientProvider messages={messages}>
+          <TooltipProvider>{children}</TooltipProvider>
+        </NextIntlClientProvider>
         {/* <Analytics /> */}
       </body>
     </html>

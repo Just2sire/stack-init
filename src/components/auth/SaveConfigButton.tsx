@@ -5,11 +5,13 @@ import { Save, Check, LogIn } from 'lucide-react'
 import Link from 'next/link'
 import { useUser } from '@/lib/supabase/use-user'
 import { useWizardStore } from '@/stores/useWizardStore'
+import { useTranslations } from 'next-intl'
 
 export function SaveConfigButton() {
   const { user, loading } = useUser()
   const getConfig = useWizardStore(s => s.getConfig)
   const projectName = useWizardStore(s => s.projectName)
+  const t = useTranslations('dashboard')
 
   const [saving, setSaving]     = useState(false)
   const [saved, setSaved]       = useState(false)
@@ -26,7 +28,7 @@ export function SaveConfigButton() {
         className="flex items-center gap-2 px-4 py-2 text-sm border border-zinc-700 rounded-lg text-zinc-400 hover:border-zinc-500 hover:text-white transition-colors"
       >
         <LogIn size={14} />
-        Connecte-toi pour sauvegarder
+        {t('signInToSave')}
       </Link>
     )
   }
@@ -49,7 +51,7 @@ export function SaveConfigButton() {
 
     if (!res.ok) {
       const data = await res.json()
-      setError(data.error ?? 'Erreur lors de la sauvegarde')
+      setError(data.error ?? t('saveError'))
       setSaving(false)
       return
     }
@@ -64,7 +66,7 @@ export function SaveConfigButton() {
     return (
       <div className="flex items-center gap-2 px-4 py-2 text-sm text-green-400">
         <Check size={14} />
-        Sauvegardée !
+        {t('saved')}
       </div>
     )
   }
@@ -76,7 +78,7 @@ export function SaveConfigButton() {
           value={name}
           onChange={e => setName(e.target.value)}
           className="px-3 py-1.5 text-sm bg-zinc-900 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500 w-44"
-          placeholder={projectName || 'Nom de la config'}
+          placeholder={projectName || t('configNamePlaceholder')}
           autoFocus
         />
         {error && <span className="text-xs text-red-400">{error}</span>}
@@ -85,14 +87,14 @@ export function SaveConfigButton() {
           disabled={saving}
           className="px-3 py-1.5 text-sm bg-white text-black rounded-lg font-medium hover:bg-zinc-100 disabled:opacity-50"
         >
-          {saving ? '...' : 'OK'}
+          {saving ? t('saving') : 'OK'}
         </button>
         <button
           type="button"
           onClick={() => setShowForm(false)}
           className="text-xs text-zinc-500 hover:text-white"
         >
-          Annuler
+          {t('cancel')}
         </button>
       </form>
     )
@@ -104,7 +106,7 @@ export function SaveConfigButton() {
       className="flex items-center gap-2 px-4 py-2 text-sm border border-zinc-700 rounded-lg text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors"
     >
       <Save size={14} />
-      Sauvegarder
+      {t('saveButton')}
     </button>
   )
 }

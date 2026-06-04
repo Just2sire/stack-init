@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Sparkles, X, Loader2, Send, ChevronDown, ChevronUp, LogIn } from 'lucide-react'
 import Link from 'next/link'
 import { useUser } from '@/lib/supabase/use-user'
@@ -40,6 +41,7 @@ function makeDefaultModel(name: string): Model {
 }
 
 export function AIAssistant({ step, placeholder }: AIAssistantProps) {
+  const t = useTranslations('wizard')
   const { user, loading } = useUser()
   const { getConfig, addModel, toggleService, enabledServices } = useWizardStore()
 
@@ -59,7 +61,7 @@ export function AIAssistant({ step, placeholder }: AIAssistantProps) {
         <Sparkles size={13} className="text-text3" />
         <span>AI assist —</span>
         <Link href="/auth/login" className="underline hover:text-gold flex items-center gap-1">
-          <LogIn size={11} /> Se connecter
+          <LogIn size={11} /> {t('assistant.signIn')}
         </Link>
       </div>
     )
@@ -126,8 +128,8 @@ export function AIAssistant({ step, placeholder }: AIAssistantProps) {
       >
         <div className="flex items-center gap-2">
           <Sparkles size={14} className="text-gold" />
-          <span className="text-xs font-semibold text-gold">Ask AI</span>
-          <span className="text-[10px] text-text3">— context-aware recommendations</span>
+          <span className="text-xs font-semibold text-gold">{t('assistant.label')}</span>
+          <span className="text-[10px] text-text3">{t('assistant.contextAware')}</span>
         </div>
         {isOpen
           ? <ChevronUp size={14} className="text-gold" />
@@ -144,7 +146,7 @@ export function AIAssistant({ step, placeholder }: AIAssistantProps) {
               value={question}
               onChange={e => { setQuestion(e.target.value); setError(null) }}
               onKeyDown={e => { if (e.key === 'Enter') ask() }}
-              placeholder={placeholder ?? 'Ask a question about this step…'}
+              placeholder={placeholder ?? t('assistant.defaultPlaceholder')}
               className="si-input flex-1 text-xs"
               autoFocus
             />
@@ -157,7 +159,7 @@ export function AIAssistant({ step, placeholder }: AIAssistantProps) {
                 ? <Loader2 size={13} className="animate-spin" />
                 : <Send size={13} />
               }
-              {isAsking ? 'Thinking…' : 'Ask'}
+              {isAsking ? t('assistant.thinking') : t('assistant.ask')}
             </button>
           </div>
 
@@ -191,7 +193,7 @@ export function AIAssistant({ step, placeholder }: AIAssistantProps) {
 
               {result.modelsToAdd && result.modelsToAdd.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-text3 font-semibold uppercase tracking-wider text-[10px]">Models to add</p>
+                  <p className="text-text3 font-semibold uppercase tracking-wider text-[10px]">{t('assistant.modelsToAdd')}</p>
                   {result.modelsToAdd.map((m, i) => (
                     <div key={i} className="flex items-start gap-2">
                       <span className="font-mono text-gold">{m.name}</span>
@@ -203,7 +205,7 @@ export function AIAssistant({ step, placeholder }: AIAssistantProps) {
 
               {result.recommended && result.recommended.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-text3 font-semibold uppercase tracking-wider text-[10px]">Services to enable</p>
+                  <p className="text-text3 font-semibold uppercase tracking-wider text-[10px]">{t('assistant.servicesToEnable')}</p>
                   <div className="flex flex-wrap gap-1">
                     {result.recommended.map((svc, i) => (
                       <span key={i} className="font-mono text-[10px] px-2 py-0.5 rounded border border-gold/30 text-gold bg-gold/10">
@@ -215,7 +217,7 @@ export function AIAssistant({ step, placeholder }: AIAssistantProps) {
               )}
 
               {applied && (
-                <p className="text-green-400 font-medium">✓ Applied to your configuration</p>
+                <p className="text-green-400 font-medium">{t('assistant.applied')}</p>
               )}
 
               {hasApplicableAction && !applied && (
@@ -224,7 +226,7 @@ export function AIAssistant({ step, placeholder }: AIAssistantProps) {
                   className="si-btn-primary text-xs px-4 py-1.5 gap-1"
                 >
                   <Sparkles size={12} />
-                  Apply suggestions
+                  {t('assistant.applySuggestions')}
                 </button>
               )}
             </div>

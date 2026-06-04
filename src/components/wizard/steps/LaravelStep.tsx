@@ -5,40 +5,22 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Settings2, Layers, Check, Globe, Shield, Lock, Database, Server } from "lucide-react";
 import { SubStepPills } from "../SubStepPills";
+import { useTranslations } from "next-intl";
 
-const SUB_STEPS = [
-  { label: "Framework Setup" },
-  { label: "Global Generation Defaults" },
-  { label: "Specific Model Overrides" },
-];
+const SUB_STEPS_KEYS = ["frameworkSetup", "globalDefaults", "modelOverrides"] as const;
 
 const PATTERNS = [
-  {
-    id: 'api-only' as const,
-    title: 'API Only',
-    desc: 'REST API endpoints only — no Blade views. Ideal for decoupled frontends (React, Next.js…).',
-    Icon: Globe,
-  },
-  {
-    id: 'full' as const,
-    title: 'Full Stack',
-    desc: 'API JSON + Blade views (index/create/edit/show) + web routes. Traditional server-rendered apps.',
-    Icon: Layers,
-  },
-  {
-    id: 'minimal' as const,
-    title: 'Minimal',
-    desc: 'Closure routes in api.php — no controller classes. Direct model access, zero boilerplate.',
-    Icon: Server,
-  },
+  { id: 'api-only' as const, title: 'API Only',    Icon: Globe   },
+  { id: 'full'    as const, title: 'Full Stack',   Icon: Layers  },
+  { id: 'minimal' as const, title: 'Minimal',      Icon: Server  },
 ] as const;
 
 const AUTH_OPTIONS = [
-  { id: 'sanctum'   as const, label: 'Sanctum',   desc: 'Session + API token auth — recommended for SPAs' },
-  { id: 'none'      as const, label: 'None',       desc: 'No authentication scaffolding' },
-  { id: 'breeze'    as const, label: 'Breeze',     desc: 'Minimal Blade/Inertia auth starter kit' },
-  { id: 'jetstream' as const, label: 'Jetstream',  desc: 'Teams + full auth UI (Livewire/Inertia)' },
-  { id: 'passport'  as const, label: 'Passport',   desc: 'Full OAuth2 server for complex auth flows' },
+  { id: 'sanctum'   as const, label: 'Sanctum'   },
+  { id: 'none'      as const, label: 'None'       },
+  { id: 'breeze'    as const, label: 'Breeze'     },
+  { id: 'jetstream' as const, label: 'Jetstream'  },
+  { id: 'passport'  as const, label: 'Passport'   },
 ] as const;
 
 const DB_ENGINES = [
@@ -52,6 +34,7 @@ const PHP_VERSIONS  = ['8.1', '8.2', '8.3', '8.4'] as const;
 const LARAVEL_VERSIONS = ['10', '11', '12'] as const;
 
 export function LaravelStep() {
+  const t = useTranslations("steps");
   const {
     models, setGenerate, setGenerateAll,
     laravelOptions, setLaravelOptions,
@@ -59,24 +42,26 @@ export function LaravelStep() {
   } = useWizardStore();
   const [activeTab, setActiveTab] = useState<string | null>(null);
 
+  const SUB_STEPS = SUB_STEPS_KEYS.map((key) => ({ label: t(`laravelSetup.subStep.${key}`) }));
+
   const options = [
-    { key: "migration",  label: "Migration",    desc: "Database table definition" },
-    { key: "controller", label: "Controller",   desc: "HTTP request handler" },
-    { key: "resource",   label: "Resource",     desc: "API JSON resource transformation" },
-    { key: "request",    label: "Request",      desc: "Form request validation rules" },
-    { key: "seeder",     label: "Seeder",       desc: "Seed database with test data" },
-    { key: "factory",    label: "Factory",      desc: "Generate fake model instances" },
-    { key: "policy",     label: "Policy",       desc: "Authorization rules" },
-    { key: "service",    label: "Service",      desc: "Business logic layer" },
-    { key: "repository", label: "Repository",   desc: "Data access abstraction" },
-    { key: "tests",      label: "Tests",        desc: "Feature and unit tests" },
-    { key: "routes",     label: "Routes",       desc: "API / web route registration" },
-    { key: "swagger",    label: "Swagger",            desc: "L5-Swagger OpenAPI documentation" },
-    { key: "softDelete", label: "Soft Deletes",        desc: "Use SoftDeletes trait" },
-    { key: "observer",   label: "Observer",            desc: "ModelObserver (created/updated/deleted hooks)" },
-    { key: "events",     label: "Events & Listeners",  desc: "Queue events on model changes" },
-    { key: "actions",    label: "Action Classes",      desc: "Create/Update/Delete action objects" },
-    { key: "collection", label: "Resource Collection", desc: "Collection class with pagination meta" },
+    { key: "migration",  label: "Migration",           desc: t("laravelSetup.gen.migration") },
+    { key: "controller", label: "Controller",           desc: t("laravelSetup.gen.controller") },
+    { key: "resource",   label: "Resource",             desc: t("laravelSetup.gen.resource") },
+    { key: "request",    label: "Request",              desc: t("laravelSetup.gen.request") },
+    { key: "seeder",     label: "Seeder",               desc: t("laravelSetup.gen.seeder") },
+    { key: "factory",    label: "Factory",              desc: t("laravelSetup.gen.factory") },
+    { key: "policy",     label: "Policy",               desc: t("laravelSetup.gen.policy") },
+    { key: "service",    label: "Service",              desc: t("laravelSetup.gen.service") },
+    { key: "repository", label: "Repository",           desc: t("laravelSetup.gen.repository") },
+    { key: "tests",      label: "Tests",                desc: t("laravelSetup.gen.tests") },
+    { key: "routes",     label: "Routes",               desc: t("laravelSetup.gen.routes") },
+    { key: "swagger",    label: "Swagger",              desc: t("laravelSetup.gen.swagger") },
+    { key: "softDelete", label: "Soft Deletes",         desc: t("laravelSetup.gen.softDelete") },
+    { key: "observer",   label: "Observer",             desc: t("laravelSetup.gen.observer") },
+    { key: "events",     label: "Events & Listeners",   desc: t("laravelSetup.gen.events") },
+    { key: "actions",    label: "Action Classes",       desc: t("laravelSetup.gen.actions") },
+    { key: "collection", label: "Resource Collection",  desc: t("laravelSetup.gen.collection") },
   ] as const;
 
   const activeModel = activeTab ? models.find(m => m.name === activeTab) : null;
@@ -94,11 +79,11 @@ export function LaravelStep() {
     return (
       <div className="si-step-panel">
         <span className="si-section-label">Configuration</span>
-        <h1 className="si-title" style={{ marginBottom: 8 }}>Laravel Setup</h1>
+        <h1 className="si-title" style={{ marginBottom: 8 }}>{t("laravelSetup.title")}</h1>
         <div style={{ textAlign: "center", padding: "60px 20px", border: "1px dashed var(--border-medium)", borderRadius: 16, color: "var(--text3)" }}>
           <span style={{ fontSize: 36, display: "block", marginBottom: 12, opacity: 0.3 }}>⚙</span>
-          <p style={{ fontSize: 14 }}>No models to configure</p>
-          <p style={{ fontSize: 12, marginTop: 4, opacity: 0.7 }}>Go back and define your models first</p>
+          <p style={{ fontSize: 14 }}>{t("laravelSetup.noModels")}</p>
+          <p style={{ fontSize: 12, marginTop: 4, opacity: 0.7 }}>{t("laravelSetup.goBackModels")}</p>
         </div>
       </div>
     );
@@ -108,8 +93,8 @@ export function LaravelStep() {
     <div className="si-step-panel">
       <div>
         <span className="si-section-label">Backend</span>
-        <h1 className="si-title" style={{ marginBottom: 4 }}>Laravel Setup</h1>
-        <p className="si-subtitle">Configure your PHP framework settings and code generation options.</p>
+        <h1 className="si-title" style={{ marginBottom: 4 }}>{t("laravelSetup.title")}</h1>
+        <p className="si-subtitle">{t("laravelSetup.subtitle")}</p>
       </div>
 
       <div style={{ marginTop: 24, marginBottom: 12 }}>
@@ -122,9 +107,9 @@ export function LaravelStep() {
 
           {/* Pattern */}
           <div>
-            <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>Application Pattern</span>
+            <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>{t("laravelSetup.patternSection")}</span>
             <div className="space-y-3">
-              {PATTERNS.map(({ id, title, desc, Icon }) => {
+              {PATTERNS.map(({ id, title, Icon }) => {
                 const isSelected = laravelOptions.pattern === id;
                 return (
                   <button
@@ -148,7 +133,7 @@ export function LaravelStep() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-sm mb-0.5" style={{ color: isSelected ? "var(--gold)" : "var(--text)" }}>{title}</div>
-                      <p className="text-[11px] text-text3 leading-normal">{desc}</p>
+                      <p className="text-[11px] text-text3 leading-normal">{t(`laravelSetup.pattern.${id}.desc`)}</p>
                     </div>
                     {isSelected && (
                       <div className="w-5 h-5 rounded-full bg-gold flex items-center justify-center shrink-0">
@@ -163,9 +148,9 @@ export function LaravelStep() {
 
           {/* Auth Package */}
           <div>
-            <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>Authentication Package</span>
+            <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>{t("laravelSetup.authSection")}</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {AUTH_OPTIONS.map(({ id, label, desc }) => {
+              {AUTH_OPTIONS.map(({ id, label }) => {
                 const isSelected = laravelOptions.auth === id;
                 return (
                   <button
@@ -193,7 +178,7 @@ export function LaravelStep() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <span style={{ fontSize: 13, fontWeight: 600, color: isSelected ? "var(--gold)" : "var(--text)", display: "block" }}>{label}</span>
-                      <span style={{ fontSize: 11, color: "var(--text3)" }}>{desc}</span>
+                      <span style={{ fontSize: 11, color: "var(--text3)" }}>{t(`laravelSetup.auth.${id}.desc`)}</span>
                     </div>
                     {isSelected && (
                       <div className="w-4 h-4 rounded-full bg-gold flex items-center justify-center shrink-0">
@@ -209,7 +194,7 @@ export function LaravelStep() {
           {/* Versions row */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
             <div>
-              <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>PHP Version</span>
+              <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>{t("laravelSetup.phpVersionSection")}</span>
               <div style={{ display: "flex", gap: 8 }}>
                 {PHP_VERSIONS.map((v) => {
                   const isSelected = laravelOptions.php_version === v;
@@ -237,7 +222,7 @@ export function LaravelStep() {
             </div>
 
             <div>
-              <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>Laravel Version</span>
+              <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>{t("laravelSetup.laravelVersionSection")}</span>
               <div style={{ display: "flex", gap: 8 }}>
                 {LARAVEL_VERSIONS.map((v) => {
                   const isSelected = laravelOptions.laravel_version === v;
@@ -267,7 +252,7 @@ export function LaravelStep() {
 
           {/* Database Engine */}
           <div>
-            <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>Database Engine</span>
+            <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>{t("laravelSetup.engineSection")}</span>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               {DB_ENGINES.map(({ id, label }) => {
                 const isSelected = laravelOptions.db_engine === id;
@@ -300,23 +285,23 @@ export function LaravelStep() {
 
           {/* PHP Code Options */}
           <div>
-            <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>PHP Code Options</span>
+            <span className="si-section-label" style={{ display: "block", marginBottom: 10 }}>{t("laravelSetup.codeOptions")}</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <ToggleCard
-                label="Strict Types"
-                description="Add declare(strict_types=1) to all generated PHP files"
+                label={t("laravelSetup.strictTypes")}
+                description={t("laravelSetup.strictTypesDesc")}
                 checked={laravelOptions.use_strict_types ?? true}
                 onChange={(val) => setLaravelOptions({ use_strict_types: val })}
               />
               <ToggleCard
-                label="Readonly Properties (PHP 8.1+)"
-                description="Add readonly modifier to constructor-promoted properties in Service/Repository"
+                label={t("laravelSetup.readonly")}
+                description={t("laravelSetup.readonlyDesc")}
                 checked={laravelOptions.use_readonly ?? false}
                 onChange={(val) => setLaravelOptions({ use_readonly: val })}
               />
               <ToggleCard
-                label="Redis / Queue Worker"
-                description="Add Redis service and queue:work container to docker-compose.yml"
+                label={t("laravelSetup.redis")}
+                description={t("laravelSetup.redisDesc")}
                 checked={laravelOptions.use_redis ?? false}
                 onChange={(val) => setLaravelOptions({ use_redis: val })}
               />
@@ -349,8 +334,8 @@ export function LaravelStep() {
             <div className="flex gap-3">
               <Settings2 className="text-gold shrink-0 animate-pulse" size={18} />
               <p className="text-sm text-text2" style={{ lineHeight: 1.5 }}>
-                <span className="font-bold text-gold" style={{ textShadow: "0 0 10px rgba(245,200,66,0.3)" }}>Gold Active</span> represents full coverage (activated on all models).{" "}
-                <span className="font-bold text-[#FBBF24] ml-1">Amber Partial</span> means it is enabled on some models and disabled on others. Click any option card to globally toggle for all models.
+                <span className="font-bold text-gold" style={{ textShadow: "0 0 10px rgba(245,200,66,0.3)" }}>{t("laravelSetup.goldActive")}</span>{" "}{t("laravelSetup.goldActiveInfo")}{" "}
+                <span className="font-bold text-[#FBBF24] ml-1">{t("laravelSetup.amberPartial")}</span>{" "}{t("laravelSetup.amberPartialInfo")}
               </p>
             </div>
           </div>
@@ -420,8 +405,8 @@ export function LaravelStep() {
               }}
             >
               <Layers size={24} className="mx-auto text-gold mb-3 opacity-60" />
-              <p className="font-bold text-sm text-text">No model override selected</p>
-              <p className="text-[11px] text-text3 mt-1">Select one of the model buttons above to configure generated files on a per-model basis.</p>
+              <p className="font-bold text-sm text-text">{t("laravelSetup.noModelSelected")}</p>
+              <p className="text-[11px] text-text3 mt-1">{t("laravelSetup.selectModelHint")}</p>
             </div>
           )}
         </div>
