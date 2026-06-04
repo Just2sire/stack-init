@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import yaml from "js-yaml";
 import { useWizardStore } from "@/stores/useWizardStore";
 import { X, Zap, Table, Sparkles, Loader2, Upload, FileCode, GitBranch } from "lucide-react";
@@ -82,6 +83,7 @@ function makeDefaultModel(name: string): Model {
 }
 
 export function ImportModal({ onClose }: ImportModalProps) {
+  const t = useTranslations('wizard')
   const { addModel, importConfig } = useWizardStore();
   const [mode, setMode] = useState<'choice' | 'sql' | 'ai' | 'yaml' | 'github'>('choice');
   const [input, setInput]         = useState("");
@@ -128,7 +130,7 @@ export function ImportModal({ onClose }: ImportModalProps) {
       } else if (mode === 'sql') {
         const models = parseSqlToModels(input);
         if (models.length === 0) {
-          setError('No CREATE TABLE statements found. Make sure you pasted valid SQL DDL.');
+          setError(t('import.noCreateTable'));
           return;
         }
         models.forEach(m => addModel(m));
@@ -244,8 +246,8 @@ export function ImportModal({ onClose }: ImportModalProps) {
               <Zap size={18} fill="currentColor" />
             </div>
             <div>
-              <h3 className="font-bold text-lg">Quick Import</h3>
-              <p className="text-xs text-text3">Import models from existing schemas or using AI.</p>
+              <h3 className="font-bold text-lg">{t('import.title')}</h3>
+              <p className="text-xs text-text3">{t('import.subtitle')}</p>
             </div>
           </div>
           <button onClick={onClose} className="si-btn-icon">
@@ -261,7 +263,7 @@ export function ImportModal({ onClose }: ImportModalProps) {
             <div style={{ textAlign: 'center', padding: '24px 0' }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>✅</div>
               <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 8, color: 'var(--text)' }}>
-                {result.count} model{result.count > 1 ? 's' : ''} imported
+                {t('import.modelsImported', { count: result.count })}
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center', marginBottom: 20 }}>
                 {result.names.map(n => (
@@ -276,9 +278,9 @@ export function ImportModal({ onClose }: ImportModalProps) {
                 ))}
               </div>
               <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 20 }}>
-                Fields and relations have been extracted. Review them in the Models step.
+                {t('import.reviewModels')}
               </p>
-              <button onClick={handleDone} className="si-btn-primary px-8">Go to Models →</button>
+              <button onClick={handleDone} className="si-btn-primary px-8">{t('import.goToModels')}</button>
             </div>
           ) : mode === 'choice' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -287,9 +289,9 @@ export function ImportModal({ onClose }: ImportModalProps) {
                 className="si-card p-6 text-left hover:border-gold/40 transition-colors group"
               >
                 <Sparkles className="text-gold mb-3 group-hover:scale-110 transition-transform" size={24} />
-                <div className="font-bold text-sm mb-1">Natural Language (AI)</div>
+                <div className="font-bold text-sm mb-1">{t('import.tabNl')}</div>
                 <p className="text-[11px] text-text3 leading-relaxed">
-                  "Build a marketplace with products, orders and reviews..."
+                  {t('import.tabNlDesc')}
                 </p>
               </button>
 
@@ -298,9 +300,9 @@ export function ImportModal({ onClose }: ImportModalProps) {
                 className="si-card p-6 text-left hover:border-blue/40 transition-colors group"
               >
                 <Table className="text-blue mb-3 group-hover:scale-110 transition-transform" size={24} />
-                <div className="font-bold text-sm mb-1">SQL DDL</div>
+                <div className="font-bold text-sm mb-1">{t('import.tabSql')}</div>
                 <p className="text-[11px] text-text3 leading-relaxed">
-                  Paste or upload a SQL file. Extracts all tables, columns, types and foreign key relations.
+                  {t('import.tabSqlDesc')}
                 </p>
               </button>
 
@@ -309,9 +311,9 @@ export function ImportModal({ onClose }: ImportModalProps) {
                 className="si-card p-6 text-left hover:border-white/20 transition-colors group"
               >
                 <GitBranch className="text-text2 mb-3 group-hover:scale-110 transition-transform" size={24} />
-                <div className="font-bold text-sm mb-1">GitHub Repo</div>
+                <div className="font-bold text-sm mb-1">{t('import.tabGithub')}</div>
                 <p className="text-[11px] text-text3 leading-relaxed">
-                  Import models from an existing GitHub repository by scanning migrations &amp; model files
+                  {t('import.tabGithubDesc')}
                 </p>
               </button>
 
@@ -320,23 +322,23 @@ export function ImportModal({ onClose }: ImportModalProps) {
                 className="si-card p-6 text-left hover:border-gold/40 transition-colors group"
               >
                 <FileCode className="text-text2 mb-3 group-hover:scale-110 transition-transform" size={24} />
-                <div className="font-bold text-sm mb-1">YAML / JSON Config</div>
+                <div className="font-bold text-sm mb-1">{t('import.tabYaml')}</div>
                 <p className="text-[11px] text-text3 leading-relaxed">
-                  Upload a <code className="font-mono">stack-init.yaml</code> or exported preset JSON to resume editing a saved configuration.
+                  {t('import.tabYamlDesc')}
                 </p>
               </button>
             </div>
           ) : mode === 'github' ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-text2 uppercase tracking-wider">GitHub Repo</span>
+                <span className="text-xs font-bold text-text2 uppercase tracking-wider">{t('import.tabGithub')}</span>
                 <button onClick={handleBackToChoice} className="text-[10px] text-text3 hover:text-text underline">
-                  Back to options
+                  {t('import.backToOptions')}
                 </button>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs text-text3">Repository URL</label>
+                <label className="text-xs text-text3">{t('import.repoUrlLabel')}</label>
                 <div className="flex gap-2">
                   <input
                     type="url"
@@ -356,7 +358,7 @@ export function ImportModal({ onClose }: ImportModalProps) {
                       ? <Loader2 size={15} className="animate-spin" />
                       : <GitBranch size={15} />
                     }
-                    {isProcessing ? 'Scanning…' : 'Scan Repository'}
+                    {isProcessing ? t('import.scanning') : t('import.scanButton')}
                   </button>
                 </div>
               </div>
@@ -367,7 +369,7 @@ export function ImportModal({ onClose }: ImportModalProps) {
 
               {!githubDetected && !isProcessing && (
                 <div style={{ fontSize: 11, color: 'var(--text3)', padding: '8px 12px', background: 'var(--bg4)', borderRadius: 8 }}>
-                  <span style={{ color: 'var(--gold)', fontWeight: 700 }}>✨ AI-powered analysis: </span>
+                  <span style={{ color: 'var(--gold)', fontWeight: 700 }}>{t('import.aiAnalysis')} </span>
                   reads your actual source files (migrations, models, prisma schema, package.json) and extracts the full configuration — stack, models with fields, and services.
                   <span className="block mt-1">Login required for full analysis.</span>
                 </div>
@@ -391,13 +393,13 @@ export function ImportModal({ onClose }: ImportModalProps) {
                         className="text-text3 hover:text-text underline"
                         onClick={() => setGitBranchSelected(new Set(githubDetected))}
                       >
-                        Select all
+                        {t('import.selectAll')}
                       </button>
                       <button
                         className="text-text3 hover:text-text underline"
                         onClick={() => setGitBranchSelected(new Set())}
                       >
-                        Deselect all
+                        {t('import.deselectAll')}
                       </button>
                     </div>
                   </div>
@@ -449,10 +451,10 @@ export function ImportModal({ onClose }: ImportModalProps) {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-gold uppercase tracking-wider">
-                  {mode === 'ai' ? 'Describe your models' : mode === 'sql' ? 'SQL DDL' : 'YAML / JSON Config'}
+                  {mode === 'ai' ? t('import.describeModels') : mode === 'sql' ? t('import.sqlLabel') : t('import.yamlLabel')}
                 </span>
                 <button onClick={handleBackToChoice} className="text-[10px] text-text3 hover:text-text underline">
-                  Back to options
+                  {t('import.backToOptions')}
                 </button>
               </div>
 
@@ -527,7 +529,7 @@ export function ImportModal({ onClose }: ImportModalProps) {
         {/* Footer */}
         {!result && mode === 'github' && githubDetected && githubDetected.length > 0 && (
           <div className="p-6 border-t border-white/5 bg-bg2 flex justify-end gap-3">
-            <button onClick={onClose} className="si-btn-secondary px-6">Cancel</button>
+            <button onClick={onClose} className="si-btn-secondary px-6">{t('import.cancel')}</button>
             <button
               disabled={githubFullConfig ? false : githubSelected.size === 0}
               onClick={handleGitBranchImport}
@@ -544,15 +546,15 @@ export function ImportModal({ onClose }: ImportModalProps) {
 
         {!result && mode !== 'choice' && mode !== 'github' && (
           <div className="p-6 border-t border-white/5 bg-bg2 flex justify-end gap-3">
-            <button onClick={onClose} className="si-btn-secondary px-6">Cancel</button>
+            <button onClick={onClose} className="si-btn-secondary px-6">{t('import.cancel')}</button>
             <button
               disabled={!input.trim() || isProcessing}
               onClick={handleImport}
               className="si-btn-primary px-8 gap-2"
             >
               {isProcessing
-                ? <><Loader2 size={16} className="animate-spin" /> Processing...</>
-                : <><Zap size={16} fill="currentColor" /> Import Now</>
+                ? <><Loader2 size={16} className="animate-spin" /> {t('import.processing')}</>
+                : <><Zap size={16} fill="currentColor" /> {t('import.importButton')}</>
               }
             </button>
           </div>

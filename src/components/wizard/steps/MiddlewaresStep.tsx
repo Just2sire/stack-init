@@ -2,20 +2,22 @@
 
 import { useWizardStore } from "@/stores/useWizardStore";
 import { Shield, Activity, Lock, Maximize, Cpu, AlertTriangle, Globe, Cookie, Terminal } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function MiddlewaresStep() {
   const { expressOptions, setExpressOptions } = useWizardStore();
+  const t = useTranslations("steps.middlewares");
 
   const middlewares = [
-    { id: 'cors', title: 'CORS', icon: <Globe size={18} />, desc: 'Cross-Origin Resource Sharing enablement.' },
-    { id: 'morgan', title: 'Morgan', icon: <Activity size={18} />, desc: 'HTTP request logger middleware for node.js.' },
-    { id: 'helmet', title: 'Helmet', icon: <Shield size={18} />, desc: 'Help secure Express apps by setting various HTTP headers.' },
-    { id: 'rate-limit', title: 'Rate Limit', icon: <Lock size={18} />, desc: 'Basic rate-limiting middleware for Express.' },
-    { id: 'cookie-parser', title: 'Cookie Parser', icon: <Cookie size={18} />, desc: 'Parse Cookie header and populate req.cookies.' },
-    { id: 'compression', title: 'Compression', icon: <Maximize size={18} />, desc: 'Node.js compression middleware (Gzip).' },
-    { id: 'hpp', title: 'HPP', icon: <Shield size={18} />, desc: 'HTTP Parameter Pollution protection.' },
-    { id: 'xss-clean', title: 'XSS Clean', icon: <Terminal size={18} />, desc: 'Sanitize user input coming from POST body, GET queries, and url params.' },
-    { id: 'error-handler', title: 'Error Handler', icon: <AlertTriangle size={18} />, desc: 'Centralized error handling for all routes.' },
+    { id: 'cors', title: 'CORS', icon: <Globe size={18} />, desc: t("options.cors.desc") },
+    { id: 'morgan', title: 'Morgan', icon: <Activity size={18} />, desc: t("options.morgan.desc") },
+    { id: 'helmet', title: 'Helmet', icon: <Shield size={18} />, desc: t("options.helmet.desc") },
+    { id: 'rate-limit', title: 'Rate Limit', icon: <Lock size={18} />, desc: t("options.rate-limit.desc") },
+    { id: 'cookie-parser', title: 'Cookie Parser', icon: <Cookie size={18} />, desc: t("options.cookie-parser.desc") },
+    { id: 'compression', title: 'Compression', icon: <Maximize size={18} />, desc: t("options.compression.desc") },
+    { id: 'hpp', title: 'HPP', icon: <Shield size={18} />, desc: t("options.hpp.desc") },
+    { id: 'xss-clean', title: 'XSS Clean', icon: <Terminal size={18} />, desc: t("options.xss-clean.desc") },
+    { id: 'error-handler', title: 'Error Handler', icon: <AlertTriangle size={18} />, desc: t("options.error-handler.desc") },
   ];
 
   const toggleMiddleware = (id: string) => {
@@ -30,8 +32,8 @@ export function MiddlewaresStep() {
   return (
     <div className="space-y-10">
       <div>
-        <h2 className="si-title">HTTP Middlewares</h2>
-        <p className="si-subtitle mt-2">Choose which middleware to include in your Express pipeline.</p>
+        <h2 className="si-title">{t("title")}</h2>
+        <p className="si-subtitle mt-2">{t("subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -65,9 +67,9 @@ export function MiddlewaresStep() {
         <div className="flex gap-3">
           <Cpu className="text-gold shrink-0" size={20} />
           <div>
-            <p className="text-xs font-bold text-gold uppercase tracking-wider mb-1">Standard Stack</p>
+            <p className="text-xs font-bold text-gold uppercase tracking-wider mb-1">{t("infoTitle")}</p>
             <p className="text-sm text-text2">
-              Middlewares will be automatically configured in your <code className="text-gold">app.ts</code> or <code className="text-gold">server.ts</code> using industry best practices.
+              {t("infoDesc")}
             </p>
           </div>
         </div>

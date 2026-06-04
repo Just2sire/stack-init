@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useWizardStore, type ServiceId, type LaravelPluginId } from "@/stores/useWizardStore";
 import { MODULE_LIBRARY } from "@/lib/modules";
 import { ShieldCheck, Upload, Mail, Database, Globe, Layers, Check, Info, Bell, Users, Image, Activity, Gauge, KeyRound } from "lucide-react";
@@ -7,146 +8,38 @@ import { AIAssistant } from "@/components/wizard/AIAssistant";
 
 interface LaravelPluginCard {
   id: LaravelPluginId;
-  name: string;
   icon: React.ReactNode;
-  description: string;
-  generates: string[];
   package: string;
 }
 
-const LARAVEL_PLUGINS: LaravelPluginCard[] = [
-  {
-    id: 'notifications',
-    name: 'Notifications',
-    icon: <Bell size={22} />,
-    description: 'Multi-channel notifications (database, mail, broadcast, SMS) with ShouldQueue support.',
-    generates: ['app/Notifications/WelcomeNotification.php', 'toMail / toDatabase / toArray'],
-    package: 'built-in',
-  },
-  {
-    id: 'socialite',
-    name: 'OAuth / Socialite',
-    icon: <Globe size={22} />,
-    description: 'Social login via Google, GitHub, Facebook. Redirect + callback controller auto-generated.',
-    generates: ['Auth/SocialiteController.php', 'routes/socialite', '.env GOOGLE_CLIENT_ID'],
-    package: 'laravel/socialite',
-  },
-  {
-    id: 'spatie-permissions',
-    name: 'Roles & Permissions',
-    icon: <Users size={22} />,
-    description: 'RBAC complet avec spatie/laravel-permission — rôles, permissions, middleware HasRole.',
-    generates: ['RolesPermissionsSeeder.php', 'Middleware/CheckPermission.php', 'config/permission.php'],
-    package: 'spatie/laravel-permission',
-  },
-  {
-    id: 'spatie-media',
-    name: 'Media Library',
-    icon: <Image size={22} />,
-    description: 'Upload + variants (thumbnails, conversions) via spatie/laravel-medialibrary.',
-    generates: ['MediaController.php', 'routes/media', 'config/media-library.php'],
-    package: 'spatie/laravel-medialibrary',
-  },
-  {
-    id: 'spatie-activity',
-    name: 'Activity Log',
-    icon: <Activity size={22} />,
-    description: 'Audit trail automatique de tous les changements de modèles via spatie/laravel-activitylog.',
-    generates: ['ActivityController.php', 'config/activitylog.php', 'LogsActivity trait'],
-    package: 'spatie/laravel-activitylog',
-  },
-  {
-    id: 'horizon',
-    name: 'Laravel Horizon',
-    icon: <Gauge size={22} />,
-    description: 'Dashboard de monitoring et supervision des queues Redis (requires use_redis).',
-    generates: ['config/horizon.php', 'route /horizon', 'HorizonGate auth'],
-    package: 'laravel/horizon',
-  },
-  {
-    id: 'two-factor-auth',
-    name: 'Two-Factor Auth',
-    icon: <KeyRound size={22} />,
-    description: 'TOTP-based 2FA compatible Google Authenticator — enable, confirm, recovery codes.',
-    generates: ['Auth/TwoFactorController.php', 'add_2fa_to_users migration', 'EnsureTwoFactorEnabled'],
-    package: 'pragmarx/google2fa-laravel',
-  },
+const LARAVEL_PLUGIN_ICONS: LaravelPluginCard[] = [
+  { id: 'notifications',     icon: <Bell     size={22} />, package: 'built-in' },
+  { id: 'socialite',         icon: <Globe    size={22} />, package: 'laravel/socialite' },
+  { id: 'spatie-permissions', icon: <Users   size={22} />, package: 'spatie/laravel-permission' },
+  { id: 'spatie-media',      icon: <Image    size={22} />, package: 'spatie/laravel-medialibrary' },
+  { id: 'spatie-activity',   icon: <Activity size={22} />, package: 'spatie/laravel-activitylog' },
+  { id: 'horizon',           icon: <Gauge    size={22} />, package: 'laravel/horizon' },
+  { id: 'two-factor-auth',   icon: <KeyRound size={22} />, package: 'pragmarx/google2fa-laravel' },
 ];
 
-interface ServiceCard {
+interface ServiceCardMeta {
   id: ServiceId;
-  name: string;
   icon: React.ReactNode;
-  description: string;
-  generates: string[];
-  laravelDescription?: string;
-  laravelGenerates?: string[];
-  badge?: string;
   available: boolean;
+  badge?: string;
 }
 
-const ALL_SERVICES: ServiceCard[] = [
-  {
-    id: 'auth',
-    name: 'Authentication',
-    icon: <ShieldCheck size={24} />,
-    description: 'JWT-based login, register, logout and protected routes.',
-    generates: ['auth.service', 'auth.controller', 'auth.routes', 'jwt.middleware', '.env JWT_SECRET'],
-    available: true,
-  },
-  {
-    id: 'file-upload',
-    name: 'File Upload',
-    icon: <Upload size={24} />,
-    description: 'Multer or S3 integration for file uploads with validation.',
-    generates: ['upload.service', 'upload.routes', 'storage.config'],
-    laravelDescription: 'Storage facade with local/S3 disk support and file validation.',
-    laravelGenerates: ['UploadController.php', 'routes/upload', '.env FILESYSTEM_DISK'],
-    available: true,
-  },
-  {
-    id: 'email',
-    name: 'Email',
-    icon: <Mail size={24} />,
-    description: 'Nodemailer / Sendgrid setup with templated transactional emails.',
-    generates: ['mail.service', 'mail.templates/', '.env SMTP_*'],
-    laravelDescription: 'Laravel Mailable class with Blade template and SMTP/Mailgun config.',
-    laravelGenerates: ['app/Mail/WelcomeMail.php', 'emails/welcome.blade.php', '.env MAIL_*'],
-    available: true,
-  },
-  {
-    id: 'cache',
-    name: 'Cache (Redis)',
-    icon: <Database size={24} />,
-    description: 'Redis client setup with cache helpers for common patterns.',
-    generates: ['cache.service', 'redis.config', '.env REDIS_URL'],
-    laravelDescription: 'Cache facade helpers with Redis driver and example controller.',
-    laravelGenerates: ['CacheExampleController.php', '.env REDIS_HOST', '.env CACHE_DRIVER'],
-    available: true,
-  },
-  {
-    id: 'websockets',
-    name: 'WebSockets',
-    icon: <Globe size={24} />,
-    description: 'Socket.io or native WS server with event-based architecture.',
-    generates: ['gateway', 'ws.server', 'events/'],
-    laravelDescription: 'Laravel Broadcasting with Reverb/Pusher and Laravel Echo client.',
-    laravelGenerates: ['config/broadcasting.php', 'resources/js/echo.js', '.env BROADCAST_*'],
-    available: true,
-  },
-  {
-    id: 'queue',
-    name: 'Queue / Workers',
-    icon: <Layers size={24} />,
-    description: 'Bull (Node) or Celery (Python) queue setup with worker boilerplate.',
-    generates: ['queue.service', 'workers/', '.env REDIS_URL'],
-    laravelDescription: 'Laravel Jobs with retry logic and configurable queue connection.',
-    laravelGenerates: ['app/Jobs/ExampleJob.php', '.env QUEUE_CONNECTION', '.env REDIS_URL'],
-    available: true,
-  },
+const SERVICE_META: ServiceCardMeta[] = [
+  { id: 'auth',        icon: <ShieldCheck size={24} />, available: true },
+  { id: 'file-upload', icon: <Upload      size={24} />, available: true },
+  { id: 'email',       icon: <Mail        size={24} />, available: true },
+  { id: 'cache',       icon: <Database    size={24} />, available: true },
+  { id: 'websockets',  icon: <Globe       size={24} />, available: true },
+  { id: 'queue',       icon: <Layers      size={24} />, available: true },
 ];
 
 export function ServicesStep() {
+  const t = useTranslations("steps");
   const { enabledServices, toggleService, applyTemplate, models, stack, laravelPlugins, toggleLaravelPlugin } = useWizardStore();
   const isLaravel = stack?.includes('laravel') ?? false;
 
@@ -161,17 +54,16 @@ export function ServicesStep() {
     }
   };
 
-  const visibleServices = isLaravel
-    ? ALL_SERVICES.filter(s => s.id !== 'auth')
-    : ALL_SERVICES;
+  const visibleServiceMeta = isLaravel
+    ? SERVICE_META.filter(s => s.id !== 'auth')
+    : SERVICE_META;
 
   return (
     <div className="space-y-10">
       <div>
-        <h2 className="si-title">Services & Integrations</h2>
+        <h2 className="si-title">{t("services.title")}</h2>
         <p className="si-subtitle mt-2">
-          Select ready-made service modules to generate beyond your data models.
-          Each service produces fully working code, not just stubs.
+          {t("services.readyMadeDesc")}
         </p>
       </div>
 
@@ -180,25 +72,44 @@ export function ServicesStep() {
         <div className="flex gap-3 p-4 rounded-xl border border-gold/20 bg-gold/5">
           <Info size={16} className="text-gold mt-0.5 shrink-0" />
           <p className="text-xs text-text2 leading-relaxed">
-            <strong className="text-gold">Authentication</strong> is configured in the Laravel Setup step — choose between Sanctum, Passport, Breeze or Jetstream there.
+            <strong className="text-gold">Authentication</strong>{" "}
+            {t("services.laravelNote")}
           </p>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {visibleServices.map((service) => {
-          const isEnabled = enabledServices.includes(service.id);
-          const isAuth    = service.id === 'auth';
-          const desc      = (isLaravel && service.laravelDescription) ? service.laravelDescription : service.description;
-          const generates = (isLaravel && service.laravelGenerates)   ? service.laravelGenerates   : service.generates;
+        {visibleServiceMeta.map((meta) => {
+          const id = meta.id;
+          const isEnabled = enabledServices.includes(id);
+          const isAuth    = id === 'auth';
+
+          const nameKey     = isLaravel && id !== 'auth' ? `services.options.${id}.titleLaravel` : `services.options.${id}.title`;
+          const descKey     = isLaravel ? `services.options.${id}.descLaravel` : `services.options.${id}.desc`;
+          const generatesKey = isLaravel ? `services.options.${id}.generatesLaravel` : `services.options.${id}.generates`;
+
+          // Fallback: title is always the same key (no Laravel variant for name)
+          const name      = t.has(`services.options.${id}.titleLaravel`) && isLaravel
+            ? t(`services.options.${id}.titleLaravel` as any)
+            : t(`services.options.${id}.title` as any);
+
+          const desc      = t.has(`services.options.${id}.descLaravel`) && isLaravel
+            ? t(`services.options.${id}.descLaravel` as any)
+            : t(`services.options.${id}.desc` as any);
+
+          const generatesRaw = t.has(`services.options.${id}.generatesLaravel`) && isLaravel
+            ? t(`services.options.${id}.generatesLaravel` as any)
+            : t(`services.options.${id}.generates` as any);
+
+          const generates = (generatesRaw as string).split(" · ");
 
           return (
             <div
-              key={service.id}
-              onClick={() => service.available && (isAuth ? handleToggleAuth() : toggleService(service.id))}
+              key={id}
+              onClick={() => meta.available && (isAuth ? handleToggleAuth() : toggleService(id))}
               className={[
                 "si-card relative transition-all duration-200 overflow-hidden",
-                service.available ? "cursor-pointer" : "cursor-not-allowed opacity-50",
+                meta.available ? "cursor-pointer" : "cursor-not-allowed opacity-50",
                 isEnabled ? "ring-1 ring-gold/40" : "",
               ].join(" ")}
               style={{
@@ -207,10 +118,10 @@ export function ServicesStep() {
               }}
             >
               {/* Badge */}
-              {service.badge && (
+              {meta.badge && (
                 <span className="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border"
                   style={{ color: "var(--text3)", borderColor: "var(--border-subtle)" }}>
-                  {service.badge}
+                  {meta.badge}
                 </span>
               )}
 
@@ -224,17 +135,17 @@ export function ServicesStep() {
               <div className="si-card-body flex flex-col gap-3">
                 <div className="flex items-start gap-3">
                   <div className={`p-2 rounded-lg ${isEnabled ? "bg-gold/20 text-gold" : "bg-white/5 text-text3"}`}>
-                    {service.icon}
+                    {meta.icon}
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold text-sm text-text">{service.name}</p>
+                    <p className="font-bold text-sm text-text">{name}</p>
                     <p className="text-xs text-text3 mt-0.5 leading-relaxed">{desc}</p>
                   </div>
                 </div>
 
                 {/* Generated files preview */}
                 <div className="mt-1 pl-1">
-                  <p className="text-[10px] font-bold text-text3 uppercase tracking-widest mb-2">Generates</p>
+                  <p className="text-[10px] font-bold text-text3 uppercase tracking-widest mb-2">{t("services.generatesLabel")}</p>
                   <div className="flex flex-wrap gap-1.5">
                     {generates.map(f => (
                       <span key={f} className="font-mono text-[10px] px-2 py-0.5 rounded border"
@@ -255,15 +166,16 @@ export function ServicesStep() {
         <div className="flex gap-3 p-4 rounded-xl border border-gold/20 bg-gold/5">
           <Info size={16} className="text-gold mt-0.5 shrink-0" />
           <div className="text-xs text-text2 leading-relaxed">
-            <strong className="text-gold">Authentication enabled.</strong> The auth service will be generated for your stack (JWT login, register, protected routes).
-            {!hasUserModel && <span className="ml-1">The <strong>User</strong>, <strong>Session</strong> and <strong>PasswordReset</strong> models have been added automatically.</span>}
+            <strong className="text-gold">{t("services.authEnabledTitle")}</strong>{" "}
+            {t("services.authEnabledDesc")}
+            {!hasUserModel && <span className="ml-1">{t("services.authModelsAdded")}</span>}
           </div>
         </div>
       )}
 
       {enabledServices.length === 0 && !isLaravel && (
         <p className="text-xs text-text3 text-center py-4">
-          No services selected — you can always add them later via the CLI.
+          {t("services.noServices")}
         </p>
       )}
 
@@ -271,17 +183,24 @@ export function ServicesStep() {
       {isLaravel && (
         <div className="space-y-4">
           <div>
-            <h3 className="font-bold text-sm text-text">Laravel Packages</h3>
-            <p className="text-xs text-text3 mt-1">Ready-made integrations — each generates working boilerplate + install instructions.</p>
+            <h3 className="font-bold text-sm text-text">{t("services.laravelSection")}</h3>
+            <p className="text-xs text-text3 mt-1">{t("services.laravelDesc")}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {LARAVEL_PLUGINS.map((plugin) => {
-              const isEnabled = laravelPlugins.includes(plugin.id);
+            {LARAVEL_PLUGIN_ICONS.map((meta) => {
+              const id = meta.id;
+              const isEnabled = laravelPlugins.includes(id);
+
+              const name         = t(`services.laravel.${id}.title` as any);
+              const desc         = t(`services.laravel.${id}.desc` as any);
+              const generatesRaw = t(`services.laravel.${id}.generates` as any) as string;
+              const generates    = generatesRaw.split(" · ");
+
               return (
                 <div
-                  key={plugin.id}
-                  onClick={() => toggleLaravelPlugin(plugin.id)}
+                  key={id}
+                  onClick={() => toggleLaravelPlugin(id)}
                   className={[
                     "si-card relative transition-all duration-200 overflow-hidden cursor-pointer",
                     isEnabled ? "ring-1 ring-gold/40" : "",
@@ -294,7 +213,7 @@ export function ServicesStep() {
                   {/* Package badge */}
                   <span className="absolute top-3 right-3 font-mono text-[9px] px-2 py-0.5 rounded-full border"
                     style={{ color: "var(--text3)", borderColor: "var(--border-subtle)", background: "var(--bg4)" }}>
-                    {plugin.package}
+                    {meta.package}
                   </span>
 
                   {/* Checkmark */}
@@ -307,18 +226,18 @@ export function ServicesStep() {
                   <div className="si-card-body flex flex-col gap-3">
                     <div className="flex items-start gap-3">
                       <div className={`p-2 rounded-lg ${isEnabled ? "bg-gold/20 text-gold" : "bg-white/5 text-text3"}`}>
-                        {plugin.icon}
+                        {meta.icon}
                       </div>
                       <div className="flex-1 pr-20">
-                        <p className="font-bold text-sm text-text">{plugin.name}</p>
-                        <p className="text-xs text-text3 mt-0.5 leading-relaxed">{plugin.description}</p>
+                        <p className="font-bold text-sm text-text">{name}</p>
+                        <p className="text-xs text-text3 mt-0.5 leading-relaxed">{desc}</p>
                       </div>
                     </div>
 
                     <div className="mt-1 pl-1">
-                      <p className="text-[10px] font-bold text-text3 uppercase tracking-widest mb-2">Generates</p>
+                      <p className="text-[10px] font-bold text-text3 uppercase tracking-widest mb-2">{t("services.generatesLabel")}</p>
                       <div className="flex flex-wrap gap-1.5">
-                        {plugin.generates.map(f => (
+                        {generates.map(f => (
                           <span key={f} className="font-mono text-[10px] px-2 py-0.5 rounded border"
                             style={{ color: isEnabled ? "var(--gold)" : "var(--text3)", borderColor: isEnabled ? "var(--gold-border)" : "var(--border-subtle)", background: isEnabled ? "var(--gold-subtle)" : "var(--bg4)" }}>
                             {f}
@@ -334,13 +253,13 @@ export function ServicesStep() {
 
           {laravelPlugins.length === 0 && (
             <p className="text-xs text-text3 text-center py-2">
-              No Laravel packages selected — you can add them at any time.
+              {t("services.noLaravel")}
             </p>
           )}
         </div>
       )}
 
-      <AIAssistant step="services" placeholder='Which services do I need? E.g. "I want to send emails on user signup"' />
+      <AIAssistant step="services" placeholder={t("services.aiPlaceholder")} />
     </div>
   );
 }

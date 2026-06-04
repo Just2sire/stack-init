@@ -3,12 +3,9 @@
 import { useWizardStore } from "@/stores/useWizardStore";
 import { SubStepPills } from "../SubStepPills";
 import { Box, Globe, ShieldCheck, Lock, Folder, FileCode, Check, Database, Layers, Zap, Leaf } from "lucide-react";
+import { useTranslations } from "next-intl";
 
-const SUB_STEPS = [
-  { label: "Architecture Layout" },
-  { label: "Database & ORM" },
-  { label: "Modules & Security" },
-];
+const SUB_STEPS_KEYS = ["architectureLayout", "databaseOrm", "modulesAndSecurity"] as const;
 
 const ARCH_TREES = {
   layered: [
@@ -52,10 +49,10 @@ const ARCH_TREES = {
 };
 
 const ORM_OPTIONS = [
-  { id: 'typeorm',  title: 'TypeORM',  desc: 'Decorator-based ORM, native NestJS integration.',      Icon: Layers },
-  { id: 'prisma',   title: 'Prisma',   desc: 'Type-safe schema-first ORM with full auto-completion.', Icon: Database },
-  { id: 'mongoose', title: 'Mongoose', desc: 'MongoDB ODM — requires MongoDB engine.',                Icon: Leaf },
-  { id: 'drizzle',  title: 'Drizzle',  desc: 'Lightweight TypeScript-first SQL query builder.',       Icon: Zap },
+  { id: 'typeorm',  title: 'TypeORM',  Icon: Layers   },
+  { id: 'prisma',   title: 'Prisma',   Icon: Database  },
+  { id: 'mongoose', title: 'Mongoose', Icon: Leaf      },
+  { id: 'drizzle',  title: 'Drizzle',  Icon: Zap       },
 ] as const;
 
 const DB_ENGINES = [
@@ -66,12 +63,15 @@ const DB_ENGINES = [
 ] as const;
 
 export function NestStep() {
+  const t = useTranslations("steps");
   const { nestOptions, setNestOptions, currentSubStep, setCurrentSubStep } = useWizardStore();
 
+  const SUB_STEPS = SUB_STEPS_KEYS.map((key) => ({ label: t(`nestSetup.subStep.${key}`) }));
+
   const architectures = [
-    { id: 'layered', title: 'Layered', desc: 'Standard controllers/services/repositories architecture.' },
-    { id: 'modular', title: 'Modular', desc: 'Highly encapsulated modules for large applications.' },
-    { id: 'cqrs', title: 'CQRS', desc: 'Separation of Read and Write concerns for complex logic.' },
+    { id: 'layered', title: 'Layered', desc: t("nestSetup.arch.layered.desc") },
+    { id: 'modular', title: 'Modular', desc: t("nestSetup.arch.modular.desc") },
+    { id: 'cqrs',    title: 'CQRS',    desc: t("nestSetup.arch.cqrs.desc") },
   ] as const;
 
   const currentOrm = nestOptions.orm ?? 'typeorm';
@@ -96,8 +96,8 @@ export function NestStep() {
     <div className="space-y-6">
       <div>
         <span className="si-section-label">Backend</span>
-        <h2 className="si-title" style={{ marginBottom: 4 }}>NestJS Setup</h2>
-        <p className="si-subtitle">Fine-tune your modular backend architecture and features.</p>
+        <h2 className="si-title" style={{ marginBottom: 4 }}>{t("nestSetup.title")}</h2>
+        <p className="si-subtitle">{t("nestSetup.subtitle")}</p>
       </div>
 
       <SubStepPills steps={SUB_STEPS} current={currentSubStep} onSelect={setCurrentSubStep} />
@@ -106,7 +106,7 @@ export function NestStep() {
       {currentSubStep === 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, maxWidth: 840, alignItems: "start" }}>
           <div className="space-y-3" role="radiogroup" aria-label="NestJS Architecture Patterns">
-            <span className="si-section-label" style={{ marginBottom: 8, display: "block" }}>Select Layout</span>
+            <span className="si-section-label" style={{ marginBottom: 8, display: "block" }}>{t("nestSetup.selectLayout")}</span>
             {architectures.map((arch) => {
               const isSelected = nestOptions.architecture === arch.id;
               return (
@@ -146,7 +146,7 @@ export function NestStep() {
           </div>
 
           <div>
-            <span className="si-section-label" style={{ marginBottom: 8, display: "block" }}>Structure Preview</span>
+            <span className="si-section-label" style={{ marginBottom: 8, display: "block" }}>{t("nestSetup.structurePreview")}</span>
             <div
               className="si-yaml-preview"
               style={{
@@ -164,7 +164,7 @@ export function NestStep() {
             >
               <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 12, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 8 }}>
                 <Folder size={13} className="text-gold" />
-                <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--text3)", letterSpacing: "0.05em" }}>Generated Directory Tree</span>
+                <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--text3)", letterSpacing: "0.05em" }}>{t("nestSetup.generatedTree")}</span>
               </div>
               {ARCH_TREES[nestOptions.architecture as keyof typeof ARCH_TREES]?.map((line, i) => {
                 const isFile = line.includes(".ts");
@@ -188,9 +188,9 @@ export function NestStep() {
 
           {/* ORM selection */}
           <div>
-            <span className="si-section-label" style={{ marginBottom: 10, display: "block" }}>ORM / Database Driver</span>
+            <span className="si-section-label" style={{ marginBottom: 10, display: "block" }}>{t("nestSetup.ormDriver")}</span>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              {ORM_OPTIONS.map(({ id, title, desc, Icon }) => {
+              {ORM_OPTIONS.map(({ id, title, Icon }) => {
                 const isSelected = currentOrm === id;
                 return (
                   <button
@@ -216,7 +216,7 @@ export function NestStep() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-sm mb-0.5" style={{ color: isSelected ? "var(--gold)" : "var(--text)" }}>{title}</div>
-                      <p className="text-[11px] text-text3 leading-normal">{desc}</p>
+                      <p className="text-[11px] text-text3 leading-normal">{t(`nestSetup.orm.${id}.desc`)}</p>
                     </div>
                     {isSelected && (
                       <div className="w-5 h-5 rounded-full bg-gold flex items-center justify-center shrink-0">
@@ -231,7 +231,7 @@ export function NestStep() {
 
           {/* DB Engine selection */}
           <div>
-            <span className="si-section-label" style={{ marginBottom: 10, display: "block" }}>Database Engine</span>
+            <span className="si-section-label" style={{ marginBottom: 10, display: "block" }}>{t("nestSetup.engineSection")}</span>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               {DB_ENGINES.map(({ id, label }) => {
                 const isMongoPill = id === 'mongodb';
@@ -261,7 +261,7 @@ export function NestStep() {
                     {isSelected && <Check size={12} strokeWidth={3} />}
                     {label}
                     {isMongoPill && !isMongoose && (
-                      <span style={{ fontSize: 9, opacity: 0.6, marginLeft: 2 }}>Mongoose only</span>
+                      <span style={{ fontSize: 9, opacity: 0.6, marginLeft: 2 }}>{t("nestSetup.mongooseOnly")}</span>
                     )}
                   </button>
                 );
@@ -269,7 +269,7 @@ export function NestStep() {
             </div>
             {isMongoose && (
               <p className="text-[11px] text-text3 mt-3">
-                MongoDB is required when using Mongoose. Other engines are not compatible.
+                {t("nestSetup.mongoWarning")}
               </p>
             )}
           </div>
@@ -279,7 +279,7 @@ export function NestStep() {
       {/* Sub-step 2 — Modules & Security */}
       {currentSubStep === 2 && (
         <div style={{ maxWidth: 840 }} className="space-y-6">
-          <span className="si-section-label" style={{ display: "block" }}>Available Integrations</span>
+          <span className="si-section-label" style={{ display: "block" }}>{t("nestSetup.integrations")}</span>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
@@ -299,8 +299,8 @@ export function NestStep() {
               <div className="flex items-center gap-3">
                 <Globe size={18} className={nestOptions.swagger ? "text-gold" : "text-text3"} />
                 <div>
-                  <div className="font-bold text-sm" style={{ color: nestOptions.swagger ? "var(--gold)" : "var(--text)" }}>Swagger Documentation</div>
-                  <p className="text-[11px] text-text3 mt-0.5">Auto-generate OpenAPI spec at /api/docs</p>
+                  <div className="font-bold text-sm" style={{ color: nestOptions.swagger ? "var(--gold)" : "var(--text)" }}>{t("nestSetup.swagger")}</div>
+                  <p className="text-[11px] text-text3 mt-0.5">{t("nestSetup.swaggerDesc")}</p>
                 </div>
               </div>
             </button>
@@ -322,8 +322,8 @@ export function NestStep() {
               <div className="flex items-center gap-3">
                 <ShieldCheck size={18} className={nestOptions.validation ? "text-gold" : "text-text3"} />
                 <div>
-                  <div className="font-bold text-sm" style={{ color: nestOptions.validation ? "var(--gold)" : "var(--text)" }}>Global Validation</div>
-                  <p className="text-[11px] text-text3 mt-0.5">Enforce class-validator and ValidationPipe</p>
+                  <div className="font-bold text-sm" style={{ color: nestOptions.validation ? "var(--gold)" : "var(--text)" }}>{t("nestSetup.validation")}</div>
+                  <p className="text-[11px] text-text3 mt-0.5">{t("nestSetup.validationDesc")}</p>
                 </div>
               </div>
             </button>
@@ -345,8 +345,8 @@ export function NestStep() {
               <div className="flex items-center gap-3">
                 <Lock size={18} className={nestOptions.auth === 'jwt' ? "text-gold" : "text-text3"} />
                 <div>
-                  <div className="font-bold text-sm" style={{ color: nestOptions.auth === 'jwt' ? "var(--gold)" : "var(--text)" }}>JWT Authentication</div>
-                  <p className="text-[11px] text-text3 mt-0.5">Add Passport JWT Guard, Strategy and AuthModule</p>
+                  <div className="font-bold text-sm" style={{ color: nestOptions.auth === 'jwt' ? "var(--gold)" : "var(--text)" }}>{t("nestSetup.jwt")}</div>
+                  <p className="text-[11px] text-text3 mt-0.5">{t("nestSetup.jwtDesc")}</p>
                 </div>
               </div>
             </button>
@@ -356,9 +356,9 @@ export function NestStep() {
             <div className="flex gap-3">
               <FileCode className="text-gold shrink-0" size={18} />
               <div>
-                <p className="text-xs font-bold text-gold uppercase tracking-wider mb-1">TypeScript Architecture First</p>
+                <p className="text-xs font-bold text-gold uppercase tracking-wider mb-1">{t("nestSetup.tsFirst")}</p>
                 <p className="text-sm text-text2" style={{ lineHeight: 1.5 }}>
-                  All generated modules, controllers, and providers will follow NestJS architectural patterns with strict dependency injection, DTO generation, and {currentOrm === 'typeorm' ? 'TypeORM' : currentOrm === 'prisma' ? 'Prisma' : currentOrm === 'mongoose' ? 'Mongoose' : 'Drizzle'} bindings.
+                  {t("nestSetup.tsFirstDesc", { orm: currentOrm === 'typeorm' ? 'TypeORM' : currentOrm === 'prisma' ? 'Prisma' : currentOrm === 'mongoose' ? 'Mongoose' : 'Drizzle' })}
                 </p>
               </div>
             </div>

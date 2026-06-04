@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   ReactFlow,
   Background,
@@ -175,6 +176,7 @@ function ErdBody({
 }
 
 export function RelationsStep() {
+  const t = useTranslations("steps");
   const { models } = useWizardStore();
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
 
@@ -185,9 +187,9 @@ export function RelationsStep() {
   if (models.length === 0) {
     return (
       <div className="si-step-panel">
-        <div className="si-section-label">Relationships</div>
+        <div className="si-section-label">{t("relations.sectionLabel")}</div>
         <h1 className="si-title" style={{ marginBottom: 8 }}>
-          Relations
+          {t("relations.title")}
         </h1>
         <div
           style={{
@@ -202,9 +204,9 @@ export function RelationsStep() {
           <span style={{ fontSize: 36, display: "block", marginBottom: 12, opacity: 0.3 }}>
             ⇄
           </span>
-          <p style={{ fontSize: 14 }}>Create models first</p>
+          <p style={{ fontSize: 14 }}>{t("relations.createModelsFirst")}</p>
           <p style={{ fontSize: 12, marginTop: 4, opacity: 0.7 }}>
-            Go back and define your models to set up relations
+            {t("relations.goBack")}
           </p>
         </div>
       </div>
@@ -235,7 +237,7 @@ export function RelationsStep() {
       >
         <div>
           <div className="si-section-label" style={{ marginBottom: 0 }}>
-            Relationships
+            {t("relations.sectionLabel")}
           </div>
           <h1
             style={{
@@ -246,11 +248,11 @@ export function RelationsStep() {
               margin: 0,
             }}
           >
-            Relations
+            {t("relations.title")}
           </h1>
         </div>
         <p style={{ fontSize: 12, color: "var(--text3)" }}>
-          Click a node to manage its relations · Drag between nodes to add · Delete edges with ✕
+          {t("relations.canvasHint")}
         </p>
       </div>
 
@@ -308,10 +310,10 @@ export function RelationsStep() {
                   marginBottom: 6,
                 }}
               >
-                Select a model
+                {t("relations.selectModel")}
               </p>
               <p style={{ fontSize: 12 }}>
-                Click any node in the diagram to view and edit its relations
+                {t("relations.clickNode")}
               </p>
             </div>
           )}
@@ -329,6 +331,7 @@ function RelationPanel({
   model: Model;
   allModels: Model[];
 }) {
+  const t = useTranslations("steps");
   const { addRelation, removeRelation, stack } = useWizardStore();
   const [relType, setRelType]         = useState("hasMany");
   const [targetModel, setTargetModel] = useState("");
@@ -401,7 +404,7 @@ function RelationPanel({
             marginBottom: 16,
           }}
         >
-          No relations yet.
+          {t("relations.noRelations")}
         </p>
       ) : (
         <div
@@ -575,7 +578,7 @@ function RelationPanel({
           }}
         >
           <Plus size={14} />
-          Add relationship
+          {t("relations.addRelation")}
         </button>
       )}
 
@@ -591,23 +594,10 @@ function RelationPanel({
             fontSize: 10,
           }}
         >
-          Auto-detection
+          {t("relations.autoDetection")}
         </p>
         <p style={{ color: "var(--text2)", lineHeight: 1.6, fontSize: 12 }}>
-          Fields of type{" "}
-          <code
-            style={{
-              fontFamily: "var(--font-jetbrains-mono)",
-              background: "rgba(255,255,255,0.06)",
-              padding: "1px 6px",
-              borderRadius: 4,
-              color: "var(--text)",
-              fontSize: 11,
-            }}
-          >
-            foreignId
-          </code>{" "}
-          automatically generate relations.
+          {t("relations.autoDesc")}
         </p>
       </div>
     </div>

@@ -40,6 +40,8 @@
   --font-sans: var(--font-space-grotesk);
   --font-mono: var(--font-jetbrains-mono);
   --font-display: var(--font-syne);
+
+  --breakpoint-xs: 480px;
 }
 
 /* ================================================================
@@ -289,6 +291,32 @@
     justify-content: space-between;
     background: var(--bg2);
     flex-shrink: 0;
+  }
+
+  /* ─── Wizard Layout — Mobile Responsive ──────────────────────── */
+
+  .si-wizard-sidebar--sheet {
+    width: 100%;
+    border-right: none;
+    height: 100%;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  @media (max-width: 1023px) {
+    .si-wizard-sidebar { display: none; }
+    .si-wiz-header     { padding: 0 16px; }
+    .si-wiz-body       { padding: 24px 16px; }
+    .si-wizard-footer  { padding: 14px 16px; }
+  }
+
+  @media (max-width: 479px) {
+    .si-wiz-body      { padding: 16px 12px; }
+    .si-wizard-footer { padding: 12px 12px; }
+  }
+
+  @media (max-width: 639px) {
+    .guide-card { padding: 20px 16px 18px; }
   }
 
   /* ─── Progress Dots ─────────────────────────────────────────── */

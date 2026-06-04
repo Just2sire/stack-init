@@ -2,32 +2,34 @@
 
 import { useWizardStore } from "@/stores/useWizardStore";
 import { Layout, Database, ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function UsageStep() {
   const { nextjsUsage, setNextjsUsage } = useWizardStore();
+  const t = useTranslations("steps.usage");
 
   const options = [
     {
       id: "frontend-only" as const,
-      title: "Frontend Only",
+      title: t("options.frontend-only.title"),
       icon: <Layout className="w-8 h-8" />,
-      desc: "Next.js as a React renderer. Your API comes from elsewhere (Laravel, Express, etc.).",
-      benefit: "Generates a specialized Frontend ZIP.",
+      desc: t("options.frontend-only.desc"),
+      benefit: t("options.frontend-only.benefit"),
     },
     {
       id: "full-stack" as const,
-      title: "Full-Stack",
+      title: t("options.full-stack.title"),
       icon: <Database className="w-8 h-8" />,
-      desc: "API Routes or Server Actions with direct database access. Everything in one project.",
-      benefit: "Generates a full project ZIP with Prisma/ORM.",
+      desc: t("options.full-stack.desc"),
+      benefit: t("options.full-stack.benefit"),
     },
   ];
 
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="si-title">How will you use Next.js?</h2>
-        <p className="si-subtitle mt-2">Choose the architecture that best fits your needs.</p>
+        <h2 className="si-title">{t("title")}</h2>
+        <p className="si-subtitle mt-2">{t("subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -65,7 +67,7 @@ export function UsageStep() {
       {nextjsUsage && (
         <div className="si-info-card animate-in fade-in slide-in-from-bottom-2 duration-300">
           <p className="text-sm font-medium">
-            Next step: {nextjsUsage === "frontend-only" ? "Architecture Setup" : "Database Configuration"}
+            {t("nextStep")}: {nextjsUsage === "frontend-only" ? t("nextStepArchitecture") : t("nextStepDatabase")}
           </p>
         </div>
       )}

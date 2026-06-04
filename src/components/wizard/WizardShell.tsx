@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { StepId, useWizardStore } from "@/stores/useWizardStore";
-import Link from "next/link";
-import { Layers } from "lucide-react";
+import { Menu } from "lucide-react";
 import { WizardSidebar } from "./WizardSidebar";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { StackStep } from "./steps/StackStep";
 import { UsageStep } from "./steps/UsageStep";
 import { ArchitectureStep } from "./steps/ArchitectureStep";
@@ -20,23 +21,27 @@ import { FastAPISetupStep } from "./steps/FastAPISetupStep";
 import { IntegrationStep } from "./steps/IntegrationStep";
 import { ServicesStep } from "./steps/ServicesStep";
 import { ArchitectDrawer } from "./ArchitectDrawer";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useTranslations } from "next-intl";
 
 export function WizardShell() {
   const { currentStepId, nextStep, prevStep, canProceed, steps, setStack, setProjectName } = useWizardStore();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const t = useTranslations("wizard");
 
   const QUICK_STARTS = [
     {
-      label: 'Blog simple',
+      label: t('shell.quickStartBlog'),
       icon: '📝',
       action: () => { setProjectName('my-blog'); setStack('express+react'); nextStep(); },
     },
     {
-      label: 'API REST',
+      label: t('shell.quickStartApi'),
       icon: '🔌',
       action: () => { setProjectName('my-api'); setStack('express'); nextStep(); },
     },
     {
-      label: 'SaaS Starter',
+      label: t('shell.quickStartSaas'),
       icon: '🚀',
       action: () => { setProjectName('my-saas'); setStack('nestjs+react'); nextStep(); },
     },
@@ -66,32 +71,35 @@ export function WizardShell() {
   const currentIndex = steps.indexOf(currentStepId);
   const isLastStep = currentIndex === steps.length - 1;
 
-  const STEP_DESCRIPTIONS: Record<StepId, string> = {
-    stack: "Choose your tech stack",
-    usage: "Select how you will use Next.js",
-    architecture: "Define your project architecture",
-    database: "Configure your database & ORM",
-    services: "Select service modules to generate",
-    models: "Define your data structure",
-    relations: "Connect your models",
-    'laravel-setup': "Configure your backend",
-    'nest-setup': "Configure your NestJS backend",
-    'fastapi-setup': "Configure FastAPI backend",
-    'react-setup': "Configure your frontend",
-    'integration': "Connect Frontend & Backend",
-    output: "Generate and download",
-    routes: "Define your API routes",
-    middlewares: "Select your middlewares",
-  };
 
   return (
     <div className="si-wizard-layout">
+      {/* Desktop sidebar — masquée sur mobile via CSS */}
       <WizardSidebar />
+
+      {/* Mobile Sheet drawer */}
+      <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+        <SheetContent
+          side="left"
+          className="p-0 w-[260px] border-r border-[var(--border-subtle)] bg-[var(--bg2)]"
+        >
+          <WizardSidebar variant="sheet" onNavigate={() => setMobileNavOpen(false)} />
+        </SheetContent>
+      </Sheet>
 
       <div className="si-wizard-main">
         {/* Header */}
-        <div className="si-wiz-header" style={{ height: 72, boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div className="si-wiz-header" style={{ boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* Hamburger — visible uniquement sous lg */}
+            <button
+              className="lg:hidden si-btn-secondary"
+              style={{ padding: "7px 10px", borderRadius: 8, flexShrink: 0 }}
+              onClick={() => setMobileNavOpen(true)}
+              aria-label={t("shell.openNav")}
+            >
+              <Menu size={18} />
+            </button>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ width: 20, height: 1, background: "var(--gold)" }} />
               <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
@@ -103,27 +111,30 @@ export function WizardShell() {
                   textTransform: "uppercase",
                   letterSpacing: "0.1em"
                 }}>
-                  Step {currentIndex + 1}
+                  {t("shell.stepLabel", { current: currentIndex + 1 })}
                 </span>
                 <span style={{ color: "var(--text3)", fontSize: 16, fontWeight: 300 }}>/</span>
-                <span style={{ 
-                  fontSize: 14, 
-                  fontWeight: 600, 
+                <span style={{
+                  fontSize: 14,
+                  fontWeight: 600,
                   color: "var(--text2)",
                   letterSpacing: "-0.01em"
                 }}>
-                  {STEP_DESCRIPTIONS[currentStepId]}
+                  {t(`stepDescriptions.${currentStepId}`)}
                 </span>
               </div>
             </div>
           </div>
-          <ArchitectDrawer />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <LanguageSwitcher />
+            <ArchitectDrawer />
+          </div>
         </div>
 
         {/* Quick-start presets */}
         {currentStepId === 'stack' && (
           <div style={{
-            padding: '8px 32px',
+            padding: '8px 16px',
             borderBottom: '1px solid var(--border-subtle)',
             display: 'flex',
             alignItems: 'center',
@@ -131,7 +142,7 @@ export function WizardShell() {
             background: 'var(--bg2)',
           }}>
             <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 4 }}>
-              Quick start:
+              {t("shell.quickStart")}
             </span>
             {QUICK_STARTS.map(qs => (
               <button
@@ -169,10 +180,11 @@ export function WizardShell() {
             disabled={currentIndex === 0}
             className="si-btn-secondary"
           >
-            ← Back
+            {t("shell.back")}
           </button>
 
-          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          {/* Dots — cachés sous 480px */}
+          <div className="hidden xs:flex" style={{ gap: 6, alignItems: "center" }}>
             {steps.map((id, i) => (
               <div
                 key={id}
@@ -184,6 +196,10 @@ export function WizardShell() {
               />
             ))}
           </div>
+          {/* Counter compact — visible uniquement sous 480px */}
+          <span className="xs:hidden" style={{ fontSize: 12, color: "var(--text3)" }}>
+            {currentIndex + 1}/{steps.length}
+          </span>
 
           {!isLastStep ? (
             <button
@@ -191,7 +207,7 @@ export function WizardShell() {
               disabled={!canProceed()}
               className="si-btn-primary"
             >
-              Continue →
+              {t("shell.continue")}
             </button>
           ) : (
             <div style={{ width: 120 }} />

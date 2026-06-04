@@ -3,11 +3,13 @@
 import { useWizardStore } from "@/stores/useWizardStore";
 import { Layers, FolderTree, Box, Minimize2 } from "lucide-react";
 import type { ExpressConfig, NestConfig, ReactOptions } from "@stack-init/schema";
+import { useTranslations } from "next-intl";
 
 type ArchPattern = 'feature-first' | 'ddd' | 'mvvm' | 'mvc' | 'layered' | 'minimal';
 
 export function ArchitectureStep() {
   const { stack, reactOptions, setReactOptions, expressOptions, setExpressOptions, nestOptions, setNestOptions, fastapiOptions, setFastAPIOptions } = useWizardStore();
+  const t = useTranslations("steps.architecture");
 
   const isFrontend = stack === 'react' || stack === 'nextjs';
 
@@ -34,7 +36,7 @@ export function ArchitectureStep() {
   const patterns = [
     {
       id: 'feature-first',
-      title: 'Feature-First',
+      title: t("options.feature-first.title"),
       icon: <Layers className="w-6 h-6" />,
       show: isFrontend,
       tree: [
@@ -47,7 +49,7 @@ export function ArchitectureStep() {
     },
     {
       id: 'ddd',
-      title: 'Domain-Driven',
+      title: t("options.ddd.title"),
       icon: <FolderTree className="w-6 h-6" />,
       show: isFrontend,
       tree: [
@@ -59,7 +61,7 @@ export function ArchitectureStep() {
     },
     {
       id: 'mvc',
-      title: 'MVC Pattern',
+      title: t("options.mvc.title"),
       icon: <Box className="w-6 h-6" />,
       show: isBackend || stack === 'laravel',
       tree: [
@@ -71,7 +73,7 @@ export function ArchitectureStep() {
     },
     {
       id: 'layered',
-      title: 'Layered (N-Tier)',
+      title: t("options.layered.title"),
       icon: <Layers className="w-6 h-6" />,
       show: isBackend,
       tree: [
@@ -83,7 +85,7 @@ export function ArchitectureStep() {
     },
     {
       id: 'minimal',
-      title: 'Minimal',
+      title: t("options.minimal.title"),
       icon: <Minimize2 className="w-6 h-6" />,
       show: true,
       tree: [
@@ -97,8 +99,8 @@ export function ArchitectureStep() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="si-title">Project Architecture</h2>
-        <p className="si-subtitle mt-2">Select the organizational pattern for your source code.</p>
+        <h2 className="si-title">{t("title")}</h2>
+        <p className="si-subtitle mt-2">{t("subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

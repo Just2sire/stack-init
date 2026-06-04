@@ -3,9 +3,11 @@
 import Link from 'next/link'
 import { LayoutDashboard, LogIn } from 'lucide-react'
 import { useUser } from '@/lib/supabase/use-user'
+import { useTranslations } from 'next-intl'
 
 export function NavAuthButton() {
   const { user, loading } = useUser()
+  const t = useTranslations('auth')
 
   if (loading) return null
 
@@ -22,7 +24,7 @@ export function NavAuthButton() {
         }}
       >
         <LayoutDashboard size={14} />
-        Dashboard
+        {t('dashboard')}
       </Link>
     )
   }
@@ -38,7 +40,7 @@ export function NavAuthButton() {
       }}
     >
       <LogIn size={14} />
-      Se connecter
+      {t('signIn')}
     </Link>
   )
 }

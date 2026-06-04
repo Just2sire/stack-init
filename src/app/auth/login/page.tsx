@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Eye, EyeOff, ArrowLeft, Mail, Lock, Zap, Layers, Database, GitBranch } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 /* ─── Login Form ────────────────────────────────────────────────────── */
 
@@ -14,6 +15,7 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirectTo') ?? '/dashboard'
   const supabase = createClient()
+  const t = useTranslations('auth')
 
   const [email, setEmail]               = useState('')
   const [password, setPassword]         = useState('')
@@ -92,24 +94,24 @@ function LoginForm() {
             lineHeight: 1.2, color: 'var(--text)', marginBottom: 16,
             letterSpacing: '-0.03em',
           }}>
-            Configure once.
+            {t('tagline1')}
             <br />
-            <span style={{ color: 'var(--gold)' }}>Ship fast.</span>
+            <span style={{ color: 'var(--gold)' }}>{t('taglineGold')}</span>
           </h2>
           <p style={{
             fontSize: 14, color: 'var(--text2)', lineHeight: 1.6,
             marginBottom: 40,
           }}>
-            Connecte-toi pour retrouver tes projets, tes schémas et relancer tes générations en un clic.
+            {t('taglineDesc')}
           </p>
 
           {/* Feature pills */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
-              { icon: Layers, text: 'Modélisation visuelle de données', color: 'var(--gold)' },
-              { icon: Database, text: 'Extraction SQL automatique', color: 'var(--blue)' },
-              { icon: GitBranch, text: 'Relations & routes générées', color: 'var(--purple)' },
-              { icon: Zap, text: 'Téléchargement client-side', color: 'var(--green)' },
+              { icon: Layers, text: t('featureVisual'), color: 'var(--gold)' },
+              { icon: Database, text: t('featureSql'), color: 'var(--blue)' },
+              { icon: GitBranch, text: t('featureRelations'), color: 'var(--purple)' },
+              { icon: Zap, text: t('featureDownload'), color: 'var(--green)' },
             ].map(({ icon: Icon, text, color }) => (
               <div key={text} style={{
                 display: 'flex', alignItems: 'center', gap: 12,
@@ -170,7 +172,7 @@ function LoginForm() {
           }}
         >
           <ArrowLeft size={14} />
-          Accueil
+          {t('backHome')}
         </Link>
 
         {/* Mobile logo (visible on small screens) */}
@@ -194,10 +196,10 @@ function LoginForm() {
               fontFamily: 'var(--font-syne)', fontSize: 24, fontWeight: 800,
               color: 'var(--text)', marginBottom: 6, letterSpacing: '-0.02em',
             }}>
-              Content de te revoir
+              {t('signInTitle')}
             </h1>
             <p style={{ fontSize: 14, color: 'var(--text3)', lineHeight: 1.5 }}>
-              Connecte-toi à ton compte StackInit
+              {t('signInSubtitle')}
             </p>
           </div>
 
@@ -225,7 +227,7 @@ function LoginForm() {
             }}
           >
             <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-            Continuer avec GitHub
+            {t('signInWithGithub')}
           </button>
 
           {/* Divider */}
@@ -237,7 +239,7 @@ function LoginForm() {
             <span style={{
               fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase',
               letterSpacing: '0.08em', fontWeight: 600,
-            }}>ou par email</span>
+            }}>{t('orByEmail')}</span>
             <div style={{ flex: 1, height: 1, background: 'var(--border-subtle)' }} />
           </div>
 
@@ -286,7 +288,7 @@ function LoginForm() {
                   onBlur={() => setFocusedField(null)}
                   required
                   autoComplete="email"
-                  placeholder="toi@exemple.com"
+                  placeholder={t('emailPlaceholder')}
                   style={{
                     width: '100%', padding: '12px 14px',
                     background: 'transparent',
@@ -352,7 +354,7 @@ function LoginForm() {
                   onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text)'}
                   onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text3)'}
                   tabIndex={-1}
-                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  aria-label={showPassword ? t('hidePassword') : t('showPassword')}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -392,9 +394,9 @@ function LoginForm() {
                     animation: 'spin 0.6s linear infinite',
                     display: 'inline-block',
                   }} />
-                  Connexion...
+                  {t('signingIn')}
                 </span>
-              ) : 'Se connecter'}
+              ) : t('signInButton')}
             </button>
           </form>
 
@@ -403,7 +405,7 @@ function LoginForm() {
             display: 'flex', justifyContent: 'center', gap: 4,
             marginTop: 28, fontSize: 13,
           }}>
-            <span style={{ color: 'var(--text3)' }}>Pas encore de compte ?</span>
+            <span style={{ color: 'var(--text3)' }}>{t('noAccount')}</span>
             <Link
               href="/auth/register"
               style={{
@@ -413,7 +415,7 @@ function LoginForm() {
               onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
               onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
             >
-              Créer un compte
+              {t('createAccountLink')}
             </Link>
           </div>
         </div>
@@ -423,7 +425,7 @@ function LoginForm() {
           position: 'absolute', bottom: 20, left: 0, right: 0,
           display: 'flex', justifyContent: 'center', gap: 20,
         }}>
-          {['Confidentialité', 'Conditions', 'Aide'].map((item) => (
+          {[t('footerPrivacy'), t('footerTerms'), t('footerHelp')].map((item) => (
             <span key={item} style={{
               fontSize: 11, color: 'var(--text3)',
               cursor: 'pointer', transition: 'color 0.2s',
@@ -459,7 +461,8 @@ export default function LoginPage() {
             animation: 'spin 0.6s linear infinite',
             display: 'inline-block',
           }} />
-          Chargement...
+          {/* Static fallback — useTranslations not available outside component tree */}
+          Loading...
         </span>
       </div>
     }>

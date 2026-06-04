@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { NavAuthButton } from "@/components/auth/NavAuthButton";
 import { HeroIllustration } from "@/components/landing/HeroIllustration";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useTranslations } from "next-intl";
 
 /* ─── Static Mock Data for Interactive Stacks ───────────────────────── */
 
@@ -220,6 +222,9 @@ const STACKS_DATA: Record<string, {
 /* ─── Main Component ────────────────────────────────────────────────── */
 
 export default function Home() {
+  const t = useTranslations("landing");
+  const tNav = useTranslations("nav");
+
   // Features Console Active Tab
   const [activeTab, setActiveTab] = useState<string>("visual");
   const tabListRef = useRef<HTMLDivElement>(null);
@@ -414,11 +419,11 @@ export default function Home() {
         </Link>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Link href="/guides" className="si-btn-secondary" style={{
+          <Link href="/guides" className="hidden sm:flex si-btn-secondary" style={{
             padding: "6px 14px", borderRadius: 8, fontSize: 13, border: "none", background: "none"
           }}>
             <BookOpen size={14} style={{ marginRight: 6 }} />
-            Guides
+            {tNav("guides")}
           </Link>
           <div style={{
             alignItems: "center", gap: 6,
@@ -428,9 +433,10 @@ export default function Home() {
             fontSize: 12, color: "var(--text3)",
           }} className="hidden md:flex">
             <span className="tech-dot-indicator green tech-pulse" />
-            Free · Open Source
+            {tNav("freeOpenSource")}
           </div>
           <NavAuthButton />
+          <LanguageSwitcher />
         </div>
       </nav>
 
@@ -450,7 +456,7 @@ export default function Home() {
             gap: 6
           }}>
             <Cpu size={12} className="tech-pulse" />
-            Visual Scaffolder · Open Source
+            {t("badge")}
           </div>
 
           {/* Heading */}
@@ -463,9 +469,9 @@ export default function Home() {
             marginBottom: 20,
             color: "var(--text)"
           }}>
-            Schema In.{" "}
+            {t("headline1")}{" "}
             <span style={{ color: "var(--gold)", position: "relative", display: "inline-block" }}>
-              Code Out.
+              {t("headline2")}
               <span style={{
                 position: "absolute", bottom: -2, left: 0, right: 0, height: 2,
                 background: "linear-gradient(90deg, var(--gold), transparent)",
@@ -478,9 +484,9 @@ export default function Home() {
           <p style={{
             fontSize: "clamp(14px, 1.2vw, 16px)",
             color: "var(--text2)", lineHeight: 1.65,
-            maxWidth: 460, marginBottom: 32,
+            maxWidth: "min(460px, 100%)", marginBottom: 32,
           }}>
-            StackInit is the fastest <strong>tech-stack boilerplate generator</strong>. Design your data models visually, pick your stack, and download a fully-wired codebase — no boilerplate, no copy-paste.
+            {t.rich("description", { strong: (c) => <strong>{c}</strong> })}
           </p>
 
           {/* Actions */}
@@ -490,14 +496,14 @@ export default function Home() {
               boxShadow: "0 0 48px rgba(245,200,66,0.30), 0 4px 16px rgba(0,0,0,0.4)"
             }}>
               <Zap size={16} fill="currentColor" />
-              Launch the wizard
+              {t("launchWizard")}
             </Link>
             <a href="#console" className="si-btn-secondary" style={{
               padding: "14px 28px", borderRadius: 10, fontSize: 15,
               background: "var(--bg3)", border: "1px solid var(--border-medium)"
             }}>
               <Eye size={16} style={{ marginRight: 6 }} />
-              Explore features
+              {t("exploreFeatures")}
             </a>
           </div>
 
@@ -546,7 +552,7 @@ export default function Home() {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text3)" }}>
               <span className="tech-dot-indicator green tech-pulse" />
-              <span>SYSTEM READY</span>
+              <span>{tNav("systemReady")}</span>
             </div>
           </div>
 
@@ -557,10 +563,10 @@ export default function Home() {
             borderBottom: "1px solid var(--border-subtle)"
           }}>
             {[
-              { id: "visual", label: "Visual Modeler", icon: <Database size={14} /> },
-              { id: "ai", label: "AI Prompt Import", icon: <Sparkles size={14} /> },
-              { id: "sql", label: "SQL Extractor", icon: <Table size={14} /> },
-              { id: "presets", label: "Prebuilt Templates", icon: <Package size={14} /> }
+              { id: "visual", label: t("console.tabVisual"), icon: <Database size={14} /> },
+              { id: "ai", label: t("console.tabAi"), icon: <Sparkles size={14} /> },
+              { id: "sql", label: t("console.tabSql"), icon: <Table size={14} /> },
+              { id: "presets", label: t("console.tabPresets"), icon: <Package size={14} /> }
             ].map((tab, idx) => {
               const isSelected = activeTab === tab.id;
               return (
@@ -590,7 +596,7 @@ export default function Home() {
                   }}
                 >
                   {tab.icon}
-                  {tab.label}
+                  <span className="hidden xs:inline">{tab.label}</span>
                 </button>
               );
             })}
@@ -923,16 +929,16 @@ export default function Home() {
           
           {/* Section Headers */}
           <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 48px" }}>
-            <SectionLabel>Framework Engine Capabilities</SectionLabel>
+            <SectionLabel>{t("stacks.sectionLabel")}</SectionLabel>
             <h2 style={{
               fontFamily: "var(--font-syne)",
               fontSize: "clamp(28px, 3.5vw, 44px)", fontWeight: 800,
               letterSpacing: "-0.03em", color: "var(--text)", marginTop: 8
             }}>
-              Your stack, your standards.
+              {t("stacks.headline")}
             </h2>
             <p style={{ fontSize: 14, color: "var(--text3)", marginTop: 12 }}>
-              Generate complete, standard-compliant boilerplate architectures containing your specific schemas and files. Inspect their output live.
+              {t("stacks.description")}
             </p>
           </div>
 
@@ -1147,24 +1153,19 @@ export default function Home() {
         maxWidth: 1100, margin: "0 auto"
       }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <SectionLabel>Setup Pipeline</SectionLabel>
+          <SectionLabel>{t("pipeline.sectionLabel")}</SectionLabel>
           <h2 style={{
             fontFamily: "var(--font-syne)",
             fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 800,
             letterSpacing: "-0.03em", color: "var(--text)"
           }}>
-            From architecture plan to deployment.
+            {t("pipeline.headline")}
           </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-          {[
-            { step: "01", title: "Select Framework", desc: "Select matching front-end & back-end options and choose MVC, Domain or service configurations." },
-            { step: "02", title: "Visual Modeling", desc: "Inject entity models, define constraints and draw relationship flows instantly." },
-            { step: "03", title: "Custom Parameters", desc: "Toggle API resources, validations, testing stubs, and Docker virtualization setups." },
-            { step: "04", title: "Generate Codebase", desc: "Process and bundle your complete code library client-side inside a single ZIP file." }
-          ].map((item, index) => (
-            <div key={item.step} className="si-card" style={{ padding: 24, position: "relative", border: "1px solid var(--border-subtle)" }}>
+          {(["01", "02", "03", "04"] as const).map((step, index) => (
+            <div key={step} className="si-card" style={{ padding: 24, position: "relative", border: "1px solid var(--border-subtle)" }}>
               {/* Step Connection Bar */}
               {index < 3 && (
                 <div style={{
@@ -1176,13 +1177,13 @@ export default function Home() {
                 fontFamily: "var(--font-jetbrains-mono)", fontSize: 13, fontWeight: 700,
                 color: "var(--gold)", marginBottom: 12
               }}>
-                STEP {item.step}
+                {t("pipeline.stepPrefix")} {step}
               </div>
               <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>
-                {item.title}
+                {t(`pipeline.step${step}Title`)}
               </h3>
               <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.5 }}>
-                {item.desc}
+                {t(`pipeline.step${step}Desc`)}
               </p>
             </div>
           ))}
@@ -1226,13 +1227,13 @@ export default function Home() {
               fontSize: "clamp(26px, 4vw, 40px)", fontWeight: 800,
               letterSpacing: "-0.03em", color: "var(--text)", marginBottom: 12
             }}>
-              Stop writing structural boilerplate.
+              {t("ctaHeadline")}
             </h2>
             <p style={{
               fontSize: 14, color: "var(--text2)", lineHeight: 1.6,
               marginBottom: 32, maxWidth: 500, margin: "0 auto 32px"
             }}>
-              Launch the visual builder to structure your database models and download optimized, framework-compliant scaffolding configurations instantly.
+              {t("ctaDesc")}
             </p>
 
             <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
@@ -1241,7 +1242,7 @@ export default function Home() {
                 boxShadow: "0 0 32px rgba(245,200,66,0.25)"
               }}>
                 <Zap size={15} fill="currentColor" />
-                Launch Visual Scaffolder
+                {t("ctaButton")}
               </Link>
               <div style={{
                 padding: "13px 20px", borderRadius: 10, fontSize: 13,
@@ -1249,7 +1250,7 @@ export default function Home() {
                 display: "flex", alignItems: "center", gap: 8, background: "var(--bg3)"
               }}>
                 <Code2 size={13} />
-                No registration required · MIT License
+                {t("ctaNote")}
               </div>
             </div>
           </div>
@@ -1267,10 +1268,10 @@ export default function Home() {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Image src="/favicon.svg" alt="StackInit footer logo" width={14} height={14} />
-          <span>StackInit — Scaffold faster, deploy sooner.</span>
+          <span>{t("footerText")}</span>
         </div>
         <div style={{ display: "flex", gap: 20 }}>
-          {["Open Source", "Client-Side Processing", "MIT License"].map((label) => (
+          {([t("footerOpenSource"), t("footerClientSide"), t("footerMit")] as string[]).map((label) => (
             <span key={label}>{label}</span>
           ))}
         </div>

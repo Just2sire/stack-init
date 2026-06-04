@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { useWizardStore } from "@/stores/useWizardStore";
 import type { Model, NamedField } from "@stack-init/schema";
 import { Zap, X, List, LayoutGrid, Network, Library } from "lucide-react";
@@ -207,6 +208,7 @@ function typeColor(type: string): { bg: string; color: string } {
 type ViewMode = "list" | "grid" | "canvas";
 
 export function ModelsStep() {
+  const t = useTranslations("steps");
   const { models } = useWizardStore();
   const [view, setView]             = useState<ViewMode>(() => models.length > 0 ? "grid" : "list");
   const [activeModel, setActiveModel]   = useState<string | null>(() => models.length > 0 ? models[models.length - 1].name : null);
@@ -236,9 +238,9 @@ export function ModelsStep() {
     >
       {(
         [
-          { id: "list", icon: <List size={14} />, label: "List" },
-          { id: "grid", icon: <LayoutGrid size={14} />, label: "Grid" },
-          { id: "canvas", icon: <Network size={14} />, label: "Canvas" },
+          { id: "list", icon: <List size={14} />, label: t("models.viewList") },
+          { id: "grid", icon: <LayoutGrid size={14} />, label: t("models.viewGrid") },
+          { id: "canvas", icon: <Network size={14} />, label: t("models.viewCanvas") },
         ] as const
       ).map((v, idx, arr) => (
         <button
@@ -302,7 +304,7 @@ export function ModelsStep() {
                 color: "var(--text)",
               }}
             >
-              Models
+              {t("models.modelsLabel")}
             </span>
             <span
               style={{
@@ -322,7 +324,7 @@ export function ModelsStep() {
                 fontStyle: "italic",
               }}
             >
-              Double-click or + Model to create · Drag to relate
+              {t("models.canvasHint")}
             </span>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -332,7 +334,7 @@ export function ModelsStep() {
               style={{ fontSize: 11, padding: "5px 12px", display: "flex", gap: 6, alignItems: "center" }}
             >
               <Library size={13} />
-              Modules
+              {t("models.modulesButton")}
             </button>
             <button
               onClick={() => setShowImport(true)}
@@ -340,14 +342,14 @@ export function ModelsStep() {
               style={{ fontSize: 11, padding: "5px 12px", display: "flex", gap: 6, alignItems: "center" }}
             >
               <Zap size={13} fill="var(--gold)" />
-              Import
+              {t("models.importButton")}
             </button>
             <button
               onClick={() => setPanelModel("__new__")}
               className="si-btn-primary"
               style={{ fontSize: 11, padding: "5px 12px" }}
             >
-              + Model
+              + {t("models.newModelLabel")}
             </button>
             {viewToggle}
           </div>
@@ -387,12 +389,12 @@ export function ModelsStep() {
           }}
         >
           <div>
-            <div className="si-section-label">Schema</div>
+            <div className="si-section-label">{t("models.schemaLabel")}</div>
             <h1
               className="si-title"
               style={{ marginBottom: 0 }}
             >
-              Models
+              {t("models.modelsLabel")}
             </h1>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -402,7 +404,7 @@ export function ModelsStep() {
               style={{ fontSize: 12, display: "flex", gap: 6, alignItems: "center" }}
             >
               <Library size={14} />
-              Modules
+              {t("models.modulesButton")}
             </button>
             <button
               onClick={() => setShowImport(true)}
@@ -410,14 +412,14 @@ export function ModelsStep() {
               style={{ fontSize: 12, display: "flex", gap: 6, alignItems: "center" }}
             >
               <Zap size={14} fill="var(--gold)" />
-              Import
+              {t("models.importButton")}
             </button>
             <button
               onClick={() => setPanelModel("__new__")}
               className="si-btn-primary"
               style={{ fontSize: 12 }}
             >
-              + New model
+              {t("models.addModelButton")}
             </button>
             {viewToggle}
           </div>
@@ -426,7 +428,7 @@ export function ModelsStep() {
         <GridView onSelectModel={handleSelectModelForPanel} />
 
         <div style={{ marginTop: 24 }}>
-          <AIAssistant step="models" placeholder='Suggest models — e.g. "Add a subscription system with plans and invoices"' />
+          <AIAssistant step="models" placeholder={t("models.aiPlaceholder")} />
         </div>
 
         {panelModel && (
@@ -465,7 +467,7 @@ export function ModelsStep() {
               color: "var(--text3)",
             }}
           >
-            Models
+            {t("models.modelsLabel")}
           </span>
           {models.length > 0 && (
             <span
@@ -485,7 +487,7 @@ export function ModelsStep() {
           <button
             onClick={() => setShowModules(true)}
             className="si-btn-icon"
-            title="Module Library"
+            title={t("models.modulesButton")}
             style={{ width: 26, height: 26 }}
           >
             <Library size={14} />
@@ -493,7 +495,7 @@ export function ModelsStep() {
           <button
             onClick={() => setShowImport(true)}
             className="si-btn-icon"
-            title="Quick Import"
+            title={t("models.importButton")}
             style={{ width: 26, height: 26 }}
           >
             <Zap size={14} fill="var(--gold)" />
@@ -515,7 +517,7 @@ export function ModelsStep() {
               opacity: showNewModel ? 0.5 : 1,
             }}
           >
-            + New
+            + {t("models.newModelLabel")}
           </button>
           {viewToggle}
         </div>
@@ -523,7 +525,7 @@ export function ModelsStep() {
 
       {/* AI Assistant */}
       <div style={{ marginBottom: 20 }}>
-        <AIAssistant step="models" placeholder='Suggest models — e.g. "Add a subscription system with plans and invoices"' />
+        <AIAssistant step="models" placeholder={t("models.aiPlaceholder")} />
       </div>
 
       {/* Two-column content */}
@@ -569,10 +571,10 @@ export function ModelsStep() {
                     marginBottom: 4,
                   }}
                 >
-                  No models yet
+                  {t("models.noModels")}
                 </p>
                 <p style={{ fontSize: 12, marginBottom: 16 }}>
-                  Start by adding your first model
+                  {t("models.startAddFirst")}
                 </p>
                 {!showNewModel && (
                   <button
@@ -637,10 +639,10 @@ export function ModelsStep() {
                   marginBottom: 6,
                 }}
               >
-                Select a model to edit
+                {t("models.selectModelHint")}
               </p>
               <p style={{ fontSize: 13 }}>
-                Or create a new one from the list on the left
+                {t("models.startAddFirst")}
               </p>
             </div>
           )}
@@ -656,6 +658,7 @@ function GridView({
 }: {
   onSelectModel: (name: string | null) => void;
 }) {
+  const t = useTranslations("steps");
   const { models } = useWizardStore();
 
   return (
@@ -698,7 +701,7 @@ function GridView({
         }}
       >
         <span style={{ fontSize: 24, lineHeight: 1 }}>+</span>
-        <span style={{ fontSize: 12, fontWeight: 600 }}>New model</span>
+        <span style={{ fontSize: 12, fontWeight: 600 }}>{t("models.newModelLabel")}</span>
       </button>
     </div>
   );
@@ -706,6 +709,7 @@ function GridView({
 
 /* ── Model card (grid) ───────────────────────────────────────────── */
 function ModelCard({ model, onClick }: { model: Model; onClick: () => void }) {
+  const t = useTranslations("steps");
   const { removeModel } = useWizardStore();
   const topFields = model.fields.slice(0, 4);
 
@@ -811,7 +815,7 @@ function ModelCard({ model, onClick }: { model: Model; onClick: () => void }) {
       })}
       {model.fields.length > 4 && (
         <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 3 }}>
-          +{model.fields.length - 4} more
+          {t("models.extraFields", { count: model.fields.length - 4 })}
         </div>
       )}
 
@@ -826,11 +830,11 @@ function ModelCard({ model, onClick }: { model: Model; onClick: () => void }) {
         }}
       >
         <span style={{ fontSize: 10, color: "var(--text3)" }}>
-          {model.fields.length} fields
+          {t("models.fieldCount", { count: model.fields.length })}
         </span>
         {model.relations.length > 0 && (
           <span style={{ fontSize: 10, color: "#9d6fff" }}>
-            {model.relations.length} rel
+            {t("models.relCount", { count: model.relations.length })}
           </span>
         )}
       </div>
@@ -848,6 +852,7 @@ function ModelEditorSlidePanel({
   onClose: () => void;
   onCreated: (name: string) => void;
 }) {
+  const t = useTranslations("steps");
   const { models } = useWizardStore();
   const model = modelName ? models.find((m) => m.name === modelName) : null;
 
@@ -896,7 +901,7 @@ function ModelEditorSlidePanel({
               color: "var(--gold)",
             }}
           >
-            {modelName === "__new__" ? "New Model" : (model?.name ?? modelName)}
+            {modelName === "__new__" ? t("models.newModelLabel") : (model?.name ?? modelName)}
           </span>
           <button onClick={onClose} className="si-btn-icon">
             <X size={16} />
@@ -929,6 +934,7 @@ function ModelRow({
   isActive: boolean;
   onClick: () => void;
 }) {
+  const t = useTranslations("steps");
   const { removeModel } = useWizardStore();
   const previewFields = model.fields.slice(0, 3);
   const extraFields = model.fields.length - previewFields.length;
@@ -1000,7 +1006,7 @@ function ModelRow({
           })}
           {extraFields > 0 && (
             <span style={{ fontSize: 10, color: "var(--text3)", padding: "1px 4px" }}>
-              +{extraFields}
+              {t("models.extraFields", { count: extraFields })}
             </span>
           )}
         </div>
@@ -1009,13 +1015,13 @@ function ModelRow({
       {/* Relations badge */}
       {model.relations.length > 0 && (
         <div style={{ fontSize: 10, color: "#9d6fff", fontWeight: 600 }}>
-          {model.relations.length} relation{model.relations.length > 1 ? "s" : ""}
+          {t("models.relCount", { count: model.relations.length })}
         </div>
       )}
 
       {/* Empty state */}
       {model.fields.length === 0 && (
-        <div style={{ fontSize: 10, color: "var(--text3)", fontStyle: "italic" }}>No fields yet</div>
+        <div style={{ fontSize: 10, color: "var(--text3)", fontStyle: "italic" }}>{t("models.noFields")}</div>
       )}
     </div>
   );
@@ -1045,6 +1051,7 @@ function NewModelPanel({
   onCreated: (name: string) => void;
   onCancel: () => void;
 }) {
+  const t = useTranslations("steps");
   const { models, addModel } = useWizardStore();
   const [name, setName] = useState("");
   const [error, setError] = useState("");
@@ -1053,9 +1060,9 @@ function NewModelPanel({
 
   const handleCreate = () => {
     const n = name.trim();
-    if (!n) { setError("Name is required"); return; }
-    if (!/^[A-Z][A-Za-z0-9]*$/.test(n)) { setError("Must be PascalCase, e.g. UserProfile"); return; }
-    if (models.find((m) => m.name === n)) { setError("A model with this name already exists"); return; }
+    if (!n) { setError(t("models.mustStartUppercase")); return; }
+    if (!/^[A-Z][A-Za-z0-9]*$/.test(n)) { setError(t("models.pascalCaseHint")); return; }
+    if (models.find((m) => m.name === n)) { setError(t("models.alreadyExists")); return; }
 
     addModel({
       name: n,
@@ -1074,7 +1081,7 @@ function NewModelPanel({
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <div className="si-section-label">New model</div>
+        <div className="si-section-label">{t("models.newModelLabel")}</div>
         <h2
           style={{
             fontFamily: "var(--font-syne)",
@@ -1084,10 +1091,10 @@ function NewModelPanel({
             marginBottom: 4,
           }}
         >
-          Create a model
+          {t("models.createModel")}
         </h2>
         <p style={{ fontSize: 13, color: "var(--text2)" }}>
-          Give your model a PascalCase name. Fields can be added after.
+          {t("models.createModelDesc")}
         </p>
       </div>
 
@@ -1102,14 +1109,14 @@ function NewModelPanel({
             letterSpacing: "0.04em",
           }}
         >
-          Model name
+          {t("models.modelNameLabel")}
         </label>
         <input
           autoFocus
           value={name}
           onChange={(e) => { setName(e.target.value); setError(""); }}
           onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-          placeholder="e.g. UserProfile, BlogPost, OrderItem"
+          placeholder={t("models.modelNamePlaceholder")}
           className="si-input"
           style={{
             fontFamily: "var(--font-jetbrains-mono)",
@@ -1132,7 +1139,7 @@ function NewModelPanel({
           </p>
         )}
         <p style={{ fontSize: 11, color: "var(--text3)", marginBottom: 20 }}>
-          PascalCase, singular — e.g.{" "}
+          {t("models.pascalExample")}{" "}
           <code
             style={{
               fontFamily: "var(--font-jetbrains-mono)",
@@ -1156,7 +1163,7 @@ function NewModelPanel({
               letterSpacing: "0.08em",
             }}
           >
-            Suggestions
+            {t("models.suggestions")}
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {["User","Post","Comment","Category","Product","Order","Tag","Article"].map((s) => (
@@ -1182,10 +1189,10 @@ function NewModelPanel({
 
         <div style={{ display: "flex", gap: 10 }}>
           <button onClick={handleCreate} className="si-btn-primary">
-            Create model
+            {t("models.createModelButton")}
           </button>
           <button onClick={onCancel} className="si-btn-secondary">
-            Cancel
+            {t("models.cancel")}
           </button>
         </div>
       </div>
@@ -1225,6 +1232,7 @@ const FIELD_TYPES_WITH_PARAMS: Record<string, string[]> = {
 
 /* ── Model editor ─────────────────────────────────────────────────── */
 function ModelEditor({ model }: { model: Model }) {
+  const t = useTranslations("steps");
   const { addField, removeField, updateField, updateModel, models } = useWizardStore();
   const [fieldName, setFieldName]     = useState("");
   const [fieldType, setFieldType]     = useState<string>("string");
@@ -1342,7 +1350,7 @@ function ModelEditor({ model }: { model: Model }) {
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
           <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text3)" }}>
-            Fields ({model.fields.length})
+            {t("models.fieldsSection", { count: model.fields.length })}
           </span>
         </div>
 
@@ -1393,7 +1401,7 @@ function ModelEditor({ model }: { model: Model }) {
         {filteredSuggestions.length > 0 && (
           <div style={{ marginTop: 12, marginBottom: 12, paddingTop: 12, borderTop: "1px solid var(--border-subtle)" }}>
             <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text3)", marginBottom: 10 }}>
-              Quick Add
+              {t("models.quickAddLabel")}
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {filteredSuggestions.map((s) => (
@@ -1438,7 +1446,7 @@ function ModelEditor({ model }: { model: Model }) {
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="si-section-label">
-                  {editingField ? `Editing: ${editingField}` : "Field Name"}
+                  {editingField ? `Editing: ${editingField}` : t("models.fieldName")}
                 </label>
                 <input
                   ref={fieldNameRef}
@@ -1452,7 +1460,7 @@ function ModelEditor({ model }: { model: Model }) {
                 />
               </div>
               <div>
-                <label className="si-section-label">Type</label>
+                <label className="si-section-label">{t("models.fieldType")}</label>
                 <select value={fieldType} onChange={(e) => setFieldType(e.target.value)} className="si-select">
                   {Object.entries(FIELD_TYPE_CATEGORIES).map(([cat, types]) => (
                     <optgroup key={cat} label={cat}>
@@ -1507,23 +1515,23 @@ function ModelEditor({ model }: { model: Model }) {
               <div style={{ display: "flex", gap: 16 }}>
                 <label className="flex items-center gap-2 text-xs text-text2 cursor-pointer">
                   <input type="checkbox" checked={nullable} onChange={(e) => setNullable(e.target.checked)} className="accent-gold" />
-                  Nullable
+                  {t("models.nullable")}
                 </label>
                 <label className="flex items-center gap-2 text-xs text-text2 cursor-pointer">
                   <input type="checkbox" checked={fieldUnique} onChange={(e) => setFieldUnique(e.target.checked)} className="accent-gold" />
-                  Unique
+                  {t("models.unique")}
                 </label>
                 <label className="flex items-center gap-2 text-xs text-text2 cursor-pointer">
                   <input type="checkbox" checked={fieldIndex} onChange={(e) => setFieldIndex(e.target.checked)} className="accent-gold" />
-                  Index
+                  {t("models.index")}
                 </label>
               </div>
               <div className="flex gap-2">
                 <button onClick={resetForm} className="si-btn-secondary text-xs">
-                  {editingField ? "Cancel edit" : "Clear"}
+                  {editingField ? t("models.cancelEdit") : t("models.clearButton")}
                 </button>
                 <button onClick={handleAddField} className="si-btn-primary text-xs">
-                  {editingField ? "Save Changes" : "Add Field"}
+                  {editingField ? t("models.saveChanges") : t("models.addFieldButton")}
                 </button>
               </div>
             </div>
@@ -1537,12 +1545,12 @@ function ModelEditor({ model }: { model: Model }) {
       {/* Settings */}
       <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: 20, marginTop: 12 }}>
         <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text3)", display: "block", marginBottom: 16 }}>
-          Settings
+          {t("models.settingsSection")}
         </span>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, maxWidth: 480 }}>
           <div>
             <label style={{ display: "block", fontSize: 11, color: "var(--text3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
-              Primary key
+              {t("models.primaryKey")}
             </label>
             <select
               value={model.migration?.primary_key || "id"}
@@ -1557,7 +1565,7 @@ function ModelEditor({ model }: { model: Model }) {
           </div>
           <div>
             <label style={{ display: "block", fontSize: 11, color: "var(--text3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
-              Table name
+              {t("models.tableName")}
             </label>
             <input
               value={model.table || `${model.name.toLowerCase()}s`}
@@ -1577,7 +1585,7 @@ function ModelEditor({ model }: { model: Model }) {
                 className={["si-badge", isChecked ? "si-badge-gold" : "si-badge-gray"].join(" ")}
                 style={{ cursor: "pointer", padding: "6px 12px" }}
               >
-                {key === "timestamps" ? "⏱ Timestamps" : "🗑 Soft Deletes"}
+                {key === "timestamps" ? t("models.timestamps") : t("models.softDeletes")}
               </button>
             );
           })}

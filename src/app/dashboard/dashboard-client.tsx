@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Trash2, ExternalLink, Globe, Lock } from 'lucide-react'
 import { compressConfig } from '@/lib/sharing'
 import type { ProjectConfig } from '@/types/schema'
+import { useTranslations } from 'next-intl'
 
 interface Config {
   id: string
@@ -19,9 +20,10 @@ interface Config {
 export function DashboardClient({ initialConfigs }: { initialConfigs: Config[] }) {
   const [configs, setConfigs] = useState<Config[]>(initialConfigs)
   const router = useRouter()
+  const t = useTranslations('dashboard')
 
   async function deleteConfig(id: string) {
-    if (!confirm('Supprimer cette configuration ?')) return
+    if (!confirm(t('deleteConfirm'))) return
     await fetch(`/api/configs/${id}`, { method: 'DELETE' })
     setConfigs(c => c.filter(x => x.id !== id))
   }
@@ -35,8 +37,8 @@ export function DashboardClient({ initialConfigs }: { initialConfigs: Config[] }
     return (
       <div className="text-center py-20 text-zinc-500">
         <p className="text-4xl mb-4">📦</p>
-        <p className="text-sm">Aucune configuration sauvegardée.</p>
-        <p className="text-xs mt-1">Crée un projet et clique sur "Sauvegarder" dans l'étape Output.</p>
+        <p className="text-sm">{t('emptyTitle')}</p>
+        <p className="text-xs mt-1">{t('emptyHint')}</p>
       </div>
     )
   }
@@ -65,7 +67,7 @@ export function DashboardClient({ initialConfigs }: { initialConfigs: Config[] }
 
           <div className="text-xs text-zinc-500 mb-4">
             <span className="font-mono text-zinc-400">
-              {(c.stack_config as { stack?: string }).stack ?? 'stack inconnu'}
+              {(c.stack_config as { stack?: string }).stack ?? t('unknownStack')}
             </span>
             <span className="mx-2">·</span>
             {new Date(c.updated_at).toLocaleDateString('fr-FR')}
@@ -77,7 +79,7 @@ export function DashboardClient({ initialConfigs }: { initialConfigs: Config[] }
               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors"
             >
               <ExternalLink size={11} />
-              Charger
+              {t('loadButton')}
             </button>
             <button
               onClick={() => deleteConfig(c.id)}
