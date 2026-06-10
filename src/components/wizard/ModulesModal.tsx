@@ -16,22 +16,54 @@ export function ModulesModal({ onClose }: ModulesModalProps) {
   const { models, addModel, addEnabledServices, addField, addRelation } = useWizardStore();
   const [imported, setImported] = useState<string | null>(null);
   const [missingRequires, setMissingRequires] = useState<string[]>([]);
-  const [pendingLinks, setPendingLinks] = useState<UserLink[] | null>(null);
-  const [selectedLinks, setSelectedLinks] = useState<Set<string>>(new Set());
 
   const existingNames = new Set(models.map((m) => m.name));
 
+  const applyLinks = (links: UserLink[], currentModels: Model[]) => {
+    links.forEach(link => {
+      const targetModel = currentModels.find(m => m.name === link.model);
+      if (!targetModel) return;
+
+      // Avoid duplicate fields
+      const hasField = targetModel.fields.some(f => f.name === link.field);
+      if (!hasField) {
+        addField(link.model, {
+          name: link.field,
+          type: 'foreignId',
+          nullable: false,
+          references: link.references,
+        } as any);
+      }
+
+      // Avoid duplicate relations
+      const userModel = currentModels.find(m => m.name === 'User');
+      if (userModel) {
+        const hasRel = userModel.relations.some(r => r.model === link.model && r.type === 'hasMany');
+        if (!hasRel) {
+          addRelation('User', { type: 'hasMany', model: link.model });
+        }
+      }
+    });
+  };
+
   const handleImport = (mod: LibraryModule) => {
+    const newModelsAdded: Model[] = [];
+    
     // Add new models (skip duplicates)
     for (const m of mod.models) {
-      if (!existingNames.has(m.name)) addModel(m as Model);
+      if (!existingNames.has(m.name)) {
+        const model = m as Model;
+        addModel(model);
+        newModelsAdded.push(model);
+      }
     }
 
     // Activate services
     if (mod.services && mod.services.length > 0) addEnabledServices(mod.services);
 
     // Optimistic set of all model names after this import
-    const afterNames = new Set([...existingNames, ...mod.models.map(m => m.name)]);
+    const afterModels = [...models, ...newModelsAdded];
+    const afterNames = new Set(afterModels.map(m => m.name));
 
     // Check missing requires (e.g. Blog needs Auth)
     if (mod.requires && mod.requires.length > 0) {
@@ -44,13 +76,10 @@ export function ModulesModal({ onClose }: ModulesModalProps) {
       setMissingRequires([]);
     }
 
-    // Propose User FK links if User model exists
+    // Auto-apply User FK links if User model exists
     if (mod.userLinks && afterNames.has('User')) {
       const applicable = mod.userLinks.filter(l => afterNames.has(l.model));
-      if (applicable.length > 0) {
-        setPendingLinks(applicable);
-        setSelectedLinks(new Set(applicable.map(l => l.model)));
-      }
+      applyLinks(applicable, afterModels);
     }
 
     setImported(mod.id);
@@ -62,50 +91,35 @@ export function ModulesModal({ onClose }: ModulesModalProps) {
     const reqModule = MODULE_LIBRARY.find(m => m.id === reqId);
     if (!reqModule) return;
 
+    const newModelsAdded: Model[] = [];
     for (const m of reqModule.models) {
-      if (!existingNames.has(m.name)) addModel(m as Model);
+      if (!existingNames.has(m.name)) {
+        const model = m as Model;
+        addModel(model);
+        newModelsAdded.push(model);
+      }
     }
     if (reqModule.services) addEnabledServices(reqModule.services);
 
     // After importing Auth, check if any previously imported module has pending userLinks
-    const afterNames = new Set([...existingNames, ...reqModule.models.map(m => m.name)]);
+    const afterModels = [...models, ...newModelsAdded];
+    const afterNames = new Set(afterModels.map(m => m.name));
+    
     const allLinks: UserLink[] = [];
     for (const lib of MODULE_LIBRARY) {
       if (!lib.userLinks) continue;
+      // Check if this module is "present" in the project
       if (!lib.models.some(m => afterNames.has(m.name))) continue;
+      
       const applicable = lib.userLinks.filter(l => afterNames.has(l.model));
       allLinks.push(...applicable);
     }
+    
     if (allLinks.length > 0) {
-      setPendingLinks(allLinks);
-      setSelectedLinks(new Set(allLinks.map(l => l.model)));
+      applyLinks(allLinks, afterModels);
     }
 
     setMissingRequires([]);
-  };
-
-  const handleApplyLinks = () => {
-    pendingLinks?.forEach(link => {
-      if (!selectedLinks.has(link.model)) return;
-      addField(link.model, {
-        name: link.field,
-        type: 'foreignId',
-        nullable: false,
-        references: link.references,
-      } as any);
-      // addField auto-adds belongsTo via the FK detection in useWizardStore
-      // Add hasMany on the User side
-      addRelation('User', { type: 'hasMany', model: link.model });
-    });
-    setPendingLinks(null);
-  };
-
-  const toggleLink = (modelName: string) => {
-    setSelectedLinks(prev => {
-      const next = new Set(prev);
-      if (next.has(modelName)) next.delete(modelName); else next.add(modelName);
-      return next;
-    });
   };
 
   return (
@@ -182,62 +196,6 @@ export function ModulesModal({ onClose }: ModulesModalProps) {
               >
                 Dismiss
               </button>
-            </div>
-          )}
-
-          {/* User links panel */}
-          {pendingLinks && (
-            <div style={{
-              padding: "14px 16px", marginBottom: 16,
-              background: "var(--bg4)",
-              border: "1px solid var(--border-subtle)",
-              borderRadius: 10,
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-                <Link size={13} style={{ color: "var(--gold)" }} />
-                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text)" }}>
-                  Link imported models to User?
-                </span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
-                {pendingLinks.map(link => (
-                  <label
-                    key={link.model}
-                    style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedLinks.has(link.model)}
-                      onChange={() => toggleLink(link.model)}
-                      style={{ accentColor: "var(--gold)", width: 14, height: 14 }}
-                    />
-                    <span style={{
-                      fontFamily: "var(--font-jetbrains-mono)", fontSize: 11,
-                      color: selectedLinks.has(link.model) ? "var(--gold)" : "var(--text2)",
-                    }}>
-                      {link.model}.{link.field}
-                    </span>
-                    <span style={{ fontSize: 10, color: "var(--text3)" }}>→ users</span>
-                  </label>
-                ))}
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  onClick={handleApplyLinks}
-                  disabled={selectedLinks.size === 0}
-                  className="si-btn-primary"
-                  style={{ fontSize: 11, padding: "5px 14px" }}
-                >
-                  Add links
-                </button>
-                <button
-                  onClick={() => setPendingLinks(null)}
-                  className="si-btn-secondary"
-                  style={{ fontSize: 11, padding: "5px 14px" }}
-                >
-                  Later
-                </button>
-              </div>
             </div>
           )}
 

@@ -35,7 +35,7 @@ export const SUB_STEP_COUNTS: Partial<Record<StepId, number>> = {
   'react-setup':   2,
   'fastapi-setup': 2,
   'nest-setup':    2,
-  'laravel-setup': 3,
+  'laravel-setup': 2,
 };
 
 const DEFAULT_LARAVEL_OPTIONS: LaravelOptions = {

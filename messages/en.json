@@ -691,8 +691,7 @@
       "laravelVersionSection": "Laravel Version",
       "engineSection": "Database Engine",
       "codeOptions": "PHP Code Options",
-      "globalDefaults": "Global Generation Defaults",
-      "modelOverrides": "Specific Model Overrides",
+      "generationSettings": "Generation Settings",
       "strictTypes": "Strict Types",
       "readonly": "Readonly Properties (PHP 8.1+)",
       "redis": "Redis / Queue Worker",
@@ -704,8 +703,7 @@
       "selectModelHint": "Select one of the model buttons to configure its generated files",
       "subStep": {
         "frameworkSetup": "Framework Setup",
-        "globalDefaults": "Global Generation Defaults",
-        "modelOverrides": "Specific Model Overrides"
+        "generationSettings": "Generation Settings"
       },
       "pattern": {
         "api-only": { "desc": "REST API endpoints only — no Blade views. Ideal for decoupled frontends (React, Next.js…)." },

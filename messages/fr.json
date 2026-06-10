@@ -691,8 +691,7 @@
       "laravelVersionSection": "Version Laravel",
       "engineSection": "Moteur de base de données",
       "codeOptions": "Options de code PHP",
-      "globalDefaults": "Paramètres globaux de génération",
-      "modelOverrides": "Surcharges par modèle",
+      "generationSettings": "Options de génération",
       "strictTypes": "Types stricts",
       "readonly": "Propriétés readonly (PHP 8.1+)",
       "redis": "Redis / Queue Worker",
@@ -704,8 +703,7 @@
       "selectModelHint": "Sélectionnez un bouton de modèle pour configurer ses fichiers générés",
       "subStep": {
         "frameworkSetup": "Configuration du framework",
-        "globalDefaults": "Paramètres globaux de génération",
-        "modelOverrides": "Surcharges par modèle"
+        "generationSettings": "Options de génération"
       },
       "pattern": {
         "api-only": { "desc": "Endpoints REST uniquement — sans vues Blade. Idéal pour les frontends découplés (React, Next.js…)." },

@@ -1511,7 +1511,7 @@ function ModelEditor({ model }: { model: Model }) {
               )}
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--border-subtle)", paddingTop: 14 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: "start", justifyContent: "space-between", borderTop: "1px solid var(--border-subtle)", paddingTop: 14, }}>
               <div style={{ display: "flex", gap: 16 }}>
                 <label className="flex items-center gap-2 text-xs text-text2 cursor-pointer">
                   <input type="checkbox" checked={nullable} onChange={(e) => setNullable(e.target.checked)} className="accent-gold" />

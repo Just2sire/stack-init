@@ -28,7 +28,7 @@ const DEFAULT_GENERATE = {
   tests: true, routes: true, swagger: false, softDelete: false, repository: false,
 };
 
-const CANONICAL_TYPES = new Set(["hasOne", "hasMany", "belongsToMany"]);
+const CANONICAL_TYPES = new Set(["hasOne", "hasMany", "belongsTo", "belongsToMany"]);
 
 function buildEdges(
   models: ReturnType<typeof useWizardStore.getState>["models"],
@@ -424,6 +424,10 @@ function CanvasBody({
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ color: "#f5c842", fontWeight: 600 }}>——</span>
           <span>hasMany</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ color: "rgba(255,255,255,0.15)", fontWeight: 600 }}>——</span>
+          <span>belongsTo</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ color: "#9d6fff", fontWeight: 600 }}>- - -</span>
