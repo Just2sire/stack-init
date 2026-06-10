@@ -167,6 +167,7 @@ stack-init/
 │   │   ├── modules.ts                Modules optionnels (Auth, File Upload, Email, Cache...)
 │   │   ├── parseSql.ts               Parser SQL DDL → modèles du wizard
 │   │   ├── githubAnalyzer.ts         Analyse de repo GitHub → contexte de stack
+│   │   ├── gemini.ts                 Génération JSON structurée via l'API Gemini
 │   │   ├── sharing.ts                Compression/décompression config en URL (lz-string)
 │   │   ├── guides-manifest.ts        Structure de navigation de la documentation
 │   │   ├── utils.ts                  Fonctions utilitaires générales
