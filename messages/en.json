@@ -115,7 +115,8 @@
       "sectionLabel": "Framework Engine Capabilities",
       "headline": "Your stack, your standards.",
       "description": "Generate complete, standard-compliant boilerplate architectures containing your specific schemas and files. Inspect their output live."
-    }
+    },
+    "cliHint": "CLI wizard"
   },
 
   "wizard": {
@@ -234,7 +235,7 @@
       "orBuildFromScratch": "Or build from scratch",
       "singleStack": "Single Stack",
       "comboStacks": "Combo Stacks",
-      "noteText": "React, Next.js & FastAPI → ZIP download. Laravel → {code} + CLI command.",
+      "noteText": "React, Next.js & FastAPI → ZIP download. Laravel → <code>composer</code> + CLI command.",
       "applied": "Applied ✓",
       "load": "Load",
       "export": "↓",

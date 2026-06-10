@@ -115,7 +115,8 @@
       "sectionLabel": "Capacités du Moteur de Frameworks",
       "headline": "Votre stack, vos standards.",
       "description": "Générez des architectures boilerplate complètes et conformes aux standards contenant vos schémas et fichiers spécifiques. Inspectez leur sortie en direct."
-    }
+    },
+    "cliHint": "Wizard CLI"
   },
 
   "wizard": {
@@ -234,7 +235,7 @@
       "orBuildFromScratch": "Ou construire depuis zéro",
       "singleStack": "Stack Unique",
       "comboStacks": "Stacks Combinés",
-      "noteText": "React, Next.js & FastAPI → téléchargement ZIP. Laravel → {code} + commande CLI.",
+      "noteText": "React, Next.js & FastAPI → téléchargement ZIP. Laravel → <code>composer</code> + commande CLI.",
       "applied": "Appliqué ✓",
       "load": "Charger",
       "export": "↓",

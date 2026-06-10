@@ -129,6 +129,8 @@ interface WizardStore {
   // UI State
   isDrawerOpen: boolean;
   setIsDrawerOpen: (open: boolean) => void;
+  isAuthModalOpen: boolean;
+  setIsAuthModalOpen: (open: boolean) => void;
   activePreviewTab: string;
   setActivePreviewTab: (tab: string) => void;
 
@@ -255,6 +257,8 @@ export const useWizardStore = create<WizardStore>((set, get) => ({
   // UI State
   isDrawerOpen: false,
   setIsDrawerOpen: (open) => set({ isDrawerOpen: open }),
+  isAuthModalOpen: false,
+  setIsAuthModalOpen: (open) => set({ isAuthModalOpen: open }),
   activePreviewTab: 'erd',
   setActivePreviewTab: (tab) => set({ activePreviewTab: tab }),
 

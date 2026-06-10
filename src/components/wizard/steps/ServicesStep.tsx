@@ -259,7 +259,7 @@ export function ServicesStep() {
         </div>
       )}
 
-      <AIAssistant step="services" placeholder={t("services.aiPlaceholder")} />
+      {/* <AIAssistant step="services" placeholder={t("services.aiPlaceholder")} /> */}
     </div>
   );
 }

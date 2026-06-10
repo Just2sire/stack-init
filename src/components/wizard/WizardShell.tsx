@@ -23,6 +23,8 @@ import { ServicesStep } from "./steps/ServicesStep";
 import { ArchitectDrawer } from "./ArchitectDrawer";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTranslations } from "next-intl";
+import { AuthModal } from "../auth/AuthModal";
+import { WizardAuthButton } from "./WizardAuthButton";
 
 export function WizardShell() {
   const { currentStepId, nextStep, prevStep, canProceed, steps, setStack, setProjectName } = useWizardStore();
@@ -77,6 +79,9 @@ export function WizardShell() {
       {/* Desktop sidebar — masquée sur mobile via CSS */}
       <WizardSidebar />
 
+      {/* Auth Modal */}
+      <AuthModal />
+
       {/* Mobile Sheet drawer */}
       <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
         <SheetContent
@@ -126,6 +131,7 @@ export function WizardShell() {
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <WizardAuthButton />
             <LanguageSwitcher />
             <ArchitectDrawer />
           </div>

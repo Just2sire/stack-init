@@ -43,7 +43,7 @@ function makeDefaultModel(name: string): Model {
 export function AIAssistant({ step, placeholder }: AIAssistantProps) {
   const t = useTranslations('wizard')
   const { user, loading } = useUser()
-  const { getConfig, addModel, toggleService, enabledServices } = useWizardStore()
+  const { getConfig, addModel, toggleService, enabledServices, setIsAuthModalOpen } = useWizardStore()
 
   const [isOpen, setIsOpen]         = useState(false)
   const [question, setQuestion]     = useState('')
@@ -60,9 +60,12 @@ export function AIAssistant({ step, placeholder }: AIAssistantProps) {
       <div className="flex items-center gap-2 text-xs text-text3">
         <Sparkles size={13} className="text-text3" />
         <span>AI assist —</span>
-        <Link href="/auth/login" className="underline hover:text-gold flex items-center gap-1">
+        <button 
+          onClick={() => setIsAuthModalOpen(true)}
+          className="underline hover:text-gold flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer"
+        >
           <LogIn size={11} /> {t('assistant.signIn')}
-        </Link>
+        </button>
       </div>
     )
   }

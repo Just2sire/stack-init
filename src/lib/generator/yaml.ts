@@ -91,28 +91,265 @@ export function buildGettingStarted(config: ProjectConfig, isZip: boolean): stri
     .join('\n');
 
   if (!isZip) {
-    return `# ${config.name} — Getting Started
+    // ── Non-ZIP path (Laravel CLI-only stacks) — descriptive step-by-step guide ──
+    const laravel  = config.laravel as any;
+    const dbEngine = laravel?.db_engine  ?? 'mysql';
+    const auth     = laravel?.auth       ?? 'none';
+    const pattern  = laravel?.pattern    ?? 'api-only';
+    const plugins: string[] = laravel?.laravel_plugins ?? [];
 
-> Generated with Stack-Init on ${today}
+    const dbConnection = dbEngine === 'postgresql' ? 'pgsql' : dbEngine === 'sqlite' ? 'sqlite' : 'mysql';
+    const dbLabel      = dbEngine === 'postgresql' ? 'PostgreSQL' : dbEngine === 'sqlite' ? 'SQLite' : 'MySQL';
 
-## What was generated
-- \`${config.name}.stack-init.yaml\` — the complete project config
+    // Per-model generated artefacts summary
+    const generatedLines = config.models.map((m: any) => {
+      const g = m.generate ?? {};
+      const parts: string[] = ['Modèle'];
+      if (g.migration)   parts.push('Migration');
+      if (g.controller)  parts.push('Contrôleur');
+      if (g.resource)    parts.push('Resource');
+      if (g.request)     parts.push('Requests');
+      if (g.policy)      parts.push('Policy');
+      if (g.factory)     parts.push('Factory');
+      if (g.seeder)      parts.push('Seeder');
+      if (g.service)     parts.push('Service');
+      if (g.repository)  parts.push('Repository');
+      if (g.tests)       parts.push('Tests');
+      if (g.observer)    parts.push('Observer');
+      if (g.events)      parts.push('Events/Listeners');
+      if (g.actions)     parts.push('Actions');
+      return `- \`${m.name}\` → ${parts.join(', ')}`;
+    }).join('\n');
 
-## Next steps
+    const lines: string[] = [];
 
-### 1. Use the CLI
-The CLI transforms this YAML file into a full project (Laravel, NestJS, Express, etc.) with all selected options.
+    lines.push(`# ${config.name} — Getting Started`);
+    lines.push('');
+    lines.push(`> Généré avec Stack-Init le ${today}`);
+    lines.push('');
 
-\`\`\`bash
-npx stack-init-cli generate --config ${config.name}.stack-init.yaml
-\`\`\`
+    // ── What was downloaded ──────────────────────────────────────────────────
+    lines.push('## Fichiers téléchargés');
+    lines.push('');
+    lines.push(`- \`${config.name}.stack-init.yaml\` — configuration complète du projet (YAML)`);
+    lines.push('- `GETTING_STARTED.md` — ce guide pas-à-pas');
+    lines.push('');
+    lines.push('> Le fichier YAML est la source de vérité : il contient tous vos modèles, champs, relations et options.');
+    lines.push('> Le CLI `stack-init-cli` le lit et génère l\'intégralité du code PHP.');
+    lines.push('');
 
-## Configured models
-${modelLines}
+    // ── Prerequisites ────────────────────────────────────────────────────────
+    lines.push('## Prérequis');
+    lines.push('');
+    lines.push('| Outil | Version minimale | Vérification |');
+    lines.push('|---|---|---|');
+    lines.push('| PHP | 8.4+ | `php -v` |');
+    lines.push('| Composer | 2+ | `composer --version` |');
+    lines.push('| Node.js | 18+ (pour le CLI) | `node -v` |');
+    lines.push(`| ${dbLabel} | dernière stable | service actif |`);
+    lines.push('');
 
----
-Scaffold faster, ship sooner with [Stack-Init](https://stackinit.dev)
-`;
+    // ── Step 1: Create Laravel project ───────────────────────────────────────
+    lines.push('## Étape 1 — Créer un projet Laravel');
+    lines.push('');
+    lines.push('Si vous n\'avez pas encore de projet Laravel, créez-en un maintenant :');
+    lines.push('');
+    lines.push('```bash');
+    lines.push(`composer create-project laravel/laravel ${config.name}`);
+    lines.push(`cd ${config.name}`);
+    lines.push('```');
+    lines.push('');
+    lines.push('> Si vous avez déjà un projet existant, passez directement à l\'étape 2.');
+    lines.push('');
+
+    // ── Step 2: Place the YAML ───────────────────────────────────────────────
+    lines.push('## Étape 2 — Placer le fichier de configuration');
+    lines.push('');
+    lines.push(`Copiez \`${config.name}.stack-init.yaml\` dans la **racine de votre projet Laravel**,`);
+    lines.push('c\'est-à-dire le dossier qui contient le fichier `artisan` :');
+    lines.push('');
+    lines.push('```');
+    lines.push(`${config.name}/`);
+    lines.push('├── artisan              ← racine du projet Laravel');
+    lines.push(`├── ${config.name}.stack-init.yaml  ← placer ici  ✓`);
+    lines.push('├── app/');
+    lines.push('├── routes/');
+    lines.push('└── ...');
+    lines.push('```');
+    lines.push('');
+
+    // ── Step 3: Run the CLI ──────────────────────────────────────────────────
+    lines.push('## Étape 3 — Lancer le générateur stack-init');
+    lines.push('');
+    lines.push('Depuis la racine du projet Laravel (là où se trouve `artisan`) :');
+    lines.push('');
+    lines.push('```bash');
+    lines.push('npm install -g stack-init-cli');
+    lines.push(`stack-init generate --config ${config.name}.stack-init.yaml`);
+    lines.push('```');
+    lines.push('');
+    lines.push('> Le CLI détecte automatiquement la présence de `artisan` et utilise');
+    lines.push('> `php artisan make:*` pour créer certains fichiers selon les conventions Laravel.');
+    lines.push('');
+
+    // ── Step 4: Environment ──────────────────────────────────────────────────
+    lines.push('## Étape 4 — Configurer l\'environnement');
+    lines.push('');
+    lines.push('```bash');
+    lines.push('cp .env.example .env');
+    lines.push('```');
+    lines.push('');
+    lines.push('Éditez `.env` avec vos paramètres :');
+    lines.push('');
+    lines.push('```env');
+    lines.push(`DB_CONNECTION=${dbConnection}`);
+    if (dbEngine === 'sqlite') {
+      lines.push('DB_DATABASE=database/database.sqlite');
+    } else {
+      lines.push('DB_HOST=127.0.0.1');
+      lines.push(`DB_PORT=${dbEngine === 'postgresql' ? '5432' : '3306'}`);
+      lines.push(`DB_DATABASE=${config.name.replace(/-/g, '_')}`);
+      lines.push('DB_USERNAME=root');
+      lines.push('DB_PASSWORD=');
+    }
+    lines.push('APP_URL=http://localhost:8000');
+    lines.push('```');
+    lines.push('');
+    if (dbEngine === 'sqlite') {
+      lines.push('Créer le fichier SQLite :');
+      lines.push('```bash');
+      lines.push('touch database/database.sqlite');
+      lines.push('```');
+      lines.push('');
+    }
+
+    // ── Step 5: Install PHP deps ─────────────────────────────────────────────
+    lines.push('## Étape 5 — Installer les dépendances PHP');
+    lines.push('');
+    lines.push('```bash');
+    lines.push('composer install');
+    lines.push('```');
+    lines.push('');
+
+    // Auth-specific composer packages
+    if (auth === 'passport') {
+      lines.push('**Authentification — Laravel Passport :**');
+      lines.push('```bash');
+      lines.push('composer require laravel/passport');
+      lines.push('```');
+      lines.push('');
+    } else if (auth === 'breeze') {
+      lines.push('**Authentification — Laravel Breeze :**');
+      lines.push('```bash');
+      lines.push('composer require laravel/breeze');
+      lines.push('php artisan breeze:install api');
+      lines.push('```');
+      lines.push('');
+    } else if (auth === 'jetstream') {
+      lines.push('**Authentification — Laravel Jetstream :**');
+      lines.push('```bash');
+      lines.push('composer require laravel/jetstream');
+      lines.push('php artisan jetstream:install inertia');
+      lines.push('```');
+      lines.push('');
+    }
+
+    // Plugin-specific packages
+    const pluginLines: string[] = [];
+    if (plugins.includes('socialite'))          pluginLines.push('composer require laravel/socialite');
+    if (plugins.includes('spatie-permissions')) pluginLines.push('composer require spatie/laravel-permission');
+    if (plugins.includes('spatie-media'))       pluginLines.push('composer require spatie/laravel-medialibrary');
+    if (plugins.includes('spatie-activity'))    pluginLines.push('composer require spatie/laravel-activitylog');
+    if (plugins.includes('horizon'))            pluginLines.push('composer require laravel/horizon && php artisan horizon:install');
+    if (plugins.includes('2fa'))                pluginLines.push('composer require pragmarx/google2fa-laravel');
+    if (pluginLines.length > 0) {
+      lines.push('**Packages plugins :**');
+      lines.push('```bash');
+      pluginLines.forEach(l => lines.push(l));
+      lines.push('```');
+      lines.push('');
+    }
+
+    // ── Step 6: Database init ────────────────────────────────────────────────
+    lines.push('## Étape 6 — Initialiser la base de données');
+    lines.push('');
+    lines.push('```bash');
+    lines.push('php artisan key:generate');
+    if (auth === 'passport') {
+      lines.push('php artisan migrate --force');
+      lines.push('php artisan passport:install');
+    } else {
+      lines.push('php artisan migrate --force');
+    }
+    lines.push('php artisan db:seed');
+    lines.push('```');
+    lines.push('');
+
+    // ── Step 7: Serve ────────────────────────────────────────────────────────
+    lines.push('## Étape 7 — Lancer le serveur');
+    lines.push('');
+    lines.push('```bash');
+    lines.push('php artisan serve');
+    lines.push('```');
+    lines.push('');
+    lines.push('→ **http://localhost:8000/api**');
+    lines.push('');
+
+    // ── Generated artefacts ──────────────────────────────────────────────────
+    lines.push('## Ce qui sera généré');
+    lines.push('');
+    if (pattern === 'minimal') {
+      lines.push('> Pattern **minimal** : les routes sont des closures inline dans `routes/api.php` (pas de contrôleurs séparés).');
+      lines.push('');
+    } else if (pattern === 'full') {
+      lines.push('> Pattern **full** : contrôleurs API + vues Blade incluses.');
+      lines.push('');
+    }
+    lines.push(generatedLines);
+    lines.push('');
+
+    // ── Key env vars table ───────────────────────────────────────────────────
+    lines.push('## Variables d\'environnement clés');
+    lines.push('');
+    lines.push('| Variable | Description |');
+    lines.push('|---|---|');
+    lines.push(`| \`DB_CONNECTION\` | \`${dbConnection}\` |`);
+    lines.push(`| \`DB_DATABASE\` | Nom de la base de données |`);
+    lines.push('| `APP_URL` | URL de l\'application |');
+    if (auth !== 'none' && auth !== 'breeze' && auth !== 'jetstream') {
+      lines.push('| `SANCTUM_STATEFUL_DOMAINS` | `localhost` en dev |');
+    }
+    if (auth === 'passport') {
+      lines.push('| `PASSPORT_CLIENT_ID` | ID du client OAuth (après `passport:install`) |');
+      lines.push('| `PASSPORT_CLIENT_SECRET` | Secret du client OAuth |');
+    }
+    lines.push('');
+
+    // ── Useful commands ──────────────────────────────────────────────────────
+    lines.push('## Commandes Artisan utiles');
+    lines.push('');
+    lines.push('```bash');
+    lines.push('php artisan route:list               # lister toutes les routes API');
+    lines.push('php artisan app:pattern              # ajouter un modèle post-scaffold (interactif)');
+    lines.push('php artisan migrate:fresh --seed     # réinitialiser la base de données');
+    lines.push('php artisan optimize:clear           # vider tous les caches');
+    if (plugins.includes('horizon')) {
+      lines.push('php artisan horizon                  # lancer Horizon (file de jobs)');
+    }
+    lines.push('```');
+    lines.push('');
+
+    // ── Models ───────────────────────────────────────────────────────────────
+    lines.push('## Modèles configurés');
+    lines.push('');
+    lines.push(modelLines);
+    lines.push('');
+
+    lines.push('---');
+    lines.push('Scaffold faster, ship sooner avec [Stack-Init](https://stackinit.dev)');
+    lines.push('');
+
+    return lines.join('\n');
   }
 
   // ── isZip=true — comprehensive guide included inside the ZIP ──────────────

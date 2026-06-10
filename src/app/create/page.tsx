@@ -16,6 +16,18 @@ function WizardLoader() {
       const config = decompressConfig(c);
       if (config) {
         importConfig(config);
+        return;
+      }
+    }
+
+    const backup = localStorage.getItem('wizard-backup');
+    if (backup) {
+      try {
+        const config = JSON.parse(backup);
+        importConfig(config);
+        localStorage.removeItem('wizard-backup');
+      } catch (e) {
+        console.error('Failed to restore wizard backup', e);
       }
     }
   }, [searchParams, importConfig]);

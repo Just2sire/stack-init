@@ -427,9 +427,9 @@ export function ModelsStep() {
 
         <GridView onSelectModel={handleSelectModelForPanel} />
 
-        <div style={{ marginTop: 24 }}>
+        {/* <div style={{ marginTop: 24 }}>
           <AIAssistant step="models" placeholder={t("models.aiPlaceholder")} />
-        </div>
+        </div> */}
 
         {panelModel && (
           <ModelEditorSlidePanel
@@ -524,9 +524,9 @@ export function ModelsStep() {
       </div>
 
       {/* AI Assistant */}
-      <div style={{ marginBottom: 20 }}>
+      {/* <div style={{ marginBottom: 20 }}>
         <AIAssistant step="models" placeholder={t("models.aiPlaceholder")} />
-      </div>
+      </div> */}
 
       {/* Two-column content */}
       <div

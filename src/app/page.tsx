@@ -507,6 +507,25 @@ export default function Home() {
             </a>
           </div>
 
+          {/* CLI Alternative */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 12,
+            marginBottom: 28, padding: "10px 16px", borderRadius: 10,
+            background: "var(--bg3)", border: "1px solid var(--border-subtle)"
+          }}>
+            <Terminal size={14} style={{ color: "var(--gold)", flexShrink: 0 }} />
+            <code style={{
+              fontFamily: "var(--font-jetbrains-mono)", fontSize: 13,
+              color: "var(--text2)", flex: 1
+            }}>
+              <span style={{ color: "var(--text3)", marginRight: 8 }}>$</span>
+              npx create-stack-init
+            </code>
+            <span style={{ fontSize: 11, color: "var(--text3)", whiteSpace: "nowrap" }}>
+              {t("cliHint")}
+            </span>
+          </div>
+
           {/* Trust indicators */}
           <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
             {[

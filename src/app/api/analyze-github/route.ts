@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import { createClient } from '@/lib/supabase/server'
+import { generateJSON } from '@/lib/gemini'
 import {
   fetchRepoTree,
   selectKeyFiles,
@@ -20,11 +20,6 @@ export async function POST(req: Request) {
   const { url } = await req.json() as { url: string }
   if (!url?.trim()) {
     return NextResponse.json({ error: 'GitHub URL is required' }, { status: 400 })
-  }
-
-  const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) {
-    return NextResponse.json({ error: 'Gemini API not configured' }, { status: 503 })
   }
 
   const githubToken = process.env.GITHUB_TOKEN
@@ -56,22 +51,13 @@ export async function POST(req: Request) {
     }
 
     // 4. Build Gemini prompt and call API
-    const prompt = buildGeminiPrompt(files, repo)
+    const { systemPrompt, userPrompt } = buildGeminiPrompt(files, repo)
 
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-    const result = await model.generateContent(prompt)
-    const text = result.response.text().trim()
+    const config = await generateJSON<any>(systemPrompt, userPrompt)
 
-    // 5. Extract JSON from response
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      return NextResponse.json({ error: 'Could not parse AI response' }, { status: 500 })
-    }
-
-    const config = JSON.parse(jsonMatch[0])
     return NextResponse.json({ config, filesAnalyzed: files.length, repoName: repo })
   } catch (err) {
+    console.error('API analyze-github error:', err)
     const msg = err instanceof Error ? err.message : 'Unknown error'
     return NextResponse.json({ error: msg }, { status: 500 })
   }

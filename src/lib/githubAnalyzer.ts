@@ -98,19 +98,14 @@ export async function fetchFileContents(
   return results.filter(Boolean) as AnalyzedFile[]
 }
 
-export function buildGeminiPrompt(files: AnalyzedFile[], repoName: string): string {
+export function buildGeminiPrompt(files: AnalyzedFile[], repoName: string): { systemPrompt: string, userPrompt: string } {
   const fileSection = files
     .map(f => `=== ${f.label}: ${f.path} ===\n${f.content}`)
     .join('\n\n')
 
-  return `You are a code analyst and backend architect. Analyze these files from the GitHub repository "${repoName}" and generate a complete stack-init configuration.
+  const systemPrompt = `You are a code analyst and senior backend architect. Analyze the provided file contents from the GitHub repository "${repoName}" and generate a complete stack-init configuration that matches the existing project.
 
-${fileSection}
-
----
-
-Return a JSON object matching EXACTLY this schema (no markdown, no explanation, pure JSON):
-
+Return a JSON object matching this schema:
 {
   "name": "kebab-case-project-name",
   "stack": "one of: laravel|express|nestjs|fastapi|laravel+react|express+react|nestjs+react|fastapi+react|nextjs",
@@ -127,21 +122,29 @@ Return a JSON object matching EXACTLY this schema (no markdown, no explanation, 
       "migration": { "timestamps": true, "primary_key": "id", "softDeletes": false }
     }
   ],
-  "services": ["auth"|"email"|"cache"|"websockets"|"queue"|"file-upload"],
-  "laravel": { "pattern": "api-only|full|minimal", "auth": "sanctum|passport|none", "php_version": "8.4", "laravel_version": "12", "db_engine": "mysql|postgresql|sqlite" },
-  "express": { "architecture": "layered|mvc|minimal", "database": "prisma|sequelize|typeorm|mongoose|none", "db_engine": "postgresql|mysql|sqlite|mongodb", "auth": "jwt|none" },
-  "nestjs": { "architecture": "modular|cqrs|layered", "database": "prisma|typeorm|mongoose|none", "db_engine": "postgresql|mysql|sqlite|mongodb", "swagger": true, "auth": "jwt|none" },
-  "fastapi": { "architecture": "layered|flat|feature-based", "orm": "sqlmodel|sqlalchemy|tortoise-orm|none", "db_engine": "postgresql|mysql|sqlite|mongodb", "auth": "jwt|none", "migrations": true, "cors": true, "swagger": true, "rate_limiting": false, "background_tasks": false, "websockets": false, "runner": "none", "python_version": "3.12", "async_mode": true }
+  "services": ["auth", "email", "cache", "websockets", "queue", "file-upload"],
+  "laravel": { "pattern": "api-only|full", "auth": "sanctum|passport|none", "php_version": "8.4", "laravel_version": "12", "db_engine": "mysql|postgresql" },
+  "express": { "architecture": "layered|mvc", "orm": "prisma|drizzle|sequelize|typeorm|mongoose", "db_engine": "postgresql|mysql|sqlite|mongodb", "auth": "jwt|none" },
+  "nestjs": { "architecture": "modular|cqrs", "orm": "prisma|typeorm|mongoose", "db_engine": "postgresql|mysql|sqlite|mongodb", "swagger": true, "auth": "jwt|none" },
+  "fastapi": { "architecture": "layered|feature-based", "orm": "sqlmodel|sqlalchemy|tortoise-orm", "db_engine": "postgresql|mysql|sqlite|mongodb", "auth": "jwt|none", "migrations": true, "cors": true, "swagger": true, "python_version": "3.12", "async_mode": true }
 }
 
 Rules:
-- Detect stack from dependencies: laravel/framework → "laravel", express + react → "express+react", @nestjs/core → "nestjs", fastapi → "fastapi", etc.
-- Only include the stack-specific config object that matches the detected stack (e.g. only "laravel" if it's a Laravel project)
-- Extract ALL models with fields — infer types from column names (email→string, price→decimal, is_*→boolean, *_at→datetime, *_id→foreignId, content/body/description→text)
-- services: detect from dependencies (nodemailer/mail → "email", redis/ioredis/cache → "cache", bull/bullmq/celery → "queue", socket.io/ws → "websockets", multer/storage → "file-upload", auth middleware → "auth")
-- Skip pivot/junction tables (they appear as belongsToMany relations)
-- If models array would be empty (e.g. empty repo), return empty array
+- Stack Detection: 
+    - laravel/framework -> "laravel"
+    - @nestjs/core -> "nestjs"
+    - express + react -> "express+react"
+    - fastapi -> "fastapi"
+    - next -> "nextjs"
+- Model Extraction: Parse model definitions, entities, or schema.prisma to identify models and their fields. Infer types accurately.
+- Relationship Extraction: Identify hasMany, belongsTo, etc., and map them to the schema.
+- Service Detection: Identify enabled services like auth, email, redis (cache), sockets (websockets), queues (queue).
+- Extraction MUST be as complete as possible based on the files provided.
 `
+
+  const userPrompt = `Files analyzed:\n\n${fileSection}`
+
+  return { systemPrompt, userPrompt }
 }
 
 export function extractOwnerRepo(url: string): { owner: string; repo: string } {
