@@ -115,7 +115,8 @@
       "sectionLabel": "Capacités du Moteur de Frameworks",
       "headline": "Votre stack, vos standards.",
       "description": "Générez des architectures boilerplate complètes et conformes aux standards contenant vos schémas et fichiers spécifiques. Inspectez leur sortie en direct."
-    }
+    },
+    "cliHint": "Wizard CLI"
   },
 
   "wizard": {

@@ -115,7 +115,8 @@
       "sectionLabel": "Framework Engine Capabilities",
       "headline": "Your stack, your standards.",
       "description": "Generate complete, standard-compliant boilerplate architectures containing your specific schemas and files. Inspect their output live."
-    }
+    },
+    "cliHint": "CLI wizard"
   },
 
   "wizard": {

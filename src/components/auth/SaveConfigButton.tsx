@@ -11,6 +11,7 @@ export function SaveConfigButton() {
   const { user, loading } = useUser()
   const getConfig = useWizardStore(s => s.getConfig)
   const projectName = useWizardStore(s => s.projectName)
+  const setIsAuthModalOpen = useWizardStore(s => s.setIsAuthModalOpen)
   const t = useTranslations('dashboard')
 
   const [saving, setSaving]     = useState(false)
@@ -23,13 +24,13 @@ export function SaveConfigButton() {
 
   if (!user) {
     return (
-      <Link
-        href="/auth/login"
-        className="flex items-center gap-2 px-4 py-2 text-sm border border-zinc-700 rounded-lg text-zinc-400 hover:border-zinc-500 hover:text-white transition-colors"
+      <button
+        onClick={() => setIsAuthModalOpen(true)}
+        className="flex items-center gap-2 px-4 py-2 text-sm border border-zinc-700 rounded-lg text-zinc-400 hover:border-zinc-500 hover:text-white transition-colors bg-transparent cursor-pointer"
       >
         <LogIn size={14} />
         {t('signInToSave')}
-      </Link>
+      </button>
     )
   }
 

@@ -84,7 +84,7 @@ function makeDefaultModel(name: string): Model {
 
 export function ImportModal({ onClose }: ImportModalProps) {
   const t = useTranslations('wizard')
-  const { addModel, importConfig } = useWizardStore();
+  const { addModel, importConfig, setIsAuthModalOpen } = useWizardStore();
   const [mode, setMode] = useState<'choice' | 'sql' | 'ai' | 'yaml' | 'github'>('choice');
   const [input, setInput]         = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -371,7 +371,14 @@ export function ImportModal({ onClose }: ImportModalProps) {
                 <div style={{ fontSize: 11, color: 'var(--text3)', padding: '8px 12px', background: 'var(--bg4)', borderRadius: 8 }}>
                   <span style={{ color: 'var(--gold)', fontWeight: 700 }}>{t('import.aiAnalysis')} </span>
                   reads your actual source files (migrations, models, prisma schema, package.json) and extracts the full configuration — stack, models with fields, and services.
-                  <span className="block mt-1">Login required for full analysis.</span>
+                  <span className="block mt-1">
+                    <button 
+                      onClick={() => setIsAuthModalOpen(true)}
+                      className="underline hover:text-gold bg-transparent border-none p-0 cursor-pointer text-[11px]"
+                    >
+                      Login required
+                    </button> for full analysis.
+                  </span>
                 </div>
               )}
 

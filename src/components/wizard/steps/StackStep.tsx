@@ -535,9 +535,9 @@ export function StackStep() {
       </div>
 
       {/* AI Stack Recommender */}
-      <div style={{ maxWidth: 760, marginBottom: 24 }}>
+      {/* <div style={{ maxWidth: 760, marginBottom: 24 }}>
         <AIAssistant step="stack" placeholder='Describe your project — "SaaS with teams, subscriptions and real-time chat"' />
-      </div>
+      </div> */}
 
       {/* Info card */}
       <div className="si-info-card" style={{ maxWidth: 760 }}>

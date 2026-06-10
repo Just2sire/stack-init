@@ -126,7 +126,7 @@ export function DatabaseStep() {
         </div>
       </div>
 
-      <AIAssistant step="database" placeholder={t("database.aiPlaceholder")} />
+      {/* <AIAssistant step="database" placeholder={t("database.aiPlaceholder")} /> */}
     </div>
   );
 }
