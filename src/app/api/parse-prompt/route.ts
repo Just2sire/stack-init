@@ -1,15 +1,33 @@
 import { NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import { createClient } from '@/lib/supabase/server'
+import { generateJSON } from '@/lib/gemini'
 
-const MODEL_SCHEMA_DESCRIPTION = `
-Return a JSON object with a "models" array. Each model has:
-- name: PascalCase string
-- fields: array of { name: camelCase string, type: one of [string|text|integer|decimal|boolean|date|datetime|json|enum|foreignId], required?: boolean, unique?: boolean, default?: string|number|boolean, values?: string[] (for enum) }
-- relations: array of { type: one of [hasOne|hasMany|belongsTo|belongsToMany|morphTo|morphMany], model: PascalCase string }
-- generate: { controller: boolean, service: boolean, migration: boolean, repository?: boolean }
+const SYSTEM_PROMPT = `You are a backend schema designer. Given a project description, generate the core data models.
 
-Return ONLY valid JSON, no markdown, no explanation.
+Return a JSON object with a "models" array. Each model MUST follow this schema:
+{
+  "name": "PascalCase string",
+  "fields": [
+    { 
+      "name": "camelCase string", 
+      "type": "string|text|integer|decimal|boolean|date|datetime|json|enum|foreignId", 
+      "required": boolean, 
+      "unique": boolean, 
+      "default": "optional string|number|boolean",
+      "values": ["only for enum type"] 
+    }
+  ],
+  "relations": [
+    { "type": "hasOne|hasMany|belongsTo|belongsToMany", "model": "PascalCase string" }
+  ],
+  "generate": { "controller": true, "service": true, "migration": true, "repository": true },
+  "migration": { "timestamps": true, "primary_key": "id", "softDeletes": false }
+}
+
+Rules:
+- Generate 3-7 models that cover the main entities and their relationships.
+- Use foreignId for fields that link to other models and ensure a corresponding relation is added.
+- Be consistent with naming.
 `
 
 export async function POST(req: Request) {
@@ -23,31 +41,23 @@ export async function POST(req: Request) {
     )
   }
 
-  const { prompt } = await req.json()
-  if (!prompt?.trim()) {
-    return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
+  try {
+    const { prompt } = await req.json()
+    if (!prompt?.trim()) {
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
+    }
+
+    const result = await generateJSON<any>(
+      SYSTEM_PROMPT,
+      `Project description: ${prompt}`
+    )
+
+    return NextResponse.json(result)
+  } catch (error) {
+    console.error('API parse-prompt error:', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'An error occurred while parsing prompt' },
+      { status: 500 }
+    )
   }
-
-  const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) {
-    return NextResponse.json({ error: 'Gemini API not configured' }, { status: 503 })
-  }
-
-  const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-
-  const result = await model.generateContent(
-    `You are a backend schema designer. Given this project description, generate the data models.\n\n` +
-    `Schema format:\n${MODEL_SCHEMA_DESCRIPTION}\n\n` +
-    `Project description: ${prompt}`
-  )
-
-  const text = result.response.text().trim()
-  const jsonMatch = text.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) {
-    return NextResponse.json({ error: 'Could not parse AI response' }, { status: 500 })
-  }
-
-  const parsed = JSON.parse(jsonMatch[0])
-  return NextResponse.json(parsed)
 }

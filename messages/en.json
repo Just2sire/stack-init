@@ -235,7 +235,7 @@
       "orBuildFromScratch": "Or build from scratch",
       "singleStack": "Single Stack",
       "comboStacks": "Combo Stacks",
-      "noteText": "React, Next.js & FastAPI → ZIP download. Laravel → {code} + CLI command.",
+      "noteText": "React, Next.js & FastAPI → ZIP download. Laravel → <code>composer</code> + CLI command.",
       "applied": "Applied ✓",
       "load": "Load",
       "export": "↓",
